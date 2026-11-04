@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.24.5v";
+  const VERSION = "0.24.6v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");

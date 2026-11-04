@@ -22,10 +22,13 @@ with sync_playwright() as p:
    assert page.locator(gone).count()==0,gone
   # Cut chips replace the static "Koszulka męska".
   assert page.locator('[data-app-cut]').all_inner_texts()==['Męska','Damska','Dziecięca']
-  assert 'krój męski' in page.locator('.d24-malfini-subtitle').inner_text()
+  # 0.24.6: opis pod nazwą = rodzaj · gramatura · unisex; osobna linia z dostępnymi krojami (nie zależy od wybranego kroju).
+  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g · unisex',page.locator('.d24-malfini-subtitle').inner_text()
+  assert page.locator('.d24-malfini-availability').inner_text().strip()=='Dostępne kroje: męski, damski i dziecięcy'
   assert page.locator('.d24-malfini-cut-note').is_hidden()
   page.locator('[data-app-cut="Damska"]').click()
-  assert 'krój damski' in page.locator('.d24-malfini-subtitle').inner_text()
+  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g · unisex'
+  assert 'krój' not in page.locator('.d24-malfini-subtitle').inner_text()
   assert page.locator('[data-app-cut="Damska"]').get_attribute('aria-pressed')=='true'
   assert page.locator('.d24-malfini-cut-note').is_visible()
   assert page.evaluate('gallery.selection().cut')=='Damska'
@@ -40,6 +43,8 @@ with sync_playwright() as p:
   page.evaluate("gallery.render({category:'Koszulki bawełniane',product:'Heavy New 200 g'})")
   assert 'Heavy New 137' in page.locator('.d24-malfini-title').inner_text()
   assert page.locator('[data-app-cut]').count()==0 and 'Unisex' in page.locator('.d24-malfini-cut-fixed').inner_text()
+  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana oversize · 200 g · unisex'
+  assert page.locator('.d24-malfini-availability').count()==0
   # Chosen cut survives a model change when the new model offers it.
   page.evaluate("gallery.render({category:'Koszulki bawełniane',product:'Basic 160 g'});gallery.render({category:'Koszulki bawełniane',product:'Classic New 145 g'})")
   assert page.evaluate('gallery.selection().cut')=='Męska'
@@ -63,7 +68,9 @@ with sync_playwright() as p:
   # Caps and bags: front only (no back view).
   page.evaluate("gallery.render({category:'Czapki',product:'Czapka bejsbolówka'})")
   assert page.locator('[data-app-view]').all_inner_texts()==['Przód','Profil']
+  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Czapka bejsbolówka'
   page.evaluate("gallery.render({category:'Torby i worki',product:'Carry'})")
+  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Torba bawełniana'
   assert page.locator('[data-app-view="back"]').count()==0
   assert not errors,errors
   print('PASS',width, 'cuts, no print area, two vests, front-only caps/bags, no overflow',flush=True)

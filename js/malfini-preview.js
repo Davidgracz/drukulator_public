@@ -27,6 +27,20 @@
   const cutsMD = ["Męska", "Damska"];
   const cutAdjective = { "Męska": "męski", "Damska": "damski", "Dziecięca": "dziecięcy", "Unisex": "unisex" };
 
+  // 0.24.6: opis pod nazwą modelu: rodzaj · gramatura · unisex (jeśli dotyczy); osobna linia z dostępnymi krojami.
+  const joinList = items => items.length > 1 ? `${items.slice(0, -1).join(', ')} i ${items[items.length - 1]}` : (items[0] || '');
+  const subtitleFor = (model, cuts, fallback) => {
+    if (!model) return fallback;
+    const parts = [model.type || fallback];
+    const showGram = !['tote', 'drawstring', 'cap'].includes(model.visualType);
+    if (showGram && /\d/.test(model.gram || '')) parts.push(String(model.gram).replace(/\s*g\/m²/i, ' g'));
+    if (model.audience === 'unisex' || (cuts.length === 1 && cuts[0] === 'Unisex')) parts.push('unisex');
+    return parts.join(' · ');
+  };
+  const availabilityFor = cuts => cuts.length > 1
+    ? `Dostępne kroje: ${joinList(cuts.map(cut => cutAdjective[cut] || cut.toLowerCase()))}`
+    : '';
+
   const entry = (code, name, type, gram, material, sizes, url, colors = commonColors, visualType = "shirt", extra = {}) => ({
     code, name, type, gram, material, sizes, url, colors, visualType, cuts: [], ...extra
   });
@@ -48,7 +62,7 @@
   };
 
   const products = {
-    "Basic 160 g": entry("129", "Basic", "Koszulka bawełniana", "160 g/m²", "100% bawełna*", "XS–5XL", "https://shop.malfini.com/pl/pl/product/basic-129", basicColors, "shirt", { cuts: cutsMKD, photoCut: "Męska" }),
+    "Basic 160 g": entry("129", "Basic", "Koszulka bawełniana", "160 g/m²", "100% bawełna*", "XS–5XL", "https://shop.malfini.com/pl/pl/product/basic-129", basicColors, "shirt", { cuts: cutsMKD, photoCut: "Męska", audience: "unisex" }),
     "Classic New 145 g": entry("132", "Classic New", "Koszulka bawełniana", "145 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/classic-new-132", commonColors, "shirt", { cuts: cutsMKD, photoCut: "Męska" }),
     "Heavy New 200 g": entry("137", "Heavy New", "Koszulka bawełniana oversize", "200 g/m²", "100% bawełna*", "XS–3XL", "https://shop.malfini.com/pl/pl/product/heavy-new-137", commonColors, "shirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
     "Slim Fit V-neck 180 g": entry("146", "Slim Fit V-neck", "Koszulka bawełniana, dekolt w serek", "180 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/slim-fit-v-neck-146", commonColors, "shirt", { cuts: cutsMD, photoCut: "Męska" }),
@@ -305,7 +319,7 @@
 
     function cutText() {
       const subtitle = node.querySelector('.d24-malfini-subtitle');
-      if (subtitle) subtitle.textContent = `${activeModel?.type || current.category}${activeCut ? ` · krój ${cutAdjective[activeCut] || activeCut.toLowerCase()}` : ''}`;
+      if (subtitle) subtitle.textContent = subtitleFor(activeModel, cutsFor(), current.category);
       node.querySelectorAll('[data-app-cut]').forEach(button => {
         const on = button.dataset.appCut === activeCut;
         button.classList.toggle('is-active', on);
@@ -466,7 +480,8 @@
         <div class="d24-malfini-detail">
           <span class="d24-malfini-eyebrow">${activeModel ? `PODGLĄD · ${escapeHtml(activeModel.code || 'MODEL')}` : 'Katalog odzieży'}</span>
           <h3 class="d24-malfini-title">${escapeHtml(name)}</h3>
-          <p class="d24-malfini-subtitle">${escapeHtml(activeModel?.type || current.category)}</p>
+          <p class="d24-malfini-subtitle">${escapeHtml(subtitleFor(activeModel, cuts, current.category))}</p>
+          ${availabilityFor(cuts) ? `<p class="d24-malfini-availability">${escapeHtml(availabilityFor(cuts))}</p>` : ''}
           <div class="d24-malfini-facts${facts.length > 3 ? ' has-extra' : ''}">
             ${facts.map(([label, value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}
           </div>
