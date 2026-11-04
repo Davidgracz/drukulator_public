@@ -48,7 +48,9 @@ with sync_playwright() as p:
  # przy 100 szt. nadal pokazują się różnice cen pozostałych formatów
  page.locator(qtyt,has_text='100').first.click(); page.wait_for_timeout(500)
  texts=tiles(fmt)
- assert '305,00 zł' in texts[0] and any('+' in t for t in texts[1:]),texts
+ # 0.24.8: każdy format pokazuje faktyczną cenę całego zamówienia, bez różnic „+/−”.
+ assert [t.split('\n')[-1] for t in texts[:5]]==['305,00 zł','595,00 zł','1075,00 zł','680,00 zł','1320,00 zł'],texts
+ assert not any(('+' in t or '−' in t) for t in texts),texts
  assert not own.is_visible(),'Własna ilość nie istnieje w offsecie.'
 
  # 2) Druk wielkoformatowy: plakietka 24h, kafelki 1/3/6/10/20 bez cen za sztukę.

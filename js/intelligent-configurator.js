@@ -134,10 +134,10 @@
           button.append(context);
         }
         const amount = prices.get(option.value);
-        // 0.24.5: gdy po zmianie ilości tylko wybrany format ma cenę (np. offset A3 × 500 szt. — większe formaty
-        // nie mają takiego nakładu), wybrany kafelek nadal pokazuje cenę łączną.
-        const onlySelectedPriced = amount !== undefined && kind !== 'quantity' && available.length > 1 && option.value === select.value;
-        if (amount !== undefined && (prices.size > 1 || onlySelectedPriced)) {
+        // 0.24.5/0.24.8: ilości pokazują cenę łączną; pozostałe opcje — faktyczną cenę całego zamówienia po wybraniu
+        // danej opcji (bez „+/−”). Opcja bez ceny dla bieżącej ilości (np. offset A2 × 500 szt.) nie ma kwoty.
+        const showPrice = amount !== undefined && (kind === 'quantity' ? prices.size > 1 : available.length > 1);
+        if (showPrice) {
           const label = document.createElement('span');
           label.className = 'd24-config-price';
           if (kind === 'quantity') {
@@ -152,26 +152,21 @@
               button.append(unit);
             }
           } else {
-            // Pozostałe opcje: wybrana pokazuje cenę całości, pozostałe — różnicę względem niej.
-            const selectedPrice = prices.get(select.value);
-            const diff = selectedPrice === undefined ? null : Math.round((amount - selectedPrice) * 100) / 100;
-            if (diff === null || option.value === select.value) label.textContent = `${money(amount)} ${tr('łącznie', 'total')}`;
-            else if (diff > 0) label.textContent = `+${money(diff)}`;
-            else if (diff < 0) label.textContent = `−${money(-diff)}`;
-            else label.textContent = tr('bez dopłaty', 'no extra charge');
+            // Pozostałe opcje: faktyczna cena całego zamówienia z tą opcją (0.24.8: bez różnic „+/−”).
+            label.textContent = money(amount);
             button.append(label);
           }
         }
       });
       // Jedno zdanie wyjaśnia, co oznaczają kwoty na opcjach (nie są sumowane).
       let priceNote = field.querySelector(':scope > .d24-config-price-note');
-      if (priceEnabled && kind !== 'quantity' && prices.size > 1) {
+      if (priceEnabled && kind !== 'quantity' && prices.size > 0 && available.length > 1) {
         if (!priceNote) {
           priceNote = document.createElement('small');
           priceNote.className = 'd24-config-price-note';
           chipRow.after(priceNote);
         }
-        priceNote.textContent = tr('Kwoty pokazują zmianę ceny całego zamówienia.', 'Amounts show the change in the total order price.');
+        priceNote.textContent = tr('Kwoty to cena całego zamówienia z daną opcją.', 'Amounts are the price of the whole order with that option.');
       } else if (priceNote) {
         priceNote.remove();
       }
@@ -265,8 +260,8 @@
       button.setAttribute('aria-pressed',String(selected));
       const name=makeNode('span','d24-config-comparison__option-name',item.label);
       const amount=makeNode('strong','',money(item.price));
-      const secondary=makeNode('small','',selected ? tr('Wybrany wariant','Selected option') : (item.price-config.selected.price<0 ? `${money(Math.abs(item.price-config.selected.price))} ${tr('taniej','less')}` : item.price>config.selected.price ? `+${money(item.price-config.selected.price)}` : tr('Ta sama cena','Same price')));
-      button.append(name,amount,secondary);rows.append(button);
+      const secondary=makeNode('small','',selected ? tr('Wybrany wariant','Selected option') : '');
+      button.append(name,amount);if (selected) button.append(secondary);rows.append(button);
     });
     body.append(rows,makeNode('p','d24-config-comparison__note',tr('Ceny brutto dla obecnego nakładu i parametrów. Wybrany wariant zatwierdzisz przyciskiem „Dodaj do koszyka”.','Gross prices for the current quantity and settings. Confirm the configuration with “Add to cart”.')));
   }

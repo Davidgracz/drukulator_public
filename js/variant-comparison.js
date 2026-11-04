@@ -152,9 +152,7 @@
     const unit = make('div','d24-vc-card__unit');
     unit.append(make('strong','',money(item.unitPrice)),make('span','',tr('za sztukę','per piece')));
     node.append(unit);
-    const diff = item.price - data.base.price;
-    const diffText = current ? tr('Aktualny wariant','Current option') : diff > .005 ? `+${money(diff)} ${tr('łącznie','total')}` : diff < -.005 ? `−${money(-diff)} ${tr('łącznie','total')}` : tr('Taka sama cena','Same total price');
-    node.append(make('p','d24-vc-card__difference',diffText));
+    // 0.24.8: karta pokazuje faktyczną cenę wariantu (łączną i za sztukę) — bez różnic „+/−” względem wybranego wariantu.
     const buttons = make('div','d24-vc-card__buttons');
     // 0.24.0: jeden przycisk na kartę. Wybór ustawia wariant w formularzu; do koszyka dodaje
     // jeden, stały przycisk przy cenie (pasek ceny), więc nie ma dwóch różnych „Dodaj”.

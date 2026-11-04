@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.24.7v";
+  const VERSION = "0.24.8v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -3623,7 +3623,7 @@
     card.className = "variant-upgrade-card";
     card.innerHTML = `
       <div class="variant-upgrade-card__head"><span>WARTO ROZWAŻYĆ</span><strong>${esc(upgrade.label)}</strong></div>
-      <p>${esc(upgrade.note)} za <b>+${money(upgrade.extraPrice)} zł</b> względem obecnego zamówienia.</p>
+      <p>${esc(upgrade.note.charAt(0).toUpperCase() + upgrade.note.slice(1))}: <b>${money(upgrade.price)} zł</b> za całe zamówienie (obecnie ${money(Number(upgrade.price) - Number(upgrade.extraPrice))} zł).</p>
       <button class="button secondary full" type="button">Pokaż ten wariant — ${money(upgrade.price)} zł</button>`;
     card.querySelector("button").addEventListener("click", () => upgrade.apply());
     container.appendChild(card);
@@ -3662,9 +3662,8 @@
 
     if (suggestion) {
       const unit = quantityUnitLabel();
-      const extraText = suggestion.extraPrice <= 0
-        ? `więcej o ${suggestion.extraQuantity} ${unit} i jeszcze ${money(Math.abs(suggestion.extraPrice))} zł taniej`
-        : `+${suggestion.extraQuantity} ${unit} za +${money(suggestion.extraPrice)} zł`;
+      // 0.24.8: faktyczne ceny zamiast „+N szt. za +X zł”.
+      const extraText = `${suggestion.quantity} ${unit} za ${money(suggestion.price)} zł zamiast ${currentQuantity} ${unit} za ${money(baseQuote.price)} zł`;
 
       const card = document.createElement("div");
       card.className = "best-value-card";
