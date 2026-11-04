@@ -62,7 +62,7 @@ with sync_playwright() as p:
     assert page.locator('#posterQty').input_value()=='1'
     choices=page.locator('#posterQtyWrap .d24-smart-choice')
     assert choices.count()==5,[c.inner_text() for c in choices.all()]
-    assert [c.get_attribute('data-option-value') for c in choices.all()]==['1','5','10','20','30']
+    assert [c.get_attribute('data-option-value') for c in choices.all()]==['1','3','6','10','20']
     assert page.locator('#posterQtyWrap .d24-smart-more').count()==0
     assert '30' in page.locator('#calculate').inner_text(),page.locator('#calculate').inner_text()
     select('posterQty','10')

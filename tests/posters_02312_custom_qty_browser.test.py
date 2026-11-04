@@ -40,7 +40,10 @@ with sync_playwright() as p:
  assert qty.input_value()=='1','Large format default must be 1.'
  assert page.locator('#posterQtyWrap .d24-smart-choice').count()==5
  assert page.locator('#posterQtyWrap .d24-smart-choice:visible').count()==5
- assert page.locator('#posterQtyWrap .d24-smart-choice[aria-pressed="true"]').inner_text().strip().startswith('1 szt.')
+ assert page.locator('#posterQtyWrap .d24-smart-choice[aria-pressed="true"]').inner_text().strip().split('\n')[0].strip()=='1'
+ assert [c.get_attribute('data-option-value') for c in page.locator('#posterQtyWrap .d24-smart-choice').all()]==['1','3','6','10','20']
+ assert not any('szt.' in t for t in page.locator('#posterQtyWrap .d24-smart-choice').all_text_contents()),'No per-piece wording on large-format quantity buttons.'
+
  assert '30' in page.locator('#calculate').inner_text(),page.locator('#calculate').inner_text()
  page.locator('#posterQtyWrap .d24-smart-choice[data-option-value="10"]').click()
  page.wait_for_timeout(300)
@@ -57,9 +60,10 @@ with sync_playwright() as p:
  assert qty.input_value()=='17',f'Expected custom 17, got {qty.input_value()}'
  assert '340' in page.locator('#calculate').inner_text(),page.locator('#calculate').inner_text()
  assert own.get_attribute('aria-pressed')=='true'
- custom.fill('101')
+ assert custom.get_attribute('max')=='30'
+ custom.fill('31')
  page.wait_for_timeout(450)
- assert '100' in page.locator('#posterOwnQtyNote').inner_text()
+ assert 'od 1 do 30' in page.locator('#posterOwnQtyNote').inner_text()
  assert 'sprawdź parametry' in page.locator('#calculate').inner_text().lower(),page.locator('#calculate').inner_text()
  custom.fill('3')
  page.wait_for_timeout(450)
@@ -69,23 +73,15 @@ with sync_playwright() as p:
  page.wait_for_timeout(200)
  assert own.get_attribute('aria-pressed')=='false'
  assert not custom.is_visible()
- # Offset custom quantities: exact catalog tiers are priced, others direct customers to ask.
+ # 0.24.5: own quantity exists only in large format — in digital and offset it disappears.
  tech.filter(has=page.locator('strong').get_by_text('Ekonomicznie')).click()
  page.wait_for_timeout(330)
  assert page.locator('#posterPrint').input_value()=='Offsetowy'
  assert qty.input_value() in ('100','250','500')
- own.click()
- custom.fill('77')
- page.wait_for_timeout(300)
- assert qty.input_value()=='77'
- assert 'indywidualną cenę' in page.locator('#posterOwnQtyNote').inner_text()
- assert page.locator('#posterOwnQtyNote a[href^="mailto:"]').count()==1
- assert 'sprawdź parametry' in page.locator('#calculate').inner_text().lower(),page.locator('#calculate').inner_text()
- custom.fill('100')
- page.wait_for_timeout(450)
- assert qty.input_value()=='100'
- assert 'Cena zostanie obliczona' in page.locator('#posterOwnQtyNote').inner_text()
- assert 'sprawdź parametry' not in page.locator('#calculate').inner_text().lower()
+ assert not own.is_visible() and not custom.is_visible()
+ tech.filter(has=page.locator('strong').get_by_text('Szybko')).click()
+ page.wait_for_timeout(330)
+ assert not own.is_visible() and not custom.is_visible()
  tech.filter(has=page.locator('strong').get_by_text('Druk wielkoformatowy')).click()
  page.wait_for_timeout(300)
  assert qty.input_value()=='1',f'After switch to large: {qty.input_value()}'

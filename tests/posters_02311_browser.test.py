@@ -40,7 +40,10 @@ with sync_playwright() as p:
  assert qty.input_value()=='1','Large format default must be 1.'
  assert page.locator('#posterQtyWrap .d24-smart-choice').count()==5
  assert page.locator('#posterQtyWrap .d24-smart-choice:visible').count()==5
- assert page.locator('#posterQtyWrap .d24-smart-choice[aria-pressed="true"]').inner_text().strip().startswith('1 szt.')
+ assert page.locator('#posterQtyWrap .d24-smart-choice[aria-pressed="true"]').inner_text().strip().split('\n')[0].strip()=='1'
+ assert [c.get_attribute('data-option-value') for c in page.locator('#posterQtyWrap .d24-smart-choice').all()]==['1','3','6','10','20']
+ assert not any('szt.' in t for t in page.locator('#posterQtyWrap .d24-smart-choice').all_text_contents()),'No per-piece wording on large-format quantity buttons.'
+ assert page.locator('#posterOwnQtyToggle').is_visible()
  assert '30' in page.locator('#calculate').inner_text(),page.locator('#calculate').inner_text()
  page.locator('#posterQtyWrap .d24-smart-choice[data-option-value="10"]').click()
  page.wait_for_timeout(300)
@@ -57,6 +60,7 @@ with sync_playwright() as p:
  assert page.locator('#posterPrint').input_value()=='Offsetowy'
  assert qty.input_value() in ('100','250','500')
  assert page.locator('#posterQtyWrap .d24-smart-choice').count()>0
+ assert not page.locator('#posterOwnQtyToggle').is_visible(),'Own quantity exists only in large format.'
  tech.filter(has=page.locator('strong').get_by_text('Druk wielkoformatowy')).click()
  page.wait_for_timeout(300)
  assert qty.input_value()=='1',f'After switch to large: {qty.input_value()}'

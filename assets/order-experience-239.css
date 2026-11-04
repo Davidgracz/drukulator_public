@@ -77,7 +77,8 @@
 .content #posterQtyWrap .d24-poster-own-toggle:focus-visible,.content #posterQtyWrap .d24-poster-own-entry input:focus-visible {
   outline:3px solid var(--accent);outline-offset:3px;
 }
-.content #posterQtyWrap .d24-poster-own-panel[hidden] {display:none!important;}
+.content #posterQtyWrap .d24-poster-own-panel[hidden],
+.content #posterQtyWrap .d24-poster-own-toggle[hidden] {display:none!important;}
 .content #posterQtyWrap .d24-poster-own-panel {
   padding:15px;margin-top:12px;background:var(--panel-2);border:1px solid var(--border);border-radius:11px;
 }

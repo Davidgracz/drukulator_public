@@ -277,7 +277,7 @@
     if (!root || !root[formatName]) throw new Error("Brak cennika dla wybranego plakatu.");
 
     if (printType === "Wielkoformatowy 24h") {
-      if (Number(quantity) > 100) throwLimit("Maksymalny nakład plakatów wielkoformatowych w kalkulatorze to 100 sztuk.");
+      if (Number(quantity) > 30) throwLimit("Maksymalny nakład plakatów wielkoformatowych w kalkulatorze to 30 sztuk.");
       const tier = getQuantityUnitPrice(quantity, root[formatName].progi_ilosciowe);
       const unitPrice = Number(tier.cena_sztuki);
       return { price: round2(unitPrice * Number(quantity)), unitPrice };

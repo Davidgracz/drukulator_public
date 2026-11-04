@@ -118,13 +118,14 @@
         const price = pricing.preview(select.id, o.value, values);
         if (price !== null) prices.set(o.value, price);
       });
-      const signature = JSON.stringify([document.documentElement.lang, select.id, kind, select.value, available, Array.from(prices.entries())]);
+      const noUnit = select.dataset.d24NoUnitPrice === '1';
+      const signature = JSON.stringify([document.documentElement.lang, select.id, kind, select.value, noUnit, available, Array.from(prices.entries())]);
       if (chipRow.dataset.configuratorSignature === signature) return;
       chipRow.dataset.configuratorSignature = signature;
       chipRow.querySelectorAll('button[data-option-index]').forEach(button => {
         const option = select.options[Number(button.dataset.optionIndex)];
         if (!option) return;
-        button.querySelectorAll('.d24-config-price, .d24-config-context, .d24-choice-visual').forEach(node => node.remove());
+        button.querySelectorAll('.d24-config-price, .d24-config-unit, .d24-config-context, .d24-choice-visual').forEach(node => node.remove());
         const note = smallInfo(kind, option.label);
         decoration(button,kind,option.label);
         if (note) {
@@ -133,7 +134,10 @@
           button.append(context);
         }
         const amount = prices.get(option.value);
-        if (amount !== undefined && prices.size > 1) {
+        // 0.24.5: gdy po zmianie ilości tylko wybrany format ma cenę (np. offset A3 × 500 szt. — większe formaty
+        // nie mają takiego nakładu), wybrany kafelek nadal pokazuje cenę łączną.
+        const onlySelectedPriced = amount !== undefined && kind !== 'quantity' && available.length > 1 && option.value === select.value;
+        if (amount !== undefined && (prices.size > 1 || onlySelectedPriced)) {
           const label = document.createElement('span');
           label.className = 'd24-config-price';
           if (kind === 'quantity') {
@@ -141,7 +145,7 @@
             label.textContent = money(amount);
             button.append(label);
             const qty = Number(option.value);
-            if (Number.isInteger(qty) && qty > 1) {
+            if (Number.isInteger(qty) && qty > 1 && !noUnit) {
               const unit = document.createElement('small');
               unit.className = 'd24-config-unit';
               unit.textContent = `${money(amount / qty)} ${tr('za sztukę', 'per piece')}`;

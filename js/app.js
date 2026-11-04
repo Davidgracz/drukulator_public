@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.24.4v";
+  const VERSION = "0.24.5v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2966,7 +2966,7 @@
   const PRINT_CHOICES = [
     { key: "digital", name: "Szybko · druk cyfrowy", detail: "Orientacyjnie 24–48 h", test: /cyfrow/i },
     { key: "offset", name: "Ekonomicznie · druk offsetowy", detail: "Orientacyjnie 3–5 dni roboczych", test: /offset|ofset/i },
-    { key: "large", name: "Druk wielkoformatowy", detail: "Formaty A2–B0 · już od 1 szt.", test: /wielkoformat/i }
+    { key: "large", name: "Druk wielkoformatowy", badge24h: true, detail: "Formaty A2–B0 · już od 1 szt.", test: /wielkoformat/i }
   ];
 
   function setSelectedPrintChoice(select, key) {
@@ -2995,7 +2995,7 @@
       select.closest(".field")?.classList.add("d24-poster-original-print");
     }
     field.innerHTML = `<div class="d24-technology-select__head"><strong>Szybko czy ekonomicznie?</strong><small>Wybierz sposób druku. Terminy są orientacyjne.</small></div>
-      <div class="d24-technology-select__buttons">${available.map(o=>`<button type="button" data-print-mode="${o.key}" aria-pressed="false"><strong>${o.name}</strong><small>${o.detail}</small></button>`).join("")}</div>`;
+      <div class="d24-technology-select__buttons">${available.map(o=>`<button type="button" data-print-mode="${o.key}" aria-pressed="false"><strong>${o.name}${o.badge24h ? ' <span class="service-badge-24h">24h</span>' : ""}</strong><small>${o.detail}</small></button>`).join("")}</div>`;
     host.insertBefore(field, form);
     // Ten sam wybór był pokazywany drugi raz jako „Rodzaj druku”. Natywny select zostaje w DOM
     // (kalkulator i asystent nadal z niego korzystają), ale klient widzi tylko jedną decyzję.
@@ -4785,7 +4785,7 @@
       <div id="stickSurfaceFields" class="field" style="display:contents">
         <div class="field third"><label>Szerokość jednej sztuki [mm]</label><input id="stickWidth" type="number" min="30" max="500" step="1" value="100"></div>
         <div class="field third"><label>Wysokość jednej sztuki [mm]</label><input id="stickHeight" type="number" min="30" max="500" step="1" value="100"></div>
-        <div class="field third"><label for="stickQty">Liczba naklejek</label><div class="d24-control-guide d24-sticker-hint">Podaj ilość potrzebnych naklejek lub etykiet.</div><input id="stickQty" type="number" min="1" step="1" value="80"></div>
+        <div class="field third"><label for="stickQty">Ilość sztuk</label><div class="d24-control-guide d24-sticker-hint">Podaj ilość potrzebnych naklejek lub etykiet.</div><input id="stickQty" type="number" min="1" step="1" value="80"></div>
       </div>
       <div id="stickTaxiFields" class="field hidden"><label>Ilość kompletów / sztuk</label><input id="stickTaxiQty" type="number" min="1" step="1" value="1"></div>
     </div><div id="stickInfo"></div><div class="actions"><button class="button" id="calculate">Oblicz cenę</button></div></div><div id="quoteArea"></div>`;
@@ -5125,6 +5125,8 @@
       B0: "B0 (100 × 140 cm)"
     };
     const lastStandardFormat = {};
+    // 0.24.5: największy nakład plakatów wielkoformatowych wpisywany ręcznie (wcześniej 100).
+    const POSTER_LARGE_MAX_QUANTITY = 30;
     let largeQuantity = "1";
     let ownQuantityMode = false;
     let ownQuantityChange = false;
@@ -5137,7 +5139,7 @@
         <button class="d24-poster-own-toggle" type="button" id="posterOwnQtyToggle" aria-pressed="false" aria-expanded="false" aria-controls="posterOwnQtyPanel">+ Własna ilość</button>
         <div class="d24-poster-own-panel" id="posterOwnQtyPanel" hidden>
           <label for="posterOwnQty">Wpisz liczbę plakatów</label>
-          <div class="d24-poster-own-entry"><input id="posterOwnQty" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Np. 17"></div>
+          <div class="d24-poster-own-entry"><input id="posterOwnQty" type="number" min="1" max="30" step="1" inputmode="numeric" placeholder="Np. 17"></div>
           <div class="d24-poster-own-note" id="posterOwnQtyNote" role="status" aria-live="polite"></div>
         </div>
       </div>
@@ -5164,7 +5166,7 @@
       const raw = ownInput.value.trim();
       const q = Number(raw);
       const isLarge = print.value === "Wielkoformatowy 24h";
-      const maxQuantity = 100;
+      const maxQuantity = POSTER_LARGE_MAX_QUANTITY;
       const valid = raw !== "" && Number.isSafeInteger(q) && q >= 1 && q <= maxQuantity;
       let billingFormat = format.value;
       if (valid && isCustomFormat()) {
@@ -5221,7 +5223,7 @@
       updateOwnQuantityPanel();
       if (ownQuantityMode) {
         ownInput.value = posterQty.value && Number.isFinite(Number(posterQty.value)) ? posterQty.value : "";
-        ownInput.max = "100";
+        ownInput.max = String(POSTER_LARGE_MAX_QUANTITY);
         setOwnQuantity();
         ownInput.focus();
       } else {
@@ -5311,16 +5313,23 @@
 
       const formatData = root[print.value][billing.formatName];
       qty.disabled = false;
+      // 0.24.5: „+ Własna ilość" tylko w druku wielkoformatowym; w cyfrze i offsecie znika.
+      ownToggle.hidden = !isLarge;
+      if (!isLarge && ownQuantityMode) {
+        ownQuantityMode = false;
+        ownNote.replaceChildren();
+        ownInput.value = "";
+        qty.querySelectorAll('option[data-d24-custom-option]').forEach(option => option.remove());
+        updateOwnQuantityPanel();
+      }
       if (isLarge) {
-        // All 1–30 values remain available to text-to-quote presets. Only
-        // 1, 5, 10, 20 and 30 are offered as quick visual buttons.
-        qty.dataset.d24FeaturedQuantities = "1,5,10,20,30";
-        const quantities = Array.from({ length: 30 }, (_, index) => String(index + 1));
-        const priceFor = quantity => {
-          const eligible = (formatData.progi_ilosciowe || []).filter(tier => Number(quantity) >= Number(tier.min_szt));
-          return eligible.length ? eligible[eligible.length - 1].cena_sztuki : null;
-        };
-        qty.innerHTML = quantities.map(q => `<option value="${q}">${q} szt. · ${money(priceFor(q))} zł/szt.</option>`).join("");
+        // Wszystkie wartości 1–30 zostają w polu (asystent i presety zamówień z tekstu z nich korzystają).
+        // 0.24.5: jako szybkie kafelki pokazujemy tylko 1, 3, 6, 10 i 20 — tak samo jak w druku cyfrowym
+        // i offsetowym: sama ilość i cena łączna (bez ceny za sztukę).
+        qty.dataset.d24FeaturedQuantities = "1,3,6,10,20";
+        qty.dataset.d24NoUnitPrice = "1";
+        const quantities = Array.from({ length: POSTER_LARGE_MAX_QUANTITY }, (_, index) => String(index + 1));
+        qty.innerHTML = options(quantities);
         qty.value = quantities.includes(previousQty) ? previousQty : "1";
         largeQuantity = qty.value;
         const tiers = formatData.progi_ilosciowe || [];
@@ -5333,9 +5342,10 @@
             : `od ${tier.min_szt} szt.`;
           return `<tr><td>${esc(range)}</td><td>${money(tier.cena_sztuki)} zł/szt.</td></tr>`;
         }).join("");
-        info.innerHTML = `${customBillingNotice(billing)}${alertBox(`Papier satynowy 135 g. Możesz zamówić już od 1 sztuki; własny nakład od 1 do 100 sztuk. Własny wymiar jest liczony jak najmniejszy standardowy format, w którym mieści się cały plakat, również po obróceniu. ${LIMIT_CONTACT_TEXT}`, "info")}<details><summary>Cennik: ${esc(formatLabel(billing.formatName))}</summary><table class="tier-table"><thead><tr><th>Nakład</th><th>Cena jednostkowa</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+        info.innerHTML = `${customBillingNotice(billing)}${alertBox(`Papier satynowy 135 g. Możesz zamówić już od 1 sztuki; własny nakład od 1 do ${POSTER_LARGE_MAX_QUANTITY} sztuk. Własny wymiar jest liczony jak najmniejszy standardowy format, w którym mieści się cały plakat, również po obróceniu. ${LIMIT_CONTACT_TEXT}`, "info")}<details><summary>Cennik: ${esc(formatLabel(billing.formatName))}</summary><table class="tier-table"><thead><tr><th>Nakład</th><th>Cena jednostkowa</th></tr></thead><tbody>${rows}</tbody></table></details>`;
       } else {
         delete qty.dataset.d24FeaturedQuantities;
+        delete qty.dataset.d24NoUnitPrice;
         const quantities = Object.keys(formatData);
         qty.innerHTML = options(quantities);
         if (quantities.includes(previousQty)) qty.value = previousQty;
