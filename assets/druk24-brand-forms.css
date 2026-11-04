@@ -1,0 +1,165 @@
+/* Drukulator 0.23.1: visual brand alignment with Druk24 (black, white, blue).
+   Scoped visual overrides, no prices or business rules are modified. */
+:root {
+  --bg: #f4f5f6;
+  --sidebar: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #fafbfc;
+  --border: #dfe3e7;
+  --text: #161b20;
+  --muted: #606b75;
+  --accent: #088fca;
+  --accent-2: #0879b3;
+  --info: #0879b3;
+  --nav-hover: #f2f7fa;
+  --nav-active: #eaf6fc;
+  --nav-active-border: #94d4f2;
+  --input-border: #cdd7de;
+  --summary-bg: #f2f7fa;
+  --secondary-hover: #eef6fb;
+  --refresh-teal: #088fc6;
+  --refresh-sky: #0595d2;
+  --refresh-glow: rgba(0,150,215,.09);
+  --refresh-radius: 15px;
+  --shadow: 0 12px 32px rgba(18,28,38,.05);
+  --soft-shadow: 0 8px 25px rgba(18,28,38,.045);
+}
+html[data-theme="dark"] {
+  --bg: #111214;
+  --sidebar: #17191b;
+  --panel: #1d2023;
+  --panel-2: #22262a;
+  --border: #373d43;
+  --text: #f6f7f8;
+  --muted: #bac1c6;
+  --accent: #35b9f0;
+  --accent-2: #10a2e0;
+  --info: #64c9f4;
+  --nav-hover: #282e33;
+  --nav-active: #183745;
+  --nav-active-border: #277b9e;
+  --input-border: #4a5660;
+  --summary-bg: #222b30;
+  --secondary-hover: #253640;
+  --refresh-teal: #4bc7f8;
+  --refresh-sky: #4bc7f8;
+  --refresh-glow: rgba(75,199,248,.09);
+  --refresh-radius: 15px;
+  --shadow: 0 14px 38px rgba(0,0,0,.19);
+  --soft-shadow: 0 9px 27px rgba(0,0,0,.18);
+}
+body { background: var(--bg); }
+.druk24-site-header { background: #070707; border-bottom: 1px solid #272727; }
+.druk24-site-navigation a.is-current,
+.druk24-site-navigation a:hover { color: #38b7ec; }
+.druk24-site-navigation a.is-current:after { background: #38b7ec; }
+.druk24-site-logo { color: #fff; text-decoration: none; }
+.druk24-site-logo .druk24-logo-fallback, .druk24-footer-logo .druk24-logo-fallback {
+  display: none; align-items: baseline; white-space: nowrap;
+  gap: 5px; font-size: clamp(1.25rem, 2vw, 1.7rem); line-height: 1; font-weight: 900; letter-spacing: -.055em;
+}
+.druk24-site-logo.logo-missing .druk24-logo-fallback, .druk24-footer-logo.logo-missing .druk24-logo-fallback { display: inline-flex; }
+.druk24-site-logo.logo-missing img, .druk24-footer-logo.logo-missing img { display: none; }
+.druk24-logo-fallback > strong { color: #39b6ee; font-weight: 900; }
+.druk24-site-logo .druk24-logo-fallback > small, .druk24-footer-logo .druk24-logo-fallback > small { font-size: .4em; align-self: end; letter-spacing: .12em; margin-left: 3px; font-weight: 700; }
+.druk24-footer-logo.logo-missing { color: white; text-decoration: none; }
+@media (max-width: 760px) {
+  .druk24-site-logo .druk24-logo-fallback { font-size: 1.15rem; gap: 3px; }
+  .druk24-site-logo .druk24-logo-fallback > small { font-size: .33em; letter-spacing: .06em; }
+}
+/* Cleaner typography and less cyan/teal glow than 0.23.0. */
+.brand-icon { background: #080808; border: 1px solid #222; color: #fff; box-shadow: none; }
+.brand h1 { font-weight: 800; }
+.nav-button.active { box-shadow: inset 3px 0 var(--accent); }
+.refresh-nav-icon, .home-product-tile__icon {
+  background: var(--nav-active); color: var(--accent);
+  border-color: var(--nav-active-border);
+}
+.refresh-recents__links button, .refresh-home-shortcuts button { border-color: var(--border); }
+.refresh-home-shortcuts button:hover, .refresh-recents__links button:hover { color: var(--accent); border-color: var(--accent); }
+.home-conversion-hero__main {
+  background: linear-gradient(140deg, var(--panel) 74%, var(--nav-active));
+  border: 1px solid var(--border);
+}
+.home-conversion-hero__main::after { opacity: .13; }
+.home-conversion-hero h1 em,
+.home-hero__badge, .home-section-kicker, .home-product-tile__arrow,
+.page-header__eyebrow, .breadcrumb button { color: var(--accent); }
+.home-simple-steps li > b { background: #151515; color: #fff; }
+.refresh-journey__step.is-active > b { background: #101010; color: #fff; }
+html[data-theme="dark"] .refresh-journey__step.is-active > b { background: #35b9f0; color: #071216; }
+.refresh-form-heading > span { background: #101010; color: #fff; }
+html[data-theme="dark"] .refresh-form-heading > span { background: #d9e9f1; color: #071216; }
+.button:not(.secondary):not(.danger), .quote-dock__button {
+  color: white; background: #087fb9; border-color: #087fb9;
+  box-shadow: none;
+}
+.button:not(.secondary):not(.danger):hover, .quote-dock__button:hover { background: #045b8a; border-color: #045b8a; color: #fff; }
+.quote-card { box-shadow: var(--soft-shadow); }
+.quote-card::before { background: #088fc6; height: 3px; }
+.quote-dock { background: var(--panel); border-color: var(--border); box-shadow: 0 8px 22px rgba(0,0,0,.06); }
+.quote-dock__symbol { color: var(--accent); }
+.service-badge-24h, html[data-theme="dark"] .service-badge-24h {
+  background: none; color: #0c9aca; -webkit-text-fill-color: currentColor; text-shadow: none;
+  animation: none;
+}
+html[data-theme="dark"] .service-badge-24h { color: #51c6ee; }
+.home-product-tile--featured { background: var(--panel); }
+.home-product-tile:hover { border-color: var(--accent); box-shadow: var(--soft-shadow); }
+.home-trust-strip > div { border-color: var(--border); }
+/* Form enhancement: original select stays visible and remains authoritative. */
+.d24-control-guide { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .70rem; line-height: 1.45; margin: 1px 0 3px; }
+.d24-control-guide svg { width: 15px; height: 15px; flex: 0 0 15px; color: var(--accent); }
+.d24-smart-options {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  gap: 8px; margin-top: 5px; width: 100%;
+}
+.field.half .d24-smart-options { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.field.third .d24-smart-options { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.d24-smart-choice {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 4px; min-width: 0; min-height: 58px; padding: 10px 12px;
+  color: var(--text); background: var(--panel); text-align: left;
+  border: 1px solid var(--border); border-radius: 10px;
+  transition: border-color .15s, background-color .15s, box-shadow .15s;
+}
+.d24-smart-choice strong { font-size: .76rem; font-weight: 800; overflow-wrap: anywhere; line-height: 1.3; }
+.d24-smart-choice small { color: var(--muted); font-size: .64rem; line-height: 1.25; }
+.d24-smart-choice:hover { background: var(--nav-hover); border-color: var(--accent); }
+.d24-smart-choice[aria-pressed="true"] {
+  color: var(--text); background: var(--nav-active); border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.d24-smart-choice[aria-pressed="true"]::before {
+  content: '✓'; align-self: flex-end; color: var(--accent); height: 0; font-size: .78rem;
+}
+.d24-smart-choice[aria-pressed="true"] strong { padding-right: 15px; }
+.d24-smart-choice:disabled { opacity: .4; cursor: not-allowed; }
+.d24-smart-choice:focus-visible, .refresh-choice-row button:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+.d24-calc-details {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 12px 14px; margin: 17px 0 2px; border: 1px solid var(--border);
+  background: var(--panel-2); color: var(--muted); border-radius: 10px;
+  line-height: 1.5; font-size: .74rem;
+}
+.d24-calc-details__icon { color: var(--accent); font-weight: 900; line-height: 1.5; }
+.d24-calc-details[data-stale="true"] { background: var(--nav-active); border-color: var(--nav-active-border); color: var(--text); }
+.d24-calc-details[data-stale="true"] .d24-calc-details__icon { color: var(--accent); }
+.d24-calc-details strong { color: var(--text); font-weight: 750; }
+.d24-smart-quantity .refresh-choice-row button[aria-pressed="true"] { box-shadow: inset 0 -2px var(--accent); }
+.refresh-choice-row button[aria-pressed="true"] { box-shadow: inset 0 -2px var(--accent); }
+/* Responsive grids are capped, no horizontal scroller in the configurator. */
+@media (min-width: 1400px) { .field:not(.half):not(.third) .d24-smart-options { grid-template-columns: repeat(auto-fit, minmax(136px, 1fr)); } }
+@media (max-width: 760px) {
+  .d24-smart-options, .field.half .d24-smart-options, .field.third .d24-smart-options { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .d24-smart-choice { min-height: 54px; padding: 9px 10px; }
+  .d24-smart-choice strong { font-size: .74rem; }
+  .d24-calc-details { margin-top: 13px; }
+}
+@media (max-width: 380px) {
+  .d24-smart-options, .field.half .d24-smart-options, .field.third .d24-smart-options { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .d24-smart-choice { padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .d24-smart-choice { transition: none; } }

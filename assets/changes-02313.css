@@ -1,0 +1,10 @@
+/* Drukulator 0.23.13 - form steps and apparel preview */
+.d24-apparel-preview{display:grid;grid-template-columns:minmax(125px,180px) 1fr;gap:22px;align-items:center;border:1px solid #cee4f2;border-radius:18px;padding:20px;background:#f7fbfe;margin:18px 0}
+.d24-apparel-preview__visual{max-width:175px;width:100%}
+.d24-apparel-preview__visual svg{display:block;width:100%;height:auto}
+.d24-apparel-preview__badge{font-size:13px;font-weight:800;color:#0873a8;text-transform:uppercase;letter-spacing:.06em}
+.d24-apparel-preview h3{margin:7px 0;font-size:21px;color:#101820}
+.d24-apparel-preview p{margin:8px 0;line-height:1.55}
+.d24-apparel-preview__help{font-size:16px;color:#3d5564}
+.d24-manual-cart-note{padding:12px;border:1px solid #bfdef1;border-radius:10px;background:#edf9ff;font-size:15px;color:#244a5f}
+@media (max-width:600px){.d24-apparel-preview{grid-template-columns:1fr;padding:16px}.d24-apparel-preview__visual{max-width:140px;margin:auto}}

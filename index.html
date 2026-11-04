@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Zamówienia druku online Druk24 Szczecin">
+  <title>Zamówienia druku online | Druk24 Szczecin</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-D2DSGMLDZZ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-D2DSGMLDZZ");
+  </script>
+
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem("drukulator_theme");
+        document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/styles.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/frontend-refresh.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/druk24-brand-forms.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/product-preview.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/checkout-experience.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/intelligent-search.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/quote-assistant-235.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/intelligent-configurator.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/variant-comparison.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/changes-02313.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/malfini-preview.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/compact-choices.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/order-experience-239.css?v=0.24.4">
+  <link rel="stylesheet" href="assets/ux-clarity.css?v=0.24.4">
+</head>
+<body class="is-home-page">
+  <a class="skip-link" href="#content">Przejdź do zamówień online</a>
+  <noscript>Ta aplikacja wymaga włączonego JavaScript.</noscript>
+
+  <header class="druk24-site-header">
+    <div class="druk24-site-header__inner">
+      <a class="druk24-site-logo" href="/" aria-label="Druk24 Szczecin — strona główna">
+        <img src="/wp-content/uploads/2022/10/druk24-logo.svg" alt="Druk24 Szczecin">
+      </a>
+
+      <div class="druk24-site-actions">
+        <button class="language-toggle" id="languageToggle" type="button" aria-label="Switch language to English" title="English">EN</button>
+
+        <button
+          class="theme-toggle"
+          id="themeToggle"
+          type="button"
+          aria-label="Włącz tryb ciemny"
+          aria-pressed="false"
+        >
+          <span class="theme-toggle__icon" aria-hidden="true">🌙</span>
+          <span class="theme-toggle__label">Tryb ciemny</span>
+        </button>
+
+        <button
+          class="druk24-site-menu-toggle"
+          id="siteMenuToggle"
+          type="button"
+          aria-label="Otwórz menu strony"
+          aria-controls="siteNavigation"
+          aria-expanded="false"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <nav class="druk24-site-navigation" id="siteNavigation" aria-label="Menu główne">
+        <a href="/">Start</a>
+        <a href="/oferta/">Cennik</a>
+        <a class="is-current" href="/drukulator/" aria-current="page">Zamów online</a>
+        <a href="/o-nas/">O nas</a>
+        <a href="/blog/">Blog</a>
+        <a href="/dojazd-i-kontakt/">Dojazd i kontakt</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand d24-brand-link" href="/drukulator/" id="d24BrandHome" aria-label="Wróć na stronę główną Drukulatora">
+        <div class="brand-icon">🖨️</div>
+        <div>
+          <h1>Cennik online</h1>
+        </div>
+      </a>
+      <div class="product-search">
+        <label class="visually-hidden" for="productSearch">Opisz, czego potrzebujesz</label>
+        <div class="product-search__field">
+          <span aria-hidden="true">⌕</span>
+          <input
+            id="productSearch"
+            type="search"
+            autocomplete="off"
+            placeholder="Szukaj produktu…"
+            aria-describedby="productSearchHint" aria-controls="productSearchResults" aria-autocomplete="list"
+          >
+        </div>
+        <small id="productSearchHint" class="muted">Możesz wpisać nazwę produktu albo krótko opisać zamówienie.</small>
+        <div id="productSearchResults" class="product-search__results" aria-live="polite"></div>
+      </div>
+      <nav id="navigation" class="navigation" aria-label="Produkty"></nav>
+    </aside>
+
+    <button id="menuToggle" class="menu-toggle" type="button" aria-label="Otwórz menu produktów" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span> <span class="menu-toggle__label">Produkty</span></button>
+
+    <main class="workspace">
+      <div class="quote-dock" id="quoteDock" aria-label="Podsumowanie Twojego zamówienia">
+        <div class="quote-dock__identity">
+          <span class="quote-dock__symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M6 6v13h12V6M9 11h6M9 15h4"/></svg>
+          </span>
+          <span><strong>Twoje zamówienie</strong><small id="quoteDockDescription">Dodaj produkt do koszyka</small></span>
+        </div>
+        <div class="quote-dock__right">
+          <div class="quote-dock__price" id="quoteDockPrice" hidden>
+            <small id="quoteDockTotalLabel">Razem brutto</small>
+            <strong class="quote-dock__total" id="quoteDockTotal">0,00 zł</strong>
+          </div>
+          <button class="quote-dock__button" id="quoteDockOpen" type="button">Wybierz produkt <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+      <section class="content" id="content" aria-live="polite"></section>
+      <aside class="cart-panel" id="cartPanel" aria-label="Twoje zamówienie i formularz wysyłki"></aside>
+    </main>
+  </div>
+
+  <div class="mobile-cart-bar" id="mobileCartBar" hidden>
+    <div class="mobile-price-bar" id="mobilePriceBar" hidden>
+      <div class="mobile-price-bar__price" aria-live="polite">
+        <strong id="mobilePriceValue">—</strong>
+        <small id="mobilePriceHint">Uzupełnij parametry</small>
+      </div>
+      <button type="button" class="mobile-price-bar__add" id="mobileAddButton" disabled>Dodaj do koszyka</button>
+    </div>
+    <div class="mobile-cart-bar__tools">
+      <a class="mobile-cart-bar__call" href="tel:+48918314747" aria-label="Zadzwoń do Druk24: 91 831 47 47">
+        <span aria-hidden="true">☎</span><span class="mobile-cart-bar__call-label">Zadzwoń</span>
+      </a>
+      <button type="button" class="mobile-cart-bar__cart" id="mobileCartButton" aria-label="Przejdź do koszyka">
+        <span class="mobile-cart-bar__label">Koszyk</span>
+        <strong id="mobileCartSummary">0 pozycji • 0,00 zł</strong>
+      </button>
+    </div>
+  </div>
+
+  <footer class="druk24-site-footer">
+    <div class="druk24-site-footer__grid">
+      <section>
+        <a class="druk24-footer-logo" href="/" aria-label="Druk24 Szczecin — strona główna">
+          <img src="/wp-content/uploads/2022/10/druk24-logo.svg" alt="Druk24 Szczecin">
+        </a>
+        <p>
+          al. Wojska Polskiego 39a<br>
+          70-473 Szczecin
+        </p>
+        <p>
+          NIP 852 26 09 187<br>
+          KRS 0000521253
+        </p>
+      </section>
+
+      <section>
+        <h2>Kontakt</h2>
+        <p>
+          <a href="tel:+48918314747">+48 91 831 47 47</a><br>
+          <a href="tel:+48572379445">+48 572 379 445</a>
+        </p>
+        <p>
+          <a href="mailto:biuro@druk24.szczecin.pl">biuro@druk24.szczecin.pl</a>
+        </p>
+        <p>
+          Poniedziałek–piątek:<br>
+          8:00–18:00
+        </p>
+      </section>
+
+      <section>
+        <h2>Oferta</h2>
+        <nav class="druk24-footer-links" aria-label="Oferta">
+          <a href="/oferta/ulotki-i-plakaty/">Ulotki i plakaty</a>
+          <a href="/oferta/wizytowkii-papier-firmowy/">Wizytówki</a>
+          <a href="/oferta/etykiety-wlepki-i-magnesy/">Naklejki, etykiety i magnesy</a>
+          <a href="/oferta/folie-i-banery/">Folie i banery</a>
+          <a href="/oferta/rollupy-i-x-banery/">Roll-upy i X-banery</a>
+          <a href="/oferta/obrazy-na-plotnie/">Obrazy na płótnie</a>
+          <a href="/oferta/sluby-wesela-imprezy/">Śluby, wesela i imprezy</a>
+        </nav>
+      </section>
+
+      <section>
+        <h2>Drukarnia</h2>
+        <nav class="druk24-footer-links" aria-label="Informacje">
+          <a href="/o-nas/">O nas</a>
+          <a href="/dojazd-i-kontakt/">Kontakt i dojazd</a>
+          <a href="/blog/">Blog</a>
+          <a href="/polityka-prywatnosci/">Polityka prywatności</a>
+          <a href="/regulamin/">Regulamin</a>
+          <a href="/rodo/">RODO</a>
+        </nav>
+      </section>
+    </div>
+
+    <div class="druk24-site-footer__bottom">
+      <span>© Druk24 Szczecin</span>
+      <a href="/drukulator/">Zamów online</a>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="js/i18n.js?v=0.24.4"></script>
+  <script src="js/calculators.js?v=0.24.4"></script>
+  <script src="js/checkout-experience.js?v=0.24.4"></script>
+  <script src="js/intelligent-search.js?v=0.24.4"></script>
+  <script src="js/quote-interpreter.js?v=0.24.4"></script>
+  <script src="js/malfini-preview.js?v=0.24.4"></script>
+  <script src="js/app.js?v=0.24.4"></script>
+  <script src="js/frontend-refresh.js?v=0.24.4"></script>
+  <script src="js/smart-forms.js?v=0.24.4"></script>
+  <script src="js/product-preview.js?v=0.24.4"></script>
+  <script src="js/intelligent-configurator.js?v=0.24.4"></script>
+  <script src="js/variant-comparison.js?v=0.24.4"></script>
+</body>
+</html>

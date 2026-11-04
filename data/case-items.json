@@ -1,0 +1,53 @@
+{
+  "name": "Skrzynka zniżek Druk24",
+  "items": [
+    {
+      "id": "discount-1",
+      "name": "1% zniżki",
+      "image": "assets/case-items/discount-1.png",
+      "rarity": "common",
+      "discount": 1,
+      "weight": 42
+    },
+    {
+      "id": "discount-2",
+      "name": "2% zniżki",
+      "image": "assets/case-items/discount-2.png",
+      "rarity": "common",
+      "discount": 2,
+      "weight": 28
+    },
+    {
+      "id": "discount-3",
+      "name": "3% zniżki",
+      "image": "assets/case-items/discount-3.png",
+      "rarity": "uncommon",
+      "discount": 3,
+      "weight": 16
+    },
+    {
+      "id": "discount-5",
+      "name": "5% zniżki",
+      "image": "assets/case-items/discount-5.png",
+      "rarity": "rare",
+      "discount": 5,
+      "weight": 9
+    },
+    {
+      "id": "discount-10",
+      "name": "10% zniżki",
+      "image": "assets/case-items/discount-10.png",
+      "rarity": "epic",
+      "discount": 10,
+      "weight": 4
+    },
+    {
+      "id": "discount-15",
+      "name": "15% zniżki",
+      "image": "assets/case-items/discount-15.png",
+      "rarity": "legendary",
+      "discount": 15,
+      "weight": 1
+    }
+  ]
+}

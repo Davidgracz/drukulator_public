@@ -1,0 +1,26 @@
+const assert = require('node:assert/strict');
+const {readFileSync} = require('node:fs');
+const path = require('node:path');
+const t = require('../js/quote-interpreter.js');
+const prices = JSON.parse(readFileSync(path.join(__dirname,'../data/prices.json'),'utf8'));
+const parse = t.parse;
+assert.equal(parse('Potrzebuję 200 ulotek na imprezę').quantity, 200);
+assert.equal(parse('100 wizytówek 90x50 mm dwustronnych').quantity,100);
+assert.equal(parse('100 wizytówek 90x50 mm dwustronnych').dimensions,'90 × 50 mm');
+assert.equal(parse('100 wizytówek 90x50 mm dwustronnych').sides,'Dwustronny');
+assert.equal(parse('Wizytówki na papierze 130 g').quantity,null);
+assert.equal(parse('Kolorowe ksero A4 20 szt').format,'A4');
+assert.equal(parse('Kolorowe ksero A4 20 szt').color,'Kolorowy');
+assert.ok(t.availableFormats('Ulotki 24h',prices).includes('A5'));
+assert.ok(!t.filteredAnswers({prompt:'Jaki format ulotki?',chips:[['A6','A6'],['A5','A5'],['DL','DL'],['A4','A4']]},'Ulotki 24h',prices,'200 ulotek').some(x=>x[0]==='A4'));
+assert.ok(t.filteredAnswers({prompt:'Ile sztuk potrzebujesz?',chips:[]},'Wizytówki 24h',prices).some(x=>x[0]==='200 szt.'));
+const question={status:'question',prompt:'Jaki format ulotki?',chips:[['A5','A5'],['A4','A4']]};
+const intent={pageName:'Ulotki 24h',summary:'200 szt • A6',steps:[['flyFormat','A6']]};
+const analysis=t.inspect('200 ulotek na imprezę',[{pageName:'Ulotki 24h',score:220}],prices,question,intent);
+assert.equal(analysis.action,'clarify');
+assert.equal(analysis.intent,null); // Must not skip the required format question
+assert.equal(analysis.fields[0][1],'200 szt.');
+assert.deepEqual(analysis.answers,[['A5','A5']]);
+assert.equal(t.inspect('bełkot',[],prices,{status:'question'},null),null);
+assert.equal(t.inspect('mowa srebrem',[],prices,{status:'question'},null),null);
+console.log('QUOTE INTERPRETER TESTS OK');

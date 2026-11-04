@@ -1,0 +1,90 @@
+/* Druk24 — responsive order experience */
+.d24-brand-link { display:flex; color:inherit; text-decoration:none; border-radius:10px; cursor:pointer; }
+.d24-brand-link:hover h1, .d24-brand-link:focus-visible h1 { color:var(--info); }
+.refresh-recents, .d24-search-discovery { display:none!important; }
+.d24-detailed-quote { margin-top:12px; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--panel); }
+.d24-detailed-quote>summary { cursor:pointer; padding:14px 18px; font-weight:750; color:var(--text); }
+.d24-detailed-quote .quote-card { margin:0; border:0; box-shadow:none; }
+.d24-price-at-a-glance { display:flex; gap:16px; justify-content:space-between; align-items:center; flex-wrap:wrap; border:1px solid var(--border); border-left:4px solid #088fca; padding:14px 16px; margin-top:16px; background:var(--panel-2); border-radius:12px; }
+.d24-price-at-a-glance>div { display:grid; gap:4px; }
+.d24-price-at-a-glance strong { font-size:1.35rem; font-weight:900; }
+.d24-price-at-a-glance small { color:var(--muted); }
+.card .actions #calculate, .card .actions #calculateCanvas { min-height:52px; width:100%; font-size:1rem; font-weight:850; }
+.d24-technology-select { margin:0 0 16px; padding:15px; border:1px solid var(--border); border-radius:14px; background:var(--panel-2); }
+.d24-technology-select__head { display:grid; gap:5px; margin-bottom:12px; }
+.d24-technology-select__head small { color:var(--muted); }
+.d24-experimental {font-size:.64rem; font-weight:750; padding:2px 7px; border:1px solid var(--border); border-radius:6px; }
+.d24-technology-select__buttons,.d24-checkout-speed__choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.d24-technology-select__buttons button,.d24-speed-option>span { text-align:left; display:grid; gap:4px; width:100%; border:1px solid var(--border); border-radius:12px; background:var(--panel); color:var(--text); padding:12px 14px; cursor:pointer; font:inherit; transition:border-color .15s; }
+.d24-technology-select__buttons button small,.d24-speed-option small {font-size:.75rem; color:var(--muted);}
+.d24-technology-select__buttons button[aria-pressed=true],.d24-speed-option input:checked+span { border:2px solid #088fca; background:rgba(8,143,202,.06); padding:11px 13px; }
+.d24-speed-option input {position:absolute; opacity:0; width:1px; height:1px; }
+.d24-speed-option { cursor:pointer; position:relative; }
+.d24-speed-option input:focus-visible+span { outline:3px solid #088fca; outline-offset:2px; }
+.d24-checkout-speed__foot { color:var(--muted); font-size:.83rem; line-height:1.55; margin:12px 0 0; }
+.home-no-risk {border-color:#088fca!important; }
+@media(max-width:680px) {
+ .d24-technology-select__buttons,.d24-checkout-speed__choices {grid-template-columns:1fr;}
+ .d24-price-at-a-glance { align-items:flex-start; flex-direction:column; gap:7px; }
+ .d24-detailed-quote>summary { padding:13px 15px; }
+}
+
+/* Pending confirmation is an informational state, not completed checkout. */
+.home-no-risk {border-color:#088fca!important; background:rgba(8,143,202,.07)!important;}
+.home-no-risk strong {color:var(--text)!important;}
+.order-success-card.is-success {border-color:#088fca; background:rgba(8,143,202,.08); color:var(--text);}
+.order-success-card.is-success .order-success-card__icon {background:#088fca;}
+
+/* 0.23.10v — shipping and clearer product pricing */
+.d24-delivery-note { margin:12px 18px 0; padding:14px 16px; display:grid; gap:7px; background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-left:4px solid #088fca; border-radius:12px; }
+.d24-delivery-note strong {font-size:1rem;} .d24-delivery-note small, .d24-delivery-explanation {color:var(--muted); font-size:.82rem;line-height:1.5;}
+.d24-delivery-explanation{margin:8px 0 0;} .d24-shipping-address[hidden]{display:none!important;}
+.d24-pvc-price{background:var(--panel-2);border:1px solid #088fca;border-left:5px solid #088fca;border-radius:14px;padding:16px 20px;margin:15px 0;display:flex;flex-direction:column;gap:5px;}
+.d24-pvc-price span{color:var(--muted);font-size:.8rem;font-weight:700}.d24-pvc-price strong{font-size:clamp(1.6rem,3vw,2.3rem);color:var(--text);line-height:1.2}.d24-pvc-price small{color:var(--muted);}
+#pvcInfo details{margin-top:14px;} .content:has(#pvcDynamic) .form-grid{gap:15px;} 
+
+
+/* 0.23.11v: poster technology and quantities as visible buttons. */
+.content .d24-poster-original-print { display: none !important; }
+.content .d24-technology-select--posters .d24-technology-select__buttons {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.content .d24-technology-select--posters .d24-technology-select__buttons button {
+  min-height: 72px;
+}
+.content #posterQtyWrap .d24-smart-options { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
+.content #posterQtyWrap .d24-smart-choice { min-height: 48px; }
+@media (max-width: 720px) {
+  .content .d24-technology-select--posters .d24-technology-select__buttons {
+    grid-template-columns: 1fr;
+  }
+  .content #posterQtyWrap .d24-smart-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 380px) {
+  .content #posterQtyWrap .d24-smart-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+
+/* 0.23.12v: own quantity remains a separate visible button next to poster presets. */
+.content #posterQtyWrap .d24-poster-own-toggle {
+  display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:160px;
+  padding:11px 17px;margin-top:10px;border:1.5px dashed var(--accent);border-radius:11px;
+  background:var(--panel);color:var(--text);font:inherit;font-size:.95rem;font-weight:800;cursor:pointer;
+}
+.content #posterQtyWrap .d24-poster-own-toggle[aria-pressed="true"] {
+  background:var(--nav-active);border-style:solid;box-shadow:inset 0 0 0 1px var(--accent);
+}
+.content #posterQtyWrap .d24-poster-own-toggle:focus-visible,.content #posterQtyWrap .d24-poster-own-entry input:focus-visible {
+  outline:3px solid var(--accent);outline-offset:3px;
+}
+.content #posterQtyWrap .d24-poster-own-panel[hidden] {display:none!important;}
+.content #posterQtyWrap .d24-poster-own-panel {
+  padding:15px;margin-top:12px;background:var(--panel-2);border:1px solid var(--border);border-radius:11px;
+}
+.content #posterQtyWrap .d24-poster-own-panel label {display:block;font-size:1rem;font-weight:750;margin:0 0 9px;}
+.content #posterQtyWrap .d24-poster-own-entry input {display:block;width:min(100%,260px);min-height:48px;font-size:1rem;}
+.content #posterQtyWrap .d24-poster-own-note {min-height:22px;margin-top:10px;font-size:1rem;line-height:1.5;}
+.content #posterQtyWrap .d24-poster-own-note[data-status="error"] {color:var(--danger,#a82b35);}
+.content #posterQtyWrap .d24-poster-own-note[data-status="success"] {color:var(--text);}
+.content #posterQtyWrap .d24-poster-inquiry {display:inline-block;font-weight:800;color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
+@media(max-width:500px){.content #posterQtyWrap .d24-poster-own-toggle {width:100%;}}

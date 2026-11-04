@@ -1,0 +1,71 @@
+/* Druk24 — fotografie produktów Malfini; podgląd katalogowy 0.23.15. */
+#d24ApparelCatalog.d24-apparel-catalog{display:grid;grid-template-columns:minmax(240px,.98fr) minmax(280px,1.02fr);gap:25px;align-items:start;border:1px solid #d6e1e9;background:#fff;border-radius:22px;padding:22px;margin:20px 0 22px;color:#18232e;box-shadow:0 8px 30px rgba(20,44,60,.035)}
+.d24-malfini-gallery{min-width:0}
+.d24-malfini-gallery__stage{position:relative;display:flex;justify-content:center;align-items:center;min-height:405px;overflow:hidden;border:1px solid #e0e6ed;background:#f7f9fb;border-radius:18px;padding:36px 14px 34px}
+.d24-malfini-gallery__topline{position:absolute;top:14px;left:17px;z-index:2;font-size:11px;font-weight:800;letter-spacing:.1em;color:#617383}
+.d24-malfini-photo:not([hidden]){display:block;width:100%;height:350px;max-width:100%;object-fit:contain;filter:drop-shadow(0 7px 13px rgba(14,26,35,.08));mix-blend-mode:multiply}
+.d24-malfini-photo-status{width:min(84%,260px);margin:auto;text-align:center;line-height:1.5;color:#617383;font-size:15px}
+.d24-malfini-gallery__stage.is-unavailable .d24-malfini-photo-status{padding:30px 18px;border:1px dashed #d0dce8;border-radius:14px;background:#fff}
+.d24-malfini-gallery__note{position:absolute;bottom:12px;left:10px;right:10px;text-align:center;font-size:12px;color:#71818f}
+.d24-malfini-gallery__views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.d24-malfini-gallery__views button{min-width:0;min-height:96px;border:1px solid #d7e2eb;border-radius:12px;background:#fff;color:#283947;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:7px;transition:border-color .12s,box-shadow .12s}
+.d24-malfini-gallery__views img:not([hidden]){display:block;max-width:100%;height:58px;object-fit:contain}
+.d24-malfini-gallery__views button span{font-size:13px;font-weight:750}
+.d24-malfini-gallery__views button.is-active{border:2px solid #088fca;box-shadow:0 0 0 2px rgba(8,143,202,.1);color:#075780;background:#f4fbff}
+.d24-malfini-gallery__views button:hover,.d24-malfini-swatch:hover{border-color:#088fca}
+#d24ApparelCatalog button:focus-visible,#d24ApparelCatalog .d24-malfini-link:focus-visible{outline:3px solid #088fca;outline-offset:3px}
+.d24-malfini-detail{min-width:0;padding:4px 0}
+.d24-malfini-eyebrow{display:inline-block;background:#e8f5fc;color:#08618b;border-radius:24px;padding:6px 12px;font-size:12px;font-weight:800;letter-spacing:.06em}
+#d24ApparelCatalog .d24-malfini-title{font-size:clamp(25px,2.1vw,31px);line-height:1.2;color:#18232e;margin:14px 0 6px;font-weight:800}
+#d24ApparelCatalog .d24-malfini-subtitle{font-size:16px;color:#647686;margin:0 0 18px}
+.d24-malfini-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.d24-malfini-facts>div{min-width:0;border:1px solid #dce6ee;background:#fff;border-radius:12px;display:flex;flex-direction:column;gap:6px;padding:12px 10px}
+.d24-malfini-facts span{font-size:12px;color:#647787}
+.d24-malfini-facts strong{font-size:14px;color:#182b37;overflow-wrap:anywhere}
+.d24-malfini-colors{margin-top:20px}
+.d24-malfini-colors__heading{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.d24-malfini-colors__heading strong{font-size:15px;color:#1b2a37}
+.d24-malfini-color-label{font-size:13px;color:#5b7280}
+.d24-malfini-swatches{display:flex;flex-wrap:wrap;gap:7px}
+.d24-malfini-swatch{height:44px;width:44px;background:white;border:1px solid #cad8e3;border-radius:12px;padding:5px;cursor:pointer}
+.d24-malfini-swatch span{display:block;width:100%;height:100%;border-radius:7px;background:var(--swatch);border:1px solid rgba(0,0,0,.13)}
+.d24-malfini-swatch.is-active{border:3px solid #088fca;box-shadow:0 0 0 2px rgba(8,143,202,.12)}
+.d24-malfini-help{margin-top:18px;background:#eef8fe;border-left:4px solid #088fca;border-radius:10px;padding:14px 15px}
+.d24-malfini-help strong{color:#17506c;font-size:15px}
+#d24ApparelCatalog .d24-malfini-help p{font-size:15px;line-height:1.6;margin:5px 0 0;color:#3a596b}
+.d24-malfini-link{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin-top:14px;color:#0674a8!important;font-weight:750;font-size:15px;text-decoration:underline;text-underline-offset:3px}
+.d24-malfini-disclaimer{display:block;margin-top:8px;font-size:12px;color:#65798b;line-height:1.5}
+[data-theme="dark"] #d24ApparelCatalog.d24-apparel-catalog{background:#14212a;border-color:#3a5262}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-title,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-facts strong,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-colors__heading strong{color:#f4f9fc}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-facts>div,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-gallery__views button,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-swatch{background:#20313d;border-color:#4a606e;color:#f4f9fc}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-facts span,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-subtitle,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-color-label,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-disclaimer{color:#c1d0dc}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-help{background:#173d54}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-help strong,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-help p{color:#effaff}
+@media(max-width:930px){#d24ApparelCatalog.d24-apparel-catalog{grid-template-columns:1fr;gap:18px;padding:17px}.d24-malfini-gallery__stage{min-height:340px}.d24-malfini-photo:not([hidden]){height:294px}}
+@media(max-width:430px){#d24ApparelCatalog.d24-apparel-catalog{padding:12px;border-radius:16px}.d24-malfini-gallery__stage{min-height:285px;padding:29px 9px 25px}.d24-malfini-photo:not([hidden]){height:250px}.d24-malfini-gallery__views button{min-height:76px;padding:5px}.d24-malfini-gallery__views img:not([hidden]){height:42px}.d24-malfini-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.d24-malfini-facts>div:last-child{grid-column:span 2}.d24-malfini-color-label{width:100%}}
+
+/* 0.23.21 — wymiary pola zdjęcia (pole nadruku usunięte w 0.24.1). */
+#d24ApparelCatalog .d24-malfini-gallery__canvas{position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:460px;height:350px;min-width:0;flex:0 1 460px; margin:0 auto}
+#d24ApparelCatalog .d24-malfini-gallery__canvas .d24-malfini-photo:not([hidden]){height:100%}
+@media(max-width:930px){#d24ApparelCatalog .d24-malfini-gallery__canvas{height:294px}}
+@media(max-width:430px){#d24ApparelCatalog .d24-malfini-gallery__canvas{height:250px}}
+
+#d24ApparelCatalog .d24-malfini-gallery__canvas .d24-malfini-photo-status:not([hidden]){position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;max-width:88%;z-index:1}
+
+/* 0.24.1 — wybór kroju, 4 fakty (norma), miniatury 2–3 ujęć. */
+.d24-malfini-facts.has-extra{grid-template-columns:repeat(2,minmax(0,1fr))}
+.d24-malfini-gallery__views{grid-template-columns:repeat(var(--d24-view-count,3),minmax(0,1fr))}
+.d24-malfini-cuts{margin-top:20px}
+.d24-malfini-cuts__heading{margin-bottom:10px}
+.d24-malfini-cuts__heading strong{font-size:15px;color:#1b2a37}
+.d24-malfini-cut-options{display:flex;flex-wrap:wrap;gap:8px}
+.d24-malfini-cut{min-height:44px;padding:8px 16px;border:1px solid #cad8e3;border-radius:12px;background:#fff;color:#283947;font-size:15px;font-weight:750;cursor:pointer}
+.d24-malfini-cut:hover{border-color:#088fca}
+.d24-malfini-cut.is-active{border:3px solid #088fca;padding:6px 14px;color:#075780;background:#f4fbff;box-shadow:0 0 0 2px rgba(8,143,202,.12)}
+.d24-malfini-cut-fixed{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1px solid #dce6ee;border-radius:12px;background:#f7f9fb;color:#182b37;font-size:15px;font-weight:750}
+#d24ApparelCatalog .d24-malfini-cut-note{margin:8px 0 0;font-size:14px;line-height:1.5;color:#526c7b}
+#d24ApparelCatalog .d24-malfini-cut-note[hidden]{display:none}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-cuts__heading strong{color:#f4f9fc}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-cut,[data-theme="dark"] #d24ApparelCatalog .d24-malfini-cut-fixed{background:#20313d;border-color:#4a606e;color:#f4f9fc}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-cut.is-active{background:#173d54;border-color:#58b8e8;color:#effaff}
+[data-theme="dark"] #d24ApparelCatalog .d24-malfini-cut-note{color:#c1d0dc}

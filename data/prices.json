@@ -1,0 +1,2008 @@
+{
+  "meta": {
+    "waluta": "PLN",
+    "ceny_brutto": true,
+    "vat": 23,
+    "ciecie_reczne_cena_mb": 5
+  },
+  "banery": {
+    "Baner powlekany 510g": {
+      "cena_m2": 80,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": true,
+      "progi_cenowe": [
+        {
+          "maks_m2": 3,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": 9,
+          "cena_m2": 70
+        },
+        {
+          "maks_m2": 20,
+          "cena_m2": 60
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 50
+        }
+      ]
+    },
+    "Folia mat": {
+      "cena_m2": 80,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 1,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": 3,
+          "cena_m2": 70
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 60
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 50
+        }
+      ]
+    },
+    "Folia błysk": {
+      "cena_m2": 80,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 1,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": 3,
+          "cena_m2": 70
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 60
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 50
+        }
+      ]
+    },
+    "Folia + laminat": {
+      "cena_m2": 100,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 1,
+          "cena_m2": 100
+        },
+        {
+          "maks_m2": 3,
+          "cena_m2": 90
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 70
+        }
+      ]
+    },
+    "Folia OWH": {
+      "cena_m2": 90,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 1,
+          "cena_m2": 90
+        },
+        {
+          "maks_m2": 3,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 70
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 60
+        }
+      ]
+    },
+    "Folia transparentna": {
+      "cena_m2": 80,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 1,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": 3,
+          "cena_m2": 70
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 60
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 50
+        }
+      ]
+    },
+    "Folia do podświetleń": {
+      "cena_m2": 120,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 3,
+          "cena_m2": 120
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 110
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 90
+        }
+      ]
+    },
+    "Folia z transferem": {
+      "cena_m2": 70,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": []
+    }
+  },
+  "pvc": {
+    "Folia z nadrukiem + PCV": {
+      "doliczaj_ciecie_reczne": true,
+      "minimum_zamowienia": 70,
+      "grubosci": {
+        "4/5 mm": {
+          "progi_cenowe_m2": [
+            {
+              "maks_m2": 2,
+              "maks_wlacznie": false,
+              "cena_m2": 220
+            },
+            {
+              "maks_m2": 5,
+              "maks_wlacznie": true,
+              "cena_m2": 200
+            },
+            {
+              "maks_m2": null,
+              "cena_m2": 180
+            }
+          ]
+        },
+        "2/3 mm": {
+          "progi_cenowe_m2": [
+            {
+              "maks_m2": 2,
+              "maks_wlacznie": false,
+              "cena_m2": 190
+            },
+            {
+              "maks_m2": 5,
+              "maks_wlacznie": true,
+              "cena_m2": 170
+            },
+            {
+              "maks_m2": null,
+              "cena_m2": 150
+            }
+          ]
+        }
+      }
+    },
+    "Plansza pianka 5 mm": {
+      "doliczaj_ciecie_reczne": false,
+      "grubosc": "5 mm",
+      "formaty": {
+        "A3 (30 × 42 cm)": {
+          "szerokosc_cm": 30,
+          "wysokosc_cm": 42,
+          "cena_sztuki": 50
+        },
+        "A2 (42 × 59 cm)": {
+          "szerokosc_cm": 42,
+          "wysokosc_cm": 59,
+          "cena_sztuki": 55
+        },
+        "A1 (59 × 84 cm)": {
+          "szerokosc_cm": 59,
+          "wysokosc_cm": 84,
+          "cena_sztuki": 90
+        },
+        "B2 (50 × 70 cm)": {
+          "szerokosc_cm": 50,
+          "wysokosc_cm": 70,
+          "cena_sztuki": 65
+        },
+        "B1 (70 × 100 cm)": {
+          "szerokosc_cm": 70,
+          "wysokosc_cm": 100,
+          "cena_sztuki": 120
+        },
+        "B0 (100 × 140 cm)": {
+          "szerokosc_cm": 100,
+          "wysokosc_cm": 140,
+          "cena_sztuki": 220
+        }
+      },
+      "inne_wymiary": true
+    }
+  },
+  "wizytowki": {
+    "formaty": [
+      "90x50 mm",
+      "85x55 mm"
+    ],
+    "cyfrowe": {
+      "standard": {
+        "50": {
+          "jednostronne": 50,
+          "dwustronne": 60
+        },
+        "100": {
+          "jednostronne": 80,
+          "dwustronne": 100
+        },
+        "200": {
+          "jednostronne": 110,
+          "dwustronne": 165
+        },
+        "500": {
+          "jednostronne": 220,
+          "dwustronne": 310
+        }
+      },
+      "folia_soft_touch_lub_blysk": {
+        "50": {
+          "jednostronne": 80,
+          "dwustronne": 90
+        },
+        "100": {
+          "jednostronne": 120,
+          "dwustronne": 145
+        },
+        "200": {
+          "jednostronne": 175,
+          "dwustronne": 230
+        },
+        "500": {
+          "jednostronne": 350,
+          "dwustronne": 440
+        }
+      }
+    },
+    "offsetowe": {
+      "standard_dwustronne": {
+        "250": 115,
+        "500": 170,
+        "1000": 305,
+        "2500": 555
+      },
+      "foliowane_blysk_lub_soft_touch": {
+        "250": 270,
+        "500": 320,
+        "1000": 425
+      },
+      "zlocenie_lub_srebrzenie_plus_soft_touch": {
+        "250": 455,
+        "500": 530
+      },
+      "lakier_uv_3d_plus_soft_touch": {
+        "250": 425,
+        "500": 480,
+        "1000": 645
+      }
+    }
+  },
+  "papier_firmowy": {
+    "preprint_90g_kolor_jednostronny": {
+      "A4": {
+        "500": 350,
+        "1000": 545,
+        "2500": 715
+      }
+    }
+  },
+  "materialy_firmowe": {
+    "Koperty z nadrukiem": {
+      "warianty": {
+        "Offset 80 g, druk jednostronny": {
+          "opis": "Koperty DL, C5 lub C6, papier offsetowy 80 g, nadruk jednostronny.",
+          "formaty": {
+            "DL": {
+              "100": 130,
+              "200": 220,
+              "300": 280,
+              "400": 370,
+              "500": 450
+            },
+            "C5": {
+              "100": 130,
+              "200": 220,
+              "300": 280,
+              "400": 370,
+              "500": 450
+            },
+            "C6": {
+              "100": 130,
+              "200": 220,
+              "300": 280,
+              "400": 370,
+              "500": 450
+            }
+          }
+        }
+      }
+    },
+    "Teczki ofertowe": {
+      "warianty": {
+        "Standardowe 4/0": {
+          "opis": "Teczki ofertowe jedno- lub dwubigowe, druk 4/0.",
+          "formaty": {
+            "Jednobigowe": {
+              "100": 635,
+              "250": 895,
+              "500": 1165
+            },
+            "Dwubigowe": {
+              "100": 635,
+              "250": 895,
+              "500": 1165
+            }
+          }
+        },
+        "Standardowe foliowane 4/0": {
+          "opis": "Teczki ofertowe jedno- lub dwubigowe, druk 4/0, foliowane.",
+          "formaty": {
+            "Jednobigowe": {
+              "100": 1030,
+              "250": 1350,
+              "500": 1800
+            },
+            "Dwubigowe": {
+              "100": 1030,
+              "250": 1350,
+              "500": 1800
+            }
+          }
+        }
+      }
+    }
+  },
+  "kalendarze": {
+    "Kalendarze trójdzielne": {
+      "warianty": {
+        "Płaska główka": {
+          "opis": "Kalendarz trójdzielny z płaską główką.",
+          "formaty": {
+            "Standard": {
+              "50": 1100,
+              "100": 1710,
+              "150": 2210
+            }
+          }
+        },
+        "Główka wypukła — folia soft skin": {
+          "opis": "Kalendarz trójdzielny z główką wypukłą. Foliowanie główki folią soft skin.",
+          "formaty": {
+            "Standard": {
+              "50": 1350,
+              "100": 1960,
+              "150": 2740
+            }
+          }
+        },
+        "Główka wypukła — folia mat": {
+          "opis": "Kalendarz trójdzielny z główką wypukłą. Foliowanie główki folią matową.",
+          "formaty": {
+            "Standard": {
+              "50": 1350,
+              "100": 1960,
+              "150": 2740
+            }
+          }
+        },
+        "Główka wypukła — folia błysk": {
+          "opis": "Kalendarz trójdzielny z główką wypukłą. Foliowanie główki folią błyszczącą.",
+          "formaty": {
+            "Standard": {
+              "50": 1350,
+              "100": 1960,
+              "150": 2740
+            }
+          }
+        }
+      }
+    },
+    "Kalendarze jednodzielne": {
+      "warianty": {
+        "Płaska główka": {
+          "opis": "Kalendarz jednodzielny z płaską główką.",
+          "formaty": {
+            "Standard": {
+              "50": 410,
+              "100": 780,
+              "150": 1050
+            }
+          }
+        },
+        "Główka wypukła — folia soft skin": {
+          "opis": "Kalendarz jednodzielny z główką wypukłą. Foliowanie główki folią soft skin.",
+          "formaty": {
+            "Standard": {
+              "50": 560,
+              "100": 890,
+              "150": 1230
+            }
+          }
+        },
+        "Główka wypukła — folia mat": {
+          "opis": "Kalendarz jednodzielny z główką wypukłą. Foliowanie główki folią matową.",
+          "formaty": {
+            "Standard": {
+              "50": 560,
+              "100": 890,
+              "150": 1230
+            }
+          }
+        },
+        "Główka wypukła — folia błysk": {
+          "opis": "Kalendarz jednodzielny z główką wypukłą. Foliowanie główki folią błyszczącą.",
+          "formaty": {
+            "Standard": {
+              "50": 560,
+              "100": 890,
+              "150": 1230
+            }
+          }
+        }
+      }
+    },
+    "Kalendarze listwowane plakatowe": {
+      "warianty": {
+        "Standard": {
+          "opis": "Kalendarz listwowany plakatowy.",
+          "formaty": {
+            "A1": {
+              "30": 980,
+              "50": 1190,
+              "100": 1550
+            },
+            "A2": {
+              "10": 290,
+              "30": 480,
+              "50": 680
+            },
+            "B1": {
+              "30": 1050,
+              "50": 1250,
+              "100": 1590
+            }
+          }
+        }
+      }
+    },
+    "Biuwary": {
+      "warianty": {
+        "52 karty, offset 80 g, jednostronnie": {
+          "opis": "Kalendarz biurkowy z podkładką kartonową, 52 karty, papier offsetowy 80 g, druk jednostronny.",
+          "formaty": {
+            "A2": {
+              "10": 1480,
+              "50": 2390,
+              "100": 3650
+            },
+            "B2": {
+              "10": 1450,
+              "50": 2550,
+              "100": 3920
+            }
+          }
+        }
+      }
+    },
+    "Kalendarz biurkowy piramidka spiralowany": {
+      "warianty": {
+        "Standard": {
+          "opis": "Kalendarz biurkowy typu piramidka, spiralowany.",
+          "formaty": {
+            "A5": {
+              "10": 280,
+              "50": 870,
+              "100": 1550
+            },
+            "DL": {
+              "10": 240,
+              "50": 680,
+              "100": 1180
+            }
+          }
+        }
+      }
+    }
+  },
+  "rollup": {
+    "Roll-up Standard": {
+      "85 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 290
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 270
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 250
+          }
+        ]
+      },
+      "100 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 320
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 300
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 280
+          }
+        ]
+      },
+      "120 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 410
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 380
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 350
+          }
+        ]
+      },
+      "150 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 640
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 550
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 460
+          }
+        ]
+      }
+    },
+    "Roll-up Exclusive („łezka”)": {
+      "85 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 490
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 450
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 390
+          }
+        ]
+      },
+      "100 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 590
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 530
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 460
+          }
+        ]
+      },
+      "120 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 620
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 560
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 490
+          }
+        ]
+      },
+      "150 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 690
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 660
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 560
+          }
+        ]
+      }
+    },
+    "Wkład z wymianą": {
+      "85 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 160
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 140
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 120
+          }
+        ]
+      },
+      "100 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 180
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 160
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 140
+          }
+        ]
+      },
+      "120 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 210
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 190
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 170
+          }
+        ]
+      },
+      "150 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 240
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 220
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 200
+          }
+        ]
+      }
+    },
+    "X-baner": {
+      "60 × 160 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 155
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 145
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 130
+          }
+        ]
+      },
+      "80 × 180 cm": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 195
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 165
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 150
+          }
+        ]
+      }
+    }
+  },
+  "ulotki": {
+    "Cyfrowy": {
+      "Standard": {
+        "A6": {
+          "100": 90,
+          "200": 150,
+          "500": 265,
+          "1000": 495
+        },
+        "A5": {
+          "100": 165,
+          "200": 290,
+          "500": 495,
+          "1000": 890
+        },
+        "DL": {
+          "100": 120,
+          "200": 200,
+          "500": 385,
+          "1000": 690
+        }
+      },
+      "Składane": {
+        "A5 do A6": {
+          "100": 190,
+          "200": 310,
+          "500": 530
+        },
+        "A4 do A5": {
+          "100": 310,
+          "200": 530,
+          "500": 990
+        },
+        "A4 do DL": {
+          "100": 310,
+          "200": 530,
+          "500": 990
+        }
+      }
+    },
+    "Offsetowy": {
+      "Standard": {
+        "A7": {
+          "500": 160,
+          "1000": 200,
+          "2500": 235,
+          "5000": 270
+        },
+        "A6": {
+          "500": 200,
+          "1000": 245,
+          "2500": 315,
+          "5000": 370
+        },
+        "A5": {
+          "500": 270,
+          "1000": 340,
+          "2500": 470,
+          "5000": 630
+        },
+        "DL": {
+          "500": 235,
+          "1000": 300,
+          "2500": 375,
+          "5000": 470
+        }
+      },
+      "Składane": {
+        "A5 do A6": {
+          "500": 315,
+          "1000": 345,
+          "2500": 454
+        },
+        "A4 do A5": {
+          "500": 475,
+          "1000": 555,
+          "2500": 860
+        },
+        "A4 do DL": {
+          "500": 455,
+          "1000": 540,
+          "2500": 935
+        }
+      }
+    }
+  },
+  "notesy_i_bloczki": {
+    "Notesy klejone": {
+      "warianty": {
+        "Z okładką kredową 170 g": {
+          "opis": "Okładka kredowa 170 g, środek offset 80 g, druk jednostronny, 50 kart",
+          "formaty": {
+            "A4": {
+              "50": 850,
+              "100": 1320,
+              "200": 2150
+            },
+            "A5": {
+              "50": 540,
+              "100": 770,
+              "200": 1240
+            },
+            "A6": {
+              "50": 370,
+              "100": 510,
+              "200": 750
+            },
+            "DL": {
+              "50": 430,
+              "100": 590,
+              "200": 910
+            }
+          }
+        },
+        "Bez okładki": {
+          "opis": "Bez okładki, środek offset 80 g, druk jednostronny, 50 kart",
+          "formaty": {
+            "A4": {
+              "50": 710,
+              "100": 1120,
+              "200": 1920
+            },
+            "A5": {
+              "50": 460,
+              "100": 670,
+              "200": 1100
+            },
+            "A6": {
+              "50": 340,
+              "100": 460,
+              "200": 690
+            },
+            "DL": {
+              "50": 380,
+              "100": 430,
+              "200": 810
+            }
+          }
+        }
+      }
+    },
+    "Notesy spiralowane": {
+      "warianty": {
+        "Z okładką kredową 170 g": {
+          "opis": "Okładka kredowa 170 g, środek offset 80 g, druk jednostronny, 50 kart",
+          "formaty": {
+            "A4": {
+              "50": 440,
+              "100": 680,
+              "200": 2050
+            },
+            "A5": {
+              "50": 610,
+              "100": 880,
+              "200": 1150
+            },
+            "A6": {
+              "50": 280,
+              "100": 420,
+              "200": 680
+            },
+            "DL": {
+              "50": 330,
+              "100": 510,
+              "200": 830
+            }
+          }
+        }
+      }
+    },
+    "Bloczki samokopiujące": {
+      "warianty": {
+        "Oryginał + 1 kopia": {
+          "opis": "Oryginał + 1 kopia, 50 kompletów w bloczku",
+          "formaty": {
+            "A4": {
+              "5": 870,
+              "10": 1450,
+              "20": 1910
+            },
+            "A5": {
+              "5": 460,
+              "10": 760,
+              "20": 980
+            },
+            "A6": {
+              "5": 330,
+              "10": 450,
+              "20": 570
+            },
+            "DL": {
+              "5": 520,
+              "10": 730,
+              "20": 850
+            }
+          }
+        }
+      }
+    }
+  },
+  "plakaty": {
+    "Cyfrowy 24h": {
+      "A4": {
+        "10": 35,
+        "20": 70,
+        "50": 150,
+        "5": 17.5
+      },
+      "A3": {
+        "10": 70,
+        "20": 120,
+        "50": 300,
+        "5": 35
+      }
+    },
+    "Offsetowy": {
+      "A3": {
+        "100": 305,
+        "250": 425,
+        "500": 575
+      },
+      "A2": {
+        "50": 475,
+        "100": 595,
+        "250": 785
+      },
+      "A1": {
+        "50": 945,
+        "100": 1075,
+        "250": 1390
+      },
+      "B2": {
+        "50": 480,
+        "100": 680,
+        "250": 840
+      },
+      "B1": {
+        "50": 945,
+        "100": 1320,
+        "250": 2050
+      }
+    },
+    "Wielkoformatowy 24h": {
+      "A2": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 30
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 25
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 22
+          },
+          {
+            "min_szt": 10,
+            "cena_sztuki": 20
+          }
+        ]
+      },
+      "A1": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 55
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 50
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 45
+          },
+          {
+            "min_szt": 10,
+            "cena_sztuki": 40
+          }
+        ]
+      },
+      "A0": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 100
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 90
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 80
+          },
+          {
+            "min_szt": 10,
+            "cena_sztuki": 70
+          }
+        ]
+      },
+      "B2": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 35
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 30
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 25
+          },
+          {
+            "min_szt": 10,
+            "cena_sztuki": 22
+          }
+        ]
+      },
+      "B1": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 65
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 55
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 50
+          },
+          {
+            "min_szt": 10,
+            "cena_sztuki": 45
+          }
+        ]
+      },
+      "B0": {
+        "progi_ilosciowe": [
+          {
+            "min_szt": 1,
+            "cena_sztuki": 110
+          },
+          {
+            "min_szt": 2,
+            "cena_sztuki": 100
+          },
+          {
+            "min_szt": 5,
+            "cena_sztuki": 90
+          },
+          {
+            "min_szt": 10,
+            "cena_sztuki": 80
+          }
+        ]
+      }
+    }
+  },
+  "naklejki": {
+    "powierzchniowe": {
+      "Naklejki, etykiety": {
+        "cena_m2": 100,
+        "minimum_m2": 0.7,
+        "progi_cenowe_mb": [
+          {
+            "maks_mb": 5,
+            "cena_mb": 100
+          },
+          {
+            "maks_mb": 10,
+            "cena_mb": 95
+          },
+          {
+            "maks_mb": 25,
+            "cena_mb": 90
+          },
+          {
+            "maks_mb": 50,
+            "cena_mb": 85
+          },
+          {
+            "maks_mb": null,
+            "cena_mb": 80
+          }
+        ]
+      },
+      "Naklejki laminowane": {
+        "cena_m2": 120,
+        "minimum_m2": 1,
+        "progi_cenowe_mb": [
+          {
+            "maks_mb": 5,
+            "cena_mb": 120
+          },
+          {
+            "maks_mb": 10,
+            "cena_mb": 115
+          },
+          {
+            "maks_mb": 25,
+            "cena_mb": 110
+          },
+          {
+            "maks_mb": 50,
+            "cena_mb": 105
+          },
+          {
+            "maks_mb": null,
+            "cena_mb": 100
+          }
+        ]
+      },
+      "Magnesy reklamowe": {
+        "cena_m2": 160,
+        "minimum_m2": 0.6
+      }
+    },
+    "taxi": {
+      "Komplet naklejek taxi": {
+        "cena_sztuki": 50
+      },
+      "Komplet magnesy + naklejki taxi": {
+        "cena_sztuki": 70
+      },
+      "Cennik taxi – 2 sztuki": {
+        "cena_sztuki": 20
+      },
+      "Identyfikator taxi": {
+        "cena_sztuki": 30
+      }
+    }
+  },
+  "druk_cyfrowy_i_ksero": {
+    "mnozniki_formatu": {
+      "A4": 1,
+      "A3": 2
+    },
+    "mnozniki_zadruku": {
+      "Jednostronny": 1,
+      "Dwustronny": 2
+    },
+    "druk_cyfrowy": {
+      "Czarno-biały": {
+        "1-20": 1,
+        "21-100": 0.5,
+        "101-500": 0.3,
+        "501+": 0.2
+      },
+      "Kolorowy": {
+        "1-20": 3,
+        "21-100": 2.5,
+        "101-500": 2,
+        "501+": 1.5
+      }
+    },
+    "ksero_i_druk": {
+      "Czarno-biały": {
+        "1-20": 1,
+        "21-100": 0.5,
+        "101-500": 0.3,
+        "501+": 0.2
+      },
+      "Kolorowy": {
+        "1-20": 3,
+        "21-100": 2.5,
+        "101-500": 2,
+        "501+": 1.5
+      }
+    },
+    "ksero_ksiazki": {
+      "Czarno-biały": 0.5,
+      "Kolorowy": 2.5
+    },
+    "doplaty_do_papieru": {
+      "Standardowy 80 g": 0,
+      "Papier kolorowy": 0.3,
+      "Papier etykietowy": 2,
+      "Papier kredowy 130 g": 0.3,
+      "Papier kredowy 170 g": 0.5,
+      "Papier kredowy 250 g": 0.75,
+      "Papier kredowy 300 g": 1,
+      "Papier kredowy 350 g": 1.5
+    },
+    "dla_studentow": {
+      "Czarno-biały": {
+        "A4": 0.15,
+        "A3": 0.3
+      },
+      "Kolorowy": {
+        "A4": 1.2,
+        "A3": 2.4
+      }
+    },
+    "skanowanie": {
+      "Automatyczne": 0.1,
+      "Ręczne": 0.5
+    },
+    "arkuszowanie": {
+      "domyslny_spad_mm": 3,
+      "odstep_miedzy_uzytkami_mm": 0,
+      "margines_arkusza_mm": 3,
+      "formaty_arkuszy": {
+        "SRA4": {
+          "szerokosc_mm": 225,
+          "wysokosc_mm": 320,
+          "format_rozliczeniowy": "A4"
+        },
+        "SRA3": {
+          "szerokosc_mm": 320,
+          "wysokosc_mm": 450,
+          "format_rozliczeniowy": "A3"
+        }
+      },
+      "papiery": [
+        "Papier kredowy 130 g",
+        "Papier kredowy 170 g",
+        "Papier kredowy 250 g",
+        "Papier kredowy 300 g"
+      ]
+    }
+  },
+  "odziez_z_nadrukiem": {
+    "rabaty": {
+      "progi_ilosciowe": [
+        {
+          "min_szt": 6,
+          "rabat_proc": 5
+        },
+        {
+          "min_szt": 10,
+          "rabat_proc": 10
+        },
+        {
+          "min_szt": 20,
+          "rabat_proc": 15
+        },
+        {
+          "min_szt": 30,
+          "rabat_proc": 20
+        },
+        {
+          "min_szt": 50,
+          "rabat_proc": 25
+        }
+      ]
+    },
+    "produkty": {
+      "Koszulki bawełniane": {
+        "Basic 160 g": {
+          "opis": "100% bawełna 160 g, bez szwów bocznych, wykończenie silikonowe, krój męski, damski i dziecięcy.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/basic-129?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 40
+        },
+        "Classic New 145 g": {
+          "opis": "100% bawełna 145 g, dopasowany krój ze szwami bocznymi, wykończenie silikonowe, krój męski, damski i dziecięcy.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/classic-new-133?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 35
+        },
+        "Heavy New 200 g": {
+          "opis": "100% bawełna 200 g, bez szwów bocznych, wykończenie silikonowe, krój unisex oversize.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/heavy-new-137?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 45
+        },
+        "Slim Fit V-neck 180 g": {
+          "opis": "100% bawełna 180 g, ze szwami bocznymi, wykończenie silikonowe, krój slim-fit z dekoltem w serek, damski i męski.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/slim-fit-v-neck-146?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 45
+        }
+      },
+      "Koszulki poliestrowe": {
+        "Fantasy 150 g": {
+          "opis": "100% poliester 150 g, ze szwami bocznymi, szybkoschnący materiał, krój męski, damski i dziecięcy.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/fantasy-124?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 45
+        },
+        "Chance 140 g": {
+          "opis": "100% mikropoliester 140 g, ze szwami bocznymi, szybkoschnący materiał, krój męski i damski.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/chance-grs-810?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 55
+        },
+        "Pixel 130 g": {
+          "opis": "100% poliester 130 g, ze szwami bocznymi, gładki i szybkoschnący materiał, luźniejszy krój unisex.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/pixel-p81?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 45
+        }
+      },
+      "Koszulki polo": {
+        "Pique Polo 200 g": {
+          "opis": "65% bawełna, 35% poliester, 200 g, z bocznymi szwami, wykończenie silikonowe, krój męski, damski i dziecięcy.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/pique-polo-203?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 55
+        },
+        "Cotton 170 g": {
+          "opis": "100% bawełna, 170 g, rozporki na końcach bocznych szwów, krój męski i damski.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/cotton-212?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 55
+        },
+        "Single Jersey 180 g": {
+          "opis": "100% bawełna, 180 g, krój z bocznymi szwami, krój męski i damski.",
+          "url_specyfikacji": "https://shop.malfini.com/pl/pl/product/single-j-202?color=01",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 55
+        }
+      },
+      "Bluzy": {
+        "Essential": {
+          "opis": "Gruba bluza unisex z mieszanki bawełny i poliestru",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 95
+        },
+        "Trendy Zipper": {
+          "opis": "Bluza z zamkiem i kapturem",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 145
+        },
+        "Cape": {
+          "opis": "Bluza kangurka, krój męski i damski",
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "cena_odziezy": 145
+        }
+      },
+      "Kamizelki odblaskowe": {
+        "Brixton Flash": {
+          "opis": "Kamizelka odblaskowa Brixton Flash (żółta lub pomarańczowa), rozmiary S–3XL.",
+          "ceny": {
+            "Nadruk 20x30 cm": 40
+          },
+          "rozmiary": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "nadruk_w_cenie": true
+        },
+        "Malfini Rimeck": {
+          "opis": "Kamizelka odblaskowa Malfini Rimeck HV Bright (żółta lub pomarańczowa), dostępna tylko w rozmiarach M i 2XL.",
+          "ceny": {
+            "Nadruk 20x30 cm": 50
+          },
+          "rozmiary": [
+            "M",
+            "2XL",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ],
+          "nadruk_w_cenie": true
+        }
+      },
+      "Czapki": {
+        "Czapka bejsbolówka": {
+          "opis": "Czapka z daszkiem, fason klasyczny (bejsbolówka). Szczegóły i kolor uzgodnimy mailowo.",
+          "ceny": {
+            "Nadruk standardowy": 55
+          },
+          "rozmiary": [
+            "Uniwersalny"
+          ],
+          "nadruk_w_cenie": true
+        },
+        "Czapka raperka": {
+          "opis": "Czapka raperka Malfini RAP 5P (snapback, płaski daszek). Szczegóły i kolor uzgodnimy mailowo.",
+          "ceny": {
+            "Nadruk standardowy": 55
+          },
+          "rozmiary": [
+            "Uniwersalny"
+          ],
+          "nadruk_w_cenie": true
+        }
+      },
+      "Torby bawełniane": {
+        "Carry": {
+          "opis": "Torba 280 g z nadrukiem 20x30 cm",
+          "ceny": {
+            "Nadruk 20x30 cm": 50
+          },
+          "rozmiary": [
+            "Uniwersalny"
+          ],
+          "nadruk_w_cenie": true
+        },
+        "Shopper": {
+          "opis": "Torba 195 g z nadrukiem 20x30 cm",
+          "ceny": {
+            "Nadruk 20x30 cm": 40
+          },
+          "rozmiary": [
+            "Uniwersalny"
+          ],
+          "nadruk_w_cenie": true
+        }
+      },
+      "Worki bawełniane": {
+        "Worko-plecak Easygo": {
+          "opis": "Bawełniany worko-plecak z nadrukiem około 20x30 cm",
+          "ceny": {
+            "Nadruk 20x30 cm": 40
+          },
+          "rozmiary": [
+            "Uniwersalny"
+          ],
+          "nadruk_w_cenie": true
+        }
+      },
+      "Sam nadruk": {
+        "Nadruk na odzieży klienta": {
+          "opis": "Cena samego nadruku bez odzieży",
+          "ceny": {
+            "Do 10x15 cm": 15,
+            "Do 20x30 cm": 20,
+            "Do 35x40 cm": 30
+          },
+          "rozmiary": [
+            "XS",
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL",
+            "3XL",
+            "Dziecięcy — podaj w uwagach",
+            "Inny — podaj w uwagach",
+            "Różne rozmiary — podaj w uwagach"
+          ]
+        }
+      }
+    }
+  },
+  "oprawa_prac": {
+    "format": "A4",
+    "rodzaje_opraw": {
+      "Oprawa kanałowa twarda A4": {
+        "5 mm": 18.9,
+        "10 mm": 22.9,
+        "13 mm": 25.9,
+        "16 mm": 27.9
+      },
+      "Oprawa miękka zaciskowa": {
+        "5 mm": 9.9,
+        "10 mm": 11.9,
+        "13 mm": 14.9,
+        "16 mm": 17.9
+      },
+      "Bindowanie – spirala plastikowa": {
+        "12,5 mm": 6.5,
+        "14 mm": 7,
+        "16 mm": 7.5,
+        "19 mm": 8.5,
+        "25 mm": 10.2,
+        "32 mm": 14,
+        "38 mm": 16,
+        "51 mm": 19
+      },
+      "Bindowanie – spirala metalowa": {
+        "4 mm": 7,
+        "6,4 mm": 7.5,
+        "8 mm": 8,
+        "9,5 mm": 8.5,
+        "11 mm": 11,
+        "12,7 mm": 10,
+        "14,3 mm": 14.3
+      }
+    }
+  },
+  "laminowanie": {
+    "folia_mikrony": 80,
+    "formaty": {
+      "A6 i mniejsze": 2,
+      "A5": 3,
+      "A4": 4,
+      "A3": 7
+    }
+  },
+  "obrazy_na_plotnie": {
+    "minimalny_bok_cm": 30,
+    "maksymalny_bok_cm": 150,
+    "material": "Grube płótno poliestrowe na drewnianym blejtramie",
+    "formaty": {
+      "30x30": 60,
+      "30x40": 75,
+      "30x50": 85,
+      "30x60": 90,
+      "30x70": 105,
+      "30x80": 115,
+      "30x90": 130,
+      "30x100": 140,
+      "30x110": 150,
+      "30x120": 165,
+      "30x130": 180,
+      "30x140": 200,
+      "30x150": 210,
+      "40x40": 85,
+      "40x50": 95,
+      "40x60": 110,
+      "40x70": 120,
+      "40x80": 135,
+      "40x90": 140,
+      "40x100": 145,
+      "40x110": 160,
+      "40x120": 160,
+      "40x130": 190,
+      "40x140": 210,
+      "40x150": 225,
+      "50x50": 110,
+      "50x60": 120,
+      "50x70": 140,
+      "50x80": 150,
+      "50x90": 165,
+      "50x100": 175,
+      "50x110": 190,
+      "50x120": 205,
+      "50x130": 215,
+      "50x140": 230,
+      "50x150": 240,
+      "60x60": 140,
+      "60x70": 150,
+      "60x80": 160,
+      "60x90": 175,
+      "60x100": 190,
+      "60x110": 205,
+      "60x120": 215,
+      "60x130": 230,
+      "60x140": 240,
+      "60x150": 260,
+      "70x70": 158,
+      "70x80": 170,
+      "70x90": 180,
+      "70x100": 195,
+      "70x110": 210,
+      "70x120": 225,
+      "70x130": 235,
+      "70x140": 255,
+      "70x150": 270,
+      "80x80": 305,
+      "80x90": 195,
+      "80x100": 210,
+      "80x110": 225,
+      "80x120": 235,
+      "80x130": 260,
+      "80x140": 270,
+      "80x150": 290,
+      "90x90": 210,
+      "90x100": 225,
+      "90x110": 240,
+      "90x120": 260,
+      "90x130": 278,
+      "90x140": 305,
+      "90x150": 330,
+      "100x100": 240,
+      "100x110": 266,
+      "100x120": 283,
+      "100x130": 310,
+      "100x140": 340,
+      "100x150": 363,
+      "110x110": 278,
+      "110x120": 305,
+      "110x130": 330,
+      "110x140": 355,
+      "110x150": 387,
+      "120x120": 315,
+      "120x130": 345,
+      "120x140": 370,
+      "120x150": 400,
+      "130x130": 350,
+      "130x140": 380,
+      "130x150": 405,
+      "140x140": 460,
+      "140x150": 545
+    }
+  },
+  "sluby_wesela_imprezy": {
+    "Zaproszenia": {
+      "tryb": "pakiet",
+      "warianty": {
+        "Papier kreda 300 g": {
+          "A5": {
+            "20": 60,
+            "50": 120,
+            "100": 220
+          },
+          "DL": {
+            "20": 50,
+            "50": 100,
+            "100": 180
+          }
+        },
+        "Papier kreda 300 g + satyna": {
+          "A5": {
+            "20": 90,
+            "50": 150,
+            "100": 250
+          },
+          "DL": {
+            "20": 80,
+            "50": 140,
+            "100": 210
+          }
+        }
+      }
+    },
+    "Zaproszenia składane": {
+      "tryb": "pakiet",
+      "warianty": {
+        "Papier kreda 300 g": {
+          "A5 do A6": {
+            "20": 120,
+            "50": 210,
+            "100": 385
+          },
+          "2×DL do DL": {
+            "20": 155,
+            "50": 310,
+            "100": 530
+          }
+        }
+      }
+    },
+    "Zaproszenia z folią satynową": {
+      "tryb": "pakiet",
+      "warianty": {
+        "Papier kreda 300 g": {
+          "A5 do A6": {
+            "20": 150,
+            "50": 260,
+            "100": 450
+          },
+          "2×DL do DL": {
+            "20": 200,
+            "50": 380,
+            "100": 680
+          }
+        }
+      }
+    },
+    "Plan stołów": {
+      "tryb": "sztuka",
+      "warianty": {
+        "Plakat papier satynowy 135 g": {
+          "A2 (42×59 cm)": 30,
+          "A1 (59×84 cm)": 55,
+          "A0 (84×120 cm)": 100,
+          "B2 (50×70 cm)": 35,
+          "B1 (70×100 cm)": 65,
+          "B0 (100×140 cm)": 110
+        },
+        "Folia + PCV 4 mm": {
+          "40×60 cm": 80,
+          "60×90 cm": 130,
+          "80×120 cm": 230,
+          "50×70 cm": 90,
+          "70×100 cm": 170,
+          "100×140 cm": 330
+        },
+        "Plansza Pianka 5 mm": {
+          "A2 (42×59 cm)": 55,
+          "A1 (59×84 cm)": 90,
+          "B2 (50×70 cm)": 65,
+          "B1 (70×100 cm)": 120,
+          "B0 (100×140 cm)": 220
+        }
+      }
+    },
+    "Dekoracja sali": {
+      "tryb": "sztuka",
+      "warianty": {
+        "Zdjęcie na PCV 4 mm": {
+          "60×90 cm": 130,
+          "80×120 cm": 230,
+          "70×100 cm": 170,
+          "100×140 cm": 330
+        },
+        "Obraz na płótnie": {
+          "60×90 cm": 175,
+          "80×120 cm": 235,
+          "70×100 cm": 195,
+          "100×140 cm": 340
+        },
+        "Plansza Pianka 5 mm": {
+          "A1 (59×84 cm)": 90,
+          "B2 (50×70 cm)": 65,
+          "B1 (70×100 cm)": 120,
+          "B0 (100×140 cm)": 220
+        },
+        "X-baner": {
+          "60×160 cm": 155,
+          "80×180 cm": 195
+        }
+      }
+    }
+  },
+  "restauracje_hotele": {
+    "Podkładki na tackę": {
+      "warianty": {
+        "Offset 80 g, jednostronnie": {
+          "opis": "Papier offsetowy 80 g, druk jednostronny, format 40 × 30 cm",
+          "formaty": {
+            "40 × 30 cm": {
+              "500": 380,
+              "1000": 520,
+              "2500": 880
+            }
+          }
+        }
+      }
+    },
+    "Menu A3 offset preprint 90 g": {
+      "warianty": {
+        "Jednostronnie": {
+          "opis": "Format A3, papier offset preprint 90 g, druk jednostronny",
+          "formaty": {
+            "A3": {
+              "500": 480,
+              "1000": 580,
+              "2500": 860
+            }
+          }
+        },
+        "Dwustronnie": {
+          "opis": "Format A3, papier offset preprint 90 g, druk dwustronny",
+          "formaty": {
+            "A3": {
+              "500": 630,
+              "1000": 780,
+              "2500": 1090
+            }
+          }
+        }
+      }
+    },
+    "Menu A3 laminowane": {
+      "warianty": {
+        "Dwustronnie": {
+          "opis": "Format A3, menu laminowane, druk dwustronny",
+          "formaty": {
+            "A3": {
+              "10": 170,
+              "20": 320,
+              "30": 450
+            }
+          }
+        }
+      }
+    },
+    "Prezenter trójkątny – stojak": {
+      "warianty": {
+        "Standard": {
+          "opis": "Prezenter trójkątny, stojak stołowy",
+          "formaty": {
+            "DL": {
+              "5": 180,
+              "10": 220,
+              "20": 330
+            },
+            "A6": {
+              "5": 150,
+              "10": 190,
+              "20": 240
+            }
+          }
+        }
+      }
+    }
+  }
+}

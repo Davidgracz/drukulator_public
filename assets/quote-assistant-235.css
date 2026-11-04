@@ -1,0 +1,35 @@
+/* 0.23.5v — inline guidance; black/white/blue Druk24 palette. */
+.d24-quote-help {
+  display:grid; gap:12px; text-align:left; border:1px solid var(--accent);
+  background:var(--panel); color:var(--text); border-radius:14px; padding:16px;
+  box-shadow:0 9px 27px rgba(0,0,0,.055); margin:10px 0 12px;
+}
+.d24-quote-help__head { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+.d24-quote-help__eyebrow { display:block; color:var(--accent); text-transform:uppercase; letter-spacing:.05em; font-weight:850; font-size:.69rem; margin-bottom:5px; }
+.d24-quote-help__title { font-size:1rem; font-weight:850; line-height:1.35; }
+.d24-quote-help__confidence { white-space:nowrap; font-size:.68rem; font-weight:700; color:var(--muted); }
+.d24-quote-help__data { display:flex; flex-wrap:wrap; gap:7px; }
+.d24-quote-help__fact { display:flex; flex-direction:column; gap:3px; padding:7px 10px; border-radius:10px; border:1px solid var(--border); background:var(--panel-2); max-width:100%; }
+.d24-quote-help__fact small { color:var(--muted); font-size:.65rem; }
+.d24-quote-help__fact b { color:var(--text); font-size:.79rem; overflow-wrap:anywhere; }
+.d24-quote-help__question { padding:10px 11px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2); font-size:.82rem; line-height:1.45; }
+.d24-quote-help__question strong {display:block;margin-bottom:6px;}
+.d24-quote-help__chips {display:flex;gap:6px;flex-wrap:wrap;}
+.d24-quote-help__chip { background:var(--panel);color:var(--text);font:inherit;font-size:.76rem;font-weight:700;border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer; }
+.d24-quote-help__chip:hover {border-color:var(--accent);background:var(--nav-active);}
+.d24-quote-help__summary {font-size:.82rem;line-height:1.45;}
+.d24-quote-help__warning {color:var(--text);font-size:.76rem;line-height:1.45; border-left:3px solid #e6a242; padding:5px 10px; background:var(--panel-2);}
+.d24-quote-help__actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.d24-quote-help__action {border:1px solid var(--accent);background:var(--accent); color:#fff; padding:10px 14px;border-radius:10px;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;min-height:42px;}
+.d24-quote-help__action--secondary {background:var(--panel);color:var(--accent);}
+.d24-quote-help__action:hover {filter:brightness(.93);}
+.d24-quote-help button:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+.d24-quote-help__foot {font-size:.7rem;line-height:1.4;color:var(--muted);}
+/* The sidebar uses a compact layout; no horizontal overflow. */
+.product-search__results .d24-quote-help {padding:12px;gap:9px;min-width:0;}
+.product-search__results .d24-quote-help__head {display:block;}
+.product-search__results .d24-quote-help__confidence {display:block;margin-top:5px;white-space:normal;}
+.product-search__results .d24-quote-help__action {flex:1 1 100%;}
+.product-search__results .d24-quote-help__chip {padding:6px 8px; font-size:.7rem;}
+@media(max-width:750px){.d24-quote-help{padding:12px;gap:10px}.d24-quote-help__head{flex-wrap:wrap}.d24-quote-help__action{width:100%}}
+@media(prefers-reduced-motion:reduce){.d24-quote-help__action{transition:none}}

@@ -1,0 +1,95 @@
+/* Druk24 0.23.8v — compact details and visual options, no pricing changes. */
+.content .form-grid .field, .cart-panel .order-form-grid .field { position:relative; }
+.content .form-grid .field > select.d24-native-covered,
+.cart-panel .order-form-grid .field > select.d24-native-covered {
+  position:absolute!important; width:1px!important; height:1px!important;
+  max-width:1px!important; min-width:0!important; margin:0!important;
+  padding:0!important; border:0!important; opacity:0!important;
+  clip-path:inset(50%)!important; overflow:hidden!important; pointer-events:none!important;
+}
+.content .form-grid .d24-smart-options,
+.cart-panel .order-form-grid .d24-smart-options { grid-template-columns:repeat(auto-fit,minmax(min(100%,138px),1fr));gap:7px; }
+.content .form-grid .field.half .d24-smart-options,
+.content .form-grid .field.third .d24-smart-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.content .d24-smart-options > [hidden],.cart-panel .d24-smart-options > [hidden] { display:none!important; }
+.content .d24-smart-choice { min-height:48px; padding:9px 11px;cursor:pointer; }
+.content .d24-smart-choice strong { font-size:.77rem;line-height:1.35; }
+.content .d24-smart-more { grid-column:1/-1; min-height:36px;padding:8px 12px;
+  font-weight:750;font-size:.75rem;color:var(--accent);border:1px dashed var(--nav-active-border);
+  background:var(--panel);border-radius:9px;cursor:pointer; }
+.content .d24-smart-more:hover { border-color:var(--accent);background:var(--nav-hover); }
+.content .d24-smart-more:focus-visible { outline:3px solid var(--accent);outline-offset:2px; }
+/* Only one low-profile bar is visible before the user opens a preview/comparison. */
+.content .d24-preview-panel, .content .d24-variant-compare, .content .d24-config-comparison {
+  padding:0; overflow:visible;border-radius:12px;margin:12px 0;background:var(--panel);border:1px solid var(--border);
+}
+.content .d24-fold { display:block;min-width:0; }
+.content .d24-fold__summary { list-style:none;display:flex;align-items:center;gap:9px 12px;
+  min-height:54px;padding:13px 17px;cursor:pointer;border-radius:12px;user-select:none; }
+.content .d24-fold__summary::-webkit-details-marker {display:none;}
+.content .d24-fold__summary::marker { content:''; }
+.content .d24-fold__summary:hover { background:var(--nav-hover); }
+.content .d24-fold__label { font-weight:850;font-size:.9rem;color:var(--text); }
+.content .d24-fold__hint { margin-left:auto;color:var(--muted);font-size:.72rem;text-align:right; }
+.content .d24-fold__chevron { font-size:1.1rem;font-weight:750;color:var(--accent);transition:transform .15s; }
+.content .d24-fold[open] .d24-fold__chevron {transform:rotate(180deg);}
+.content .d24-fold__body { border-top:1px solid var(--border);padding:17px;background:var(--panel-2);border-radius:0 0 12px 12px; }
+.content .d24-fold__summary:focus-visible {outline:3px solid var(--accent);outline-offset:-3px;}
+.content .d24-vc-modes {display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+.content .d24-vc-mode-label {margin-right:4px;color:var(--muted);font-size:.76rem;font-weight:700;}
+.content .d24-vc-mode-button {background:var(--panel);border:1px solid var(--border);padding:8px 12px;
+  border-radius:9px;color:var(--text);font-size:.76rem;font-weight:750;cursor:pointer;}
+.content .d24-vc-mode-button[aria-pressed="true"] {background:var(--nav-active);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.content .d24-vc-mode-button:focus-visible {outline:3px solid var(--accent);outline-offset:2px;}
+.content .d24-vc-mode-button:hover {border-color:var(--accent);}
+.content .d24-preview-header {margin-bottom:15px;}
+@media(max-width:760px){
+ .content .d24-fold__summary {padding:12px;flex-wrap:wrap;}
+ .content .d24-fold__hint {flex-basis:100%;order:2;margin-left:0;text-align:left;}
+ .content .d24-fold__chevron {margin-left:auto;}
+ .content .d24-fold__body {padding:12px;}
+ .content .form-grid .d24-smart-options,
+.cart-panel .order-form-grid .d24-smart-options {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(prefers-reduced-motion:reduce){.content .d24-fold__chevron {transition:none;}}
+
+.cart-panel .order-form-grid .d24-smart-options {grid-template-columns:repeat(2,minmax(0,1fr));}
+.cart-panel .d24-smart-choice {min-height:46px;padding:9px 11px;cursor:pointer;}
+.cart-panel .d24-smart-more {grid-column:1/-1;padding:8px 12px;font-weight:750;font-size:.75rem;color:var(--accent);border:1px dashed var(--nav-active-border);border-radius:9px;background:var(--panel);cursor:pointer;}
+
+/* 0.23.26v — full-width apparel print choices directly below model.
+   Match the blue selection treatment used by flyer format controls.
+   0.23.27v — prints show no prices; "Brak" is the last choice in both rows. */
+.content .form-grid > .d24-apparel-print-option{grid-column:1/-1;min-width:0}
+.content .form-grid #appFrontField .d24-smart-options,
+.content .form-grid #appBackField .d24-smart-options{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.content #appFrontField .d24-smart-choice,
+.content #appBackField .d24-smart-choice{
+  min-height:56px;gap:4px;align-items:center;justify-content:center;text-align:center;
+  border:1px solid var(--nav-active-border);border-radius:11px;
+  background:var(--panel);color:var(--text);
+}
+.content #appFrontField .d24-smart-choice:hover,
+.content #appBackField .d24-smart-choice:hover{
+  border-color:var(--accent);background:var(--nav-hover);
+}
+.content #appFrontField .d24-smart-choice[aria-pressed="true"],
+.content #appBackField .d24-smart-choice[aria-pressed="true"]{
+  border:2px solid var(--accent);background:var(--nav-active);
+  box-shadow:inset 0 0 0 1px var(--accent);
+}
+.content #appFrontField .d24-smart-choice[aria-pressed="true"]::before,
+.content #appBackField .d24-smart-choice[aria-pressed="true"]::before{color:var(--accent)}
+@media(max-width:680px){
+  .content .form-grid #appFrontField .d24-smart-options,
+  .content .form-grid #appBackField .d24-smart-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* 0.23.27v — final gross price under an option name (apparel models, canvas formats).
+   Same look as the price on other price-list choices, e.g. 890,00 zł. */
+.d24-smart-choice .d24-option-price{display:block;padding-top:6px;margin-top:auto;color:var(--accent);font-weight:800;font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.d24-smart-choice[aria-pressed="true"] .d24-option-price{color:var(--accent-2);}
+
+/* 0.23.27v — a field that must begin a new grid row (foam custom size). */
+.form-grid .field.third.d24-row-start{grid-column:1 / span 4}
+@media (max-width:760px){.form-grid .field.third.d24-row-start{grid-column:1 / -1}}
