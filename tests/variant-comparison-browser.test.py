@@ -38,23 +38,17 @@ with sync_playwright() as p:
   assert len(take_prices())>=3
   assert page.locator('.d24-vc-card__unit strong').count()>=3
   target=page.locator('.d24-vc-card').last
-  # 0.24.0: karta ma jeden przycisk („Wybierz ten wariant”); do koszyka dodaje stały przycisk przy cenie.
-  assert target.locator('button').count()==1,'one action per comparison card'
-  wanted=target.locator('[data-compare-add="0"]').get_attribute('data-compare-choice')
+  wanted=target.locator('[data-compare-add="1"]').get_attribute('data-compare-choice')
   price=target.locator('.d24-vc-card__total').inner_text().split(' zł')[0]
-  target.locator('[data-compare-add="0"]').click()
-  page.wait_for_timeout(300)
+  target.locator('[data-compare-add="1"]').click()
+  page.wait_for_timeout(200)
   assert page.locator('#bcQuantity').input_value()==wanted
-  assert page.locator('.cart-card').count()==0,'choosing a variant must not add to cart'
-  assert price in page.locator('#mobilePriceValue').inner_text(),(price,page.locator('#mobilePriceValue').inner_text())
-  page.locator('#mobileAddButton').click()
-  page.wait_for_timeout(300)
   assert page.locator('.cart-card').count()==1
   assert price in page.locator('.cart-card-footer').inner_text(),(price,page.locator('.cart-card-footer').inner_text())
   # Switching finish should keep same quantity when allowed
   switch('bcFinish')
   assert page.locator('.d24-vc-card').count()>=2
-  page.locator('.d24-vc-card:not(.is-active)').last.locator('[data-compare-add="0"]').click()
+  page.locator('.d24-vc-card').last.locator('[data-compare-add="0"]').click()
   page.wait_for_timeout(200)
   assert page.locator('#bcQuantity').input_value()==wanted
   # Flyer comparison: formats and quantities from actual lists
@@ -62,8 +56,8 @@ with sync_playwright() as p:
   switch('flyQuantity')
   print('FLYERS / QTY:',take_prices(),flush=True)
   assert len(take_prices())>=3
-  want=page.locator('.d24-vc-card:not(.is-active)').first.locator('[data-compare-choice]').first.get_attribute('data-compare-choice')
-  page.locator('.d24-vc-card:not(.is-active)').first.locator('[data-compare-add="0"]').click()
+  want=page.locator('.d24-vc-card').nth(1).locator('[data-compare-choice]').first.get_attribute('data-compare-choice')
+  page.locator('.d24-vc-card').nth(1).locator('[data-compare-add="0"]').click()
   page.wait_for_timeout(100)
   assert page.locator('#flyQuantity').input_value()==want
   switch('flyFormat')
@@ -82,7 +76,7 @@ with sync_playwright() as p:
   assert len(take_prices())>=3
   # Printing one option should not mutate the cart without clicking add.
   oldCart=page.locator('.cart-card').count()
-  page.locator('.d24-vc-card:not(.is-active)').last.locator('[data-compare-add="0"]').click()
+  page.locator('.d24-vc-card').last.locator('[data-compare-add="0"]').click()
   page.wait_for_timeout(200)
   assert page.locator('.cart-card').count()==oldCart
   # Banners, quantity and material

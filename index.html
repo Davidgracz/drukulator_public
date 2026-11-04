@@ -26,20 +26,20 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="assets/styles.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/frontend-refresh.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/druk24-brand-forms.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/product-preview.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/checkout-experience.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/intelligent-search.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/quote-assistant-235.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/intelligent-configurator.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/variant-comparison.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/changes-02313.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/malfini-preview.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/compact-choices.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/order-experience-239.css?v=0.24.9">
-  <link rel="stylesheet" href="assets/ux-clarity.css?v=0.24.9">
+  <link rel="stylesheet" href="assets/styles.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/frontend-refresh.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/druk24-brand-forms.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/product-preview.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/checkout-experience.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/intelligent-search.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/quote-assistant-235.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/intelligent-configurator.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/variant-comparison.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/changes-02313.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/malfini-preview.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/compact-choices.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/order-experience-239.css?v=0.25.0">
+  <link rel="stylesheet" href="assets/ux-clarity.css?v=0.25.0">
 </head>
 <body class="is-home-page">
   <a class="skip-link" href="#content">Przejdź do zamówień online</a>
@@ -96,6 +96,7 @@
         <div class="brand-icon">🖨️</div>
         <div>
           <h1>Cennik online</h1>
+          <p id="versionLabel">0.25.0v</p>
         </div>
       </a>
       <div class="product-search">
@@ -106,7 +107,7 @@
             id="productSearch"
             type="search"
             autocomplete="off"
-            placeholder="Szukaj produktu…"
+            placeholder="Wpisz produkt lub do czego go potrzebujesz…"
             aria-describedby="productSearchHint" aria-controls="productSearchResults" aria-autocomplete="list"
           >
         </div>
@@ -116,10 +117,10 @@
       <nav id="navigation" class="navigation" aria-label="Produkty"></nav>
     </aside>
 
-    <button id="menuToggle" class="menu-toggle" type="button" aria-label="Otwórz menu produktów" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span> <span class="menu-toggle__label">Produkty</span></button>
+    <button id="menuToggle" class="menu-toggle" aria-label="Otwórz menu produktów">☰</button>
 
     <main class="workspace">
-      <div class="quote-dock" id="quoteDock" aria-label="Podsumowanie Twojego zamówienia">
+      <div class="quote-dock" id="quoteDock" aria-label="Podsumowanie Twojej zamówienia">
         <div class="quote-dock__identity">
           <span class="quote-dock__symbol" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M6 6v13h12V6M9 11h6M9 15h4"/></svg>
@@ -135,28 +136,15 @@
         </div>
       </div>
       <section class="content" id="content" aria-live="polite"></section>
-      <aside class="cart-panel" id="cartPanel" aria-label="Twoje zamówienie i formularz wysyłki"></aside>
+      <aside class="cart-panel" id="cartPanel" aria-label="Twoje zamówienie i formularz zapytania"></aside>
     </main>
   </div>
 
-  <div class="mobile-cart-bar" id="mobileCartBar" hidden>
-    <div class="mobile-price-bar" id="mobilePriceBar" hidden>
-      <div class="mobile-price-bar__price" aria-live="polite">
-        <strong id="mobilePriceValue">—</strong>
-        <small id="mobilePriceHint">Uzupełnij parametry</small>
-      </div>
-      <button type="button" class="mobile-price-bar__add" id="mobileAddButton" disabled>Dodaj do koszyka</button>
-    </div>
-    <div class="mobile-cart-bar__tools">
-      <a class="mobile-cart-bar__call" href="tel:+48918314747" aria-label="Zadzwoń do Druk24: 91 831 47 47">
-        <span aria-hidden="true">☎</span><span class="mobile-cart-bar__call-label">Zadzwoń</span>
-      </a>
-      <button type="button" class="mobile-cart-bar__cart" id="mobileCartButton" aria-label="Przejdź do koszyka">
-        <span class="mobile-cart-bar__label">Koszyk</span>
-        <strong id="mobileCartSummary">0 pozycji • 0,00 zł</strong>
-      </button>
-    </div>
-  </div>
+  <button class="mobile-cart-bar" id="mobileCartBar" type="button" aria-label="Przejdź do koszyka">
+    <span class="mobile-cart-bar__label">Koszyk</span>
+    <strong id="mobileCartSummary">0 pozycji</strong>
+    <span aria-hidden="true">↑</span>
+  </button>
 
   <footer class="druk24-site-footer">
     <div class="druk24-site-footer__grid">
@@ -222,17 +210,17 @@
   </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="js/i18n.js?v=0.24.9"></script>
-  <script src="js/calculators.js?v=0.24.9"></script>
-  <script src="js/checkout-experience.js?v=0.24.9"></script>
-  <script src="js/intelligent-search.js?v=0.24.9"></script>
-  <script src="js/quote-interpreter.js?v=0.24.9"></script>
-  <script src="js/malfini-preview.js?v=0.24.9"></script>
-  <script src="js/app.js?v=0.24.9"></script>
-  <script src="js/frontend-refresh.js?v=0.24.9"></script>
-  <script src="js/smart-forms.js?v=0.24.9"></script>
-  <script src="js/product-preview.js?v=0.24.9"></script>
-  <script src="js/intelligent-configurator.js?v=0.24.9"></script>
-  <script src="js/variant-comparison.js?v=0.24.9"></script>
+  <script src="js/i18n.js?v=0.25.0"></script>
+  <script src="js/calculators.js?v=0.25.0"></script>
+  <script src="js/checkout-experience.js?v=0.25.0"></script>
+  <script src="js/intelligent-search.js?v=0.25.0"></script>
+  <script src="js/quote-interpreter.js?v=0.25.0"></script>
+  <script src="js/malfini-preview.js?v=0.25.0"></script>
+  <script src="js/app.js?v=0.25.0"></script>
+  <script src="js/frontend-refresh.js?v=0.25.0"></script>
+  <script src="js/smart-forms.js?v=0.25.0"></script>
+  <script src="js/product-preview.js?v=0.25.0"></script>
+  <script src="js/intelligent-configurator.js?v=0.25.0"></script>
+  <script src="js/variant-comparison.js?v=0.25.0"></script>
 </body>
 </html>

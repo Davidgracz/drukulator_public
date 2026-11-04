@@ -1,8 +1,6 @@
 /* Drukulator 0.23.2v — local, optional product visualizer.
- * No price mutations, no outbound requests, no external libraries.
- * 0.24.0: a file chosen here is exposed through window.Druk24PreviewArtwork and is
- * attached to the order by app.js when the customer adds the product to the cart
- * (the existing file validation and upload remain authoritative).
+ * No price/order mutations, no outbound requests, no external libraries.
+ * Chosen preview file is NOT an order attachment: attach it in the cart.
  */
 (() => {
   'use strict';
@@ -130,41 +128,37 @@
   }
   function panelMarkup() {
     return `<details class="d24-fold d24-preview-fold">
-    <summary class="d24-fold__summary"><span class="d24-fold__label">▣ ${tr('Plik i podgląd projektu','Artwork file and preview')}</span><span class="d24-fold__hint">${tr('Dołącz plik i sprawdź rozmiar produktu','Attach your file and check the product size')}</span><span class="d24-fold__chevron" aria-hidden="true">⌄</span></summary>
+    <summary class="d24-fold__summary"><span class="d24-fold__label">▣ ${tr('Podgląd wydruku','Print preview')}</span><span class="d24-fold__hint">${tr('Format, spady i plik projektu','Size, bleed and artwork')}</span><span class="d24-fold__chevron" aria-hidden="true">⌄</span></summary>
     <div class="d24-fold__body"><div class="d24-preview-header">
-      <div><span class="d24-preview-eyebrow">${tr('SPRAWDŹ PLIK','CHECK YOUR FILE')}</span>
+      <div><span class="d24-preview-eyebrow">${tr('KONTROLA FORMATU','SIZE CHECK')}</span>
       <h3>${tr('Podgląd produktu','Product preview')}</h3>
-      <p>${tr('Podgląd jest poglądowy — nie wpływa na cenę. Wybrany plik dołączymy do zamówienia po dodaniu produktu do koszyka.','The preview is illustrative and does not affect the price. The selected file is attached to your order when you add the product to the cart.')}</p></div>
+      <p>${tr('Wizualizacja poglądowa — nie wpływa na cenę ani przesyłane zamówienie.','Illustrative only — does not affect the quote or order.')}</p></div>
+      <span class="d24-preview-local">${tr('Tylko w przeglądarce','Browser only')}</span>
     </div>
-    <ul class="d24-preview-checklist" id="d24PreviewChecklist">
-      <li>${tr('Przygotuj projekt w rozmiarze produktu z marginesem 1,5 mm z każdej strony (na docięcie).','Prepare your artwork at the product size plus a 1.5 mm margin on each side (for trimming).')}</li>
-      <li>${tr('Możesz dołączyć PDF, JPG, PNG, WebP, TIFF, SVG, AI, EPS, PSD, CDR lub ZIP — do 5 plików, łącznie do 50 MB.','You can attach PDF, JPG, PNG, WebP, TIFF, SVG, AI, EPS, PSD, CDR or ZIP — up to 5 files, 50 MB in total.')}</li>
-      <li>${tr('Po wczytaniu obrazu pokażemy orientacyjną rozdzielczość w dpi.','Once an image is loaded we show its approximate resolution in DPI.')}</li>
-    </ul>
     <div class="d24-preview-layout">
       <div class="d24-preview-stage" aria-label="${tr('Schemat rozmiaru produktu','Product size diagram')}">
         <div class="d24-preview-sheet" id="d24PreviewSheet">
           <div class="d24-preview-art" id="d24PreviewArt"><span class="d24-preview-mark">DRUK<span>24</span></span><small>${tr('TWÓJ PROJEKT','YOUR DESIGN')}</small></div>
           <div class="d24-preview-file-render" id="d24PreviewFileRender"></div>
-          <div class="d24-preview-trim" id="d24PreviewTrim"><span>${tr('PO DOCIĘCIU','AFTER TRIM')}</span></div>
+          <div class="d24-preview-trim" id="d24PreviewTrim"><span>NETTO</span></div>
         </div>
       </div>
       <div class="d24-preview-side">
         <div class="d24-preview-dims" id="d24PreviewDims" aria-live="polite"></div>
         <div class="d24-preview-actions">
           <button type="button" class="d24-preview-rotate" id="d24PreviewRotate">↻ ${tr('Obróć widok','Rotate view')}</button>
-          <label class="d24-preview-switch" id="d24PreviewBleedRow"><input type="checkbox" id="d24PreviewBleed" checked> ${tr('Pokaż margines na docięcie (1,5 mm)','Show 1.5 mm trim margin')}</label>
+          <label class="d24-preview-switch" id="d24PreviewBleedRow"><input type="checkbox" id="d24PreviewBleed" checked> ${tr('Pokaż spad 1,5 mm','Show 1.5 mm bleed')}</label>
           <label class="d24-preview-switch" id="d24PreviewCoverRow" hidden><input type="checkbox" id="d24PreviewCover"> ${tr('Wypełnij format (przycięcie)','Fill frame (crop)')}</label>
         </div>
         <div class="d24-preview-upload">
           <label for="d24PreviewFile"><strong>${tr('Sprawdź swój projekt','Preview your artwork')}</strong><small>JPG, PNG, WebP, PDF — max. 50 MB</small></label>
           <input id="d24PreviewFile" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf">
-          <p id="d24PreviewFileInfo" role="status" aria-live="polite">${noFileText()}</p>
+          <p id="d24PreviewFileInfo" role="status" aria-live="polite">${tr('Plik nie jest wysyłany. Aby dołączyć go do zapytania, wybierz go ponownie w koszyku.','No upload occurs. To attach the file to your request, choose it again in the cart.')}</p>
           <button id="d24PreviewClear" type="button" hidden>${tr('Usuń podgląd pliku','Clear file preview')}</button>
         </div>
       </div>
     </div>
-    <p class="d24-preview-footer" id="d24PreviewFooter">${tr('Linia przerywana pokazuje krawędź po docięciu. Margines jest na schemacie powiększony.','The dashed line shows the trimmed edge. The margin is enlarged in the diagram.')}</p></div></details>`;
+    <p class="d24-preview-footer" id="d24PreviewFooter">${tr('Linia przerywana pokazuje obszar po przycięciu. Spad jest schematycznie powiększony.','Dashed line shows the trim area. Bleed is enlarged for clarity.')}</p></div></details>`;
   }
   function setup(card) {
     if (currentCard !== card) {
@@ -188,16 +182,13 @@
       draw(true);
     });
   }
-  function noFileText() {
-    return tr('Nie masz jeszcze pliku? Możesz go dosłać później. Wybrany tutaj plik zostanie dołączony do zamówienia po dodaniu produktu do koszyka.','No file yet? You can send it later. A file chosen here is attached to your order when you add the product to the cart.');
-  }
   function infoForFile() {
-    if (!currentFile) return noFileText();
+    if (!currentFile) return tr('Plik nie jest wysyłany. Aby dołączyć go do zapytania, wybierz go ponownie w koszyku.','No upload occurs. To attach the file to your request, choose it again in the cart.');
     const kb = currentFile.size / 1024;
     const size = kb < 1024 ? `${readable(kb,0)} KB` : `${readable(kb/1024,1)} MB`;
     let line = `${currentFile.name} · ${size}`;
     if (filePixels) line += ` · ${filePixels.w} × ${filePixels.h} px`;
-    return `${line} — ${tr('zostanie dołączony do zamówienia po dodaniu produktu do koszyka.','will be attached to your order when you add the product to the cart.')}`;
+    return line;
   }
   async function onFileSelected(event) {
     const file = event.target.files?.[0];
@@ -265,16 +256,15 @@
       const value = document.createElement('strong'); value.textContent=text;
       item.append(small,value); dims.append(item);
     };
-    // Obrazy na płótnie są opisywane w centymetrach, pozostałe produkty w milimetrach.
-    // 0.24.3: obrazy, PCV i pianki — wymiary w cm (tak jak pola i cennik na tych stronach).
+    // 0.24.3: obrazy, PCV i pianki — wymiary w cm (tak jak pola i cennik na tych stronach), reszta w mm.
     const useCm = /^(canvas|pvc|foam)/.test(dimensions?.source || '');
     const sizeText = (w,h) => useCm ? `${readable(w/10)} × ${readable(h/10)} cm` : `${readable(w)} × ${readable(h)} mm`;
     if (net) {
-      addDimension(tr('Rozmiar produktu','Product size'),sizeText(net.w,net.h));
-      if (activeBleed) addDimension(tr('Rozmiar pliku z marginesem','File size with margin'),sizeText(grossW,grossH));
+      addDimension(tr('Format netto','Trim size'),sizeText(net.w,net.h));
+      if (activeBleed) addDimension(tr('Z plikiem na spad','With bleed'),sizeText(grossW,grossH));
       addDimension(tr('Orientacja podglądu','Preview orientation'),displayW > displayH ? tr('Pozioma','Landscape') : displayW < displayH ? tr('Pionowa','Portrait') : tr('Kwadratowa','Square'));
     } else {
-      addDimension(tr('Rozmiar produktu','Product size'),tr('Brak wymiarów w wybranej opcji','Not specified by selected options'));
+      addDimension(tr('Format produktu','Product size'),tr('Brak wymiarów w wybranej opcji','Not specified by selected options'));
       addDimension(tr('Widok','Diagram'),tr('Schemat poglądowy','Illustration only'));
     }
     const imageLayer = currentPanel.querySelector('#d24PreviewFileRender');
@@ -308,7 +298,7 @@
     currentPanel.querySelector('#d24PreviewClear').hidden=!fileUrl;
     const footer=currentPanel.querySelector('#d24PreviewFooter');
     if (!net) footer.textContent=tr('W tym produkcie nie ma jednoznacznego formatu. Podgląd obrazu nie określa wielkości zamówienia.','This product has no unambiguous dimensions. Artwork preview does not define the order size.');
-    else if (activeBleed) footer.textContent=tr('Linia przerywana pokazuje krawędź po docięciu. Margines 1,5 mm z każdej strony jest na schemacie powiększony.','The dashed line shows the trimmed edge. The 1.5 mm margin on each side is enlarged in the diagram.');
+    else if (activeBleed) footer.textContent=tr('Linia przerywana = cięcie do netto. Spad 1,5 mm z każdej strony jest powiększony dla czytelności.','Dashed line = final trim. 1.5 mm bleed on each side is enlarged for visibility.');
     else footer.textContent=tr('Podgląd i obrót nie zmieniają parametrów ani ceny zamówienia.','Preview and rotation do not change the order options or price.');
     if (dimensions?.requested && net) {
       const sameSize = Math.abs(dimensions.requested.w * 10 - dimensions.w) < 0.5 && Math.abs(dimensions.requested.h * 10 - dimensions.h) < 0.5;
@@ -358,7 +348,5 @@
   content.addEventListener('input',e=>{if (!e.target.closest('.d24-preview-panel')) schedule();},true);
   content.addEventListener('change',e=>{if (!e.target.closest('.d24-preview-panel')) schedule();},true);
   window.addEventListener('pagehide',cleanupFile);
-  // Plik wybrany w podglądzie jest dołączany do zamówienia przy dodaniu produktu do koszyka.
-  window.Druk24PreviewArtwork = Object.freeze({ getFile: () => currentFile });
   schedule();
 })();

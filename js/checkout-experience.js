@@ -87,7 +87,7 @@
       if (bar) bar.style.width = `${Math.min(100, total / (50 * 1048576) * 100)}%`;
     }
     if (!files.length) {
-      list.innerHTML = `<p class="d24-files-empty">Nie dodano plików. Możesz wysłać zamówienie bez załączników i dosłać projekt później.</p>`;
+      list.innerHTML = `<p class="d24-files-empty">Nie dodano plików. Możesz wysłać zapytanie bez załączników i dosłać projekt później.</p>`;
       return;
     }
     list.innerHTML = files.map((file, index) => {

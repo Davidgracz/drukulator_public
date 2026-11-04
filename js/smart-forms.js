@@ -22,9 +22,9 @@
     'rollSize'
   ]);
   const guides = [
-    [/nakład|ilość sztuk|liczba kopii/i, ['Wybierz, ile sztuk potrzebujesz. Przy większej ilości zwykle spada cena za sztukę.', 'Choose how many pieces you need. A larger quantity usually lowers the price per piece.']],
+    [/nakład|ilość sztuk|liczba kopii/i, ['Nakład to liczba zamawianych sztuk.', 'Quantity is the number of copies ordered.']],
     [/format/i, ['Wybierz gotowy rozmiar produktu.','Select the finished product size.']],
-    [/zadruk|stronność|stron zadrukować/i, ['Czy drukujemy tylko przód, czy przód i tył — zgodnie z Twoim projektem.','Whether we print the front only or both sides — as your design requires.']],
+    [/zadruk|stronność/i, ['Jednostronnie lub dwustronnie — zgodnie z projektem.','Single or double-sided printing, as needed.']],
     [/papier|gramatura/i, ['Większa gramatura oznacza zwykle sztywniejszy papier.','Higher paper weight usually means a stiffer sheet.']],
     [/szerokość|wysokość/i, ['Wpisz wymiary w jednostkach podanych przy polu.','Enter dimensions in the units shown.']]
   ];
@@ -177,36 +177,45 @@
       }
     } else {
       const guide = field.querySelector(':scope > .d24-control-guide');
-      if (guide && guide.dataset.lang !== document.documentElement.lang) {
+      // Naklejki mają własną podpowiedź nad polem „Ilość sztuk” — ogólny opis nakładu jej nie zastępuje.
+      if (guide && !guide.classList.contains('d24-sticker-hint') && guide.dataset.lang !== document.documentElement.lang) {
         const matching = guides.find(([pattern]) => pattern.test(label.textContent));
         if (matching) guide.textContent = tr(...matching[1]);
         guide.dataset.lang = document.documentElement.lang;
       }
     }
     if (input.tagName === 'SELECT') decorateSelect(field, input);
-    if (input.tagName === 'SELECT' && /(Quantity|Qty)$/.test(input.id)) decorateOtherQuantity(field);
-  }
-  // Ilości w kalkulatorze są zdefiniowane w cenniku; dla innych podpowiadamy kontakt.
-  function decorateOtherQuantity(field) {
-    let note = field.querySelector(':scope > .d24-qty-other');
-    if (!note) {
-      note = document.createElement('p');
-      note.className = 'd24-qty-other';
-      field.append(note);
-    }
-    const lang = document.documentElement.lang;
-    if (note.dataset.lang === lang) return;
-    note.dataset.lang = lang;
-    note.replaceChildren();
-    note.append(document.createTextNode(tr('Potrzebujesz innej ilości? ','Need a different quantity? ')));
-    const phone = document.createElement('a'); phone.href = 'tel:+48918314747'; phone.textContent = tr('Zadzwoń','Call us');
-    const mail = document.createElement('a'); mail.href = 'mailto:biuro@druk24.szczecin.pl'; mail.textContent = tr('napisz','write to us');
-    note.append(phone, document.createTextNode(tr(' lub ',' or ')), mail, document.createTextNode(tr(' — pomożemy.',' — we will help.')));
   }
   function decorateStatus(card) {
-    // 0.24.0: cena liczy się na żywo (blok ceny i przycisk „Dodaj do koszyka”), więc dawny
-    // komunikat o aktualizacji ceny „przy dodawaniu do koszyka” jest usuwany.
-    card.querySelectorAll(':scope > .d24-calc-details').forEach(node => node.remove());
+    const form = card.querySelector(':scope > .form-grid');
+    const actions = card.querySelector(':scope > .actions');
+    if (!form || !actions || !actions.querySelector('#calculate, #calculateCanvas')) return;
+    let status = card.querySelector(':scope > .d24-calc-details');
+    if (!status) {
+      status = document.createElement('div'); status.className = 'd24-calc-details';
+      status.dataset.stale = 'false';
+      status.innerHTML = '<span class="d24-calc-details__icon" aria-hidden="true">ⓘ</span><span class="d24-calc-details__message"></span>';
+      actions.before(status);
+      card.addEventListener('input', event => {
+        if (event.target.matches('input,select,textarea')) { status.dataset.stale='true'; renderStatus(status); }
+      });
+      card.addEventListener('change', event => {
+        if (event.target.matches('input,select,textarea')) { status.dataset.stale='true'; renderStatus(status); }
+      });
+      card.addEventListener('click', event => {
+        if (event.target.closest('#calculate, #calculateCanvas')) { status.dataset.stale='false'; renderStatus(status); }
+      });
+    }
+    renderStatus(status);
+  }
+  function renderStatus(status) {
+    const stale = status.dataset.stale === 'true';
+    const lang = document.documentElement.lang;
+    if (status.dataset.signature === `${lang}:${stale}`) return;
+    status.dataset.signature = `${lang}:${stale}`;
+    status.querySelector('.d24-calc-details__message').textContent = stale
+      ? tr('Zmieniono parametry. Aktualna cena przy przycisku „Dodaj do koszyka” jest aktualizowana automatycznie.','Options changed. The price on “Add to cart” updates automatically.')
+      : tr('Wybierz parametry, a cena zaktualizuje się przy dodawaniu do koszyka.','Choose your options and calculate the price. Suggestions do not change prices.');
   }
   function decorateCart() {
     if (!cartPanel) return;

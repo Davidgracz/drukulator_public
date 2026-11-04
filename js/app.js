@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.24.9v";
+  const VERSION = "0.25.0v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -22,14 +22,8 @@
   const intelligentSearch = window.Druk24IntelligentSearch || null;
   const quoteInterpreter = window.Druk24QuoteInterpreter || null;
   let homeQuoteWizard = null;
-  let priceBarActive = false;
   const mobileCartBar = document.getElementById("mobileCartBar");
   const mobileCartSummary = document.getElementById("mobileCartSummary");
-  const mobileCartButton = document.getElementById("mobileCartButton");
-  const mobilePriceBar = document.getElementById("mobilePriceBar");
-  const mobilePriceValue = document.getElementById("mobilePriceValue");
-  const mobilePriceHint = document.getElementById("mobilePriceHint");
-  const mobileAddButton = document.getElementById("mobileAddButton");
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
   const THEME_KEY = "drukulator_theme";
   const PRICE_OVERRIDE_KEY = "drukulator_prices_override_0_18_2";
@@ -310,22 +304,8 @@
     "szt", "sztuk", "sztuki", "format", "rozmiar", "wymiar", "potrzebny", "potrzebna", "potrzebne"
   ]);
 
-  // Numer wersji nie jest pokazywany klientom; zostaje tylko w atrybucie do diagnostyki.
-  document.documentElement.dataset.drukulatorVersion = VERSION;
-  const productMenuToggle = document.getElementById("menuToggle");
-  const syncProductMenuToggle = () => {
-    const open = sidebar.classList.contains("open");
-    productMenuToggle.setAttribute("aria-expanded", String(open));
-    productMenuToggle.setAttribute("aria-label", open ? "Zamknij menu produktów" : "Otwórz menu produktów");
-    const label = productMenuToggle.querySelector(".menu-toggle__label");
-    if (label) label.textContent = open ? "Zamknij" : "Produkty";
-  };
-  productMenuToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
-  // Menu zamyka się też po wyborze produktu — etykieta i ARIA zawsze zgadzają się ze stanem.
-  new MutationObserver(syncProductMenuToggle).observe(sidebar, { attributes: true, attributeFilter: ["class"] });
-  const compactProductMenuToggle = () => productMenuToggle.classList.toggle("menu-toggle--compact", window.scrollY > 160 && !sidebar.classList.contains("open"));
-  window.addEventListener("scroll", compactProductMenuToggle, { passive: true });
-  new MutationObserver(compactProductMenuToggle).observe(sidebar, { attributes: true, attributeFilter: ["class"] });
+  document.getElementById("versionLabel").textContent = VERSION;
+  document.getElementById("menuToggle").addEventListener("click", () => sidebar.classList.toggle("open"));
   function jumpToQuote() {
     if (state.cart.length) {
       cartPanel.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -335,7 +315,7 @@
     (document.querySelector(selector) || content).scrollIntoView({ behavior: "smooth", block: "start" });
   }
   quoteDockOpen?.addEventListener("click", jumpToQuote);
-  (mobileCartButton || mobileCartBar)?.addEventListener("click", jumpToQuote);
+  mobileCartBar?.addEventListener("click", jumpToQuote);
   if (siteMenuToggle && siteNavigation) {
     siteMenuToggle.addEventListener("click", () => {
       const isOpen = siteNavigation.classList.toggle("is-open");
@@ -561,16 +541,13 @@
 
     const configurations = [];
     if (!wantsOffset) {
-      const wantsGloss = normalized.includes("blysk");
-      const finish = wantsFoil ? (wantsGloss ? "Folia błyszcząca" : "Folia Soft Touch") : "Standard";
+      const finish = wantsFoil ? "Folia Soft Touch lub błysk" : "Standard";
       const priceKey = C.DIGITAL_FINISH_KEYS[finish];
       const priceMap = prices.cyfrowe?.[priceKey];
       if (priceMap) configurations.push({ mode: "digital", print: "Cyfrowy 24h", finish, priceMap, score: wantsDigital ? 200 : 50, resolver: row => Number(row?.[sideKey]) });
     }
     if (!wantsDigital) {
-      const finishCandidates = wantsFoil
-        ? [normalized.includes("blysk") ? "Foliowane — błysk" : "Foliowane — Soft Touch", "Złocenie lub srebrzenie + Soft Touch", "Lakier UV 3D + Soft Touch"]
-        : ["Standard dwustronne"];
+      const finishCandidates = wantsFoil ? ["Foliowane błysk lub Soft Touch", "Złocenie lub srebrzenie + Soft Touch", "Lakier UV 3D + Soft Touch"] : ["Standard dwustronne"];
       finishCandidates.forEach(finish => {
         const priceMap = prices.offsetowe?.[C.OFFSET_FINISH_KEYS[finish]];
         if (priceMap) configurations.push({ mode: "offset", print: "Offsetowy", finish, priceMap, score: wantsOffset ? 200 : 0, resolver: value => Number(value) });
@@ -1391,13 +1368,6 @@
       messages.innerHTML = "";
       choices.innerHTML = "";
       addBubble("assistant", `<strong>Cześć! Pomogę Ci zrobić zamówienie.</strong><span>Napisz normalnie, czego potrzebujesz — np. „potrzebuję 1500 ulotek A5” albo „200 wizytówek dwustronnych”. Dopytam tylko o brakujące rzeczy.</span>`, true);
-      // Jedno wejście pomocy zamiast dwóch: kto nie wie, czego potrzebuje, wybiera zastosowanie.
-      const useCaseHelp = document.createElement("button");
-      useCaseHelp.type = "button";
-      useCaseHelp.className = "quote-assistant__purpose-choice";
-      useCaseHelp.dataset.purposeBack = "1";
-      useCaseHelp.innerHTML = `<span aria-hidden="true">▦</span><strong>Nie wiem, czego potrzebuję — dobierz według zastosowania</strong><span aria-hidden="true">→</span>`;
-      choices.appendChild(useCaseHelp);
       input.placeholder = "Opisz, czego potrzebujesz…";
     }
 
@@ -2815,12 +2785,11 @@
   function options(values, selected) {
     return Array.from(values).map(v => `<option value="${esc(v)}"${String(v) === String(selected) ? " selected" : ""}>${esc(v)}</option>`).join("");
   }
-  function header(title, subtitle = "Wybierz parametry — cenę zobaczysz od razu.") {
-    const shownTitle = displayProductName(title);
+  function header(title, subtitle = "Uzupełnij parametry i oblicz cenę brutto") {
     const breadcrumb = title === "Kalkulator druku – cennik druku online" || title === "Start"
       ? ""
-      : `<nav class="breadcrumb" aria-label="Okruszki"><button type="button" data-breadcrumb-home>Start</button><span aria-hidden="true">/</span><strong>${esc(shownTitle)}</strong></nav>`;
-    return `<header class="page-header">${breadcrumb}<div class="page-header__eyebrow">Cennik online Druk24</div><h2>${esc(shownTitle)}</h2><p>${esc(subtitle)}</p></header>`;
+      : `<nav class="breadcrumb" aria-label="Okruszki"><button type="button" data-breadcrumb-home>Start</button><span aria-hidden="true">/</span><strong>${esc(title)}</strong></nav>`;
+    return `<header class="page-header">${breadcrumb}<div class="page-header__eyebrow">Cennik online Druk24</div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></header>`;
   }
   function alertBox(text, type = "info") { return `<div class="alert ${type}">${esc(text)}</div>`; }
   function value(id) { return document.getElementById(id).value; }
@@ -2891,16 +2860,8 @@
     document.getElementById("quoteArea").innerHTML = alertBox(error.message || String(error), "error");
   }
 
-  // Produkty z drukiem cyfrowym i offsetowym nie mają „24h” w nazwie — termin zależy od wybranej
-  // technologii i jest pokazywany jako opcja. Klucze stron w kodzie pozostają bez zmian.
-  const NO_24H_BADGE = new Set(["Wizytówki 24h", "Ulotki 24h", "Plakaty 24h"]);
-  function displayProductName(text) {
-    return NO_24H_BADGE.has(text) ? String(text).replace(/\s*24h$/i, "") : String(text);
-  }
-
-  function format24hLabel(text, keepBadge = false) {
-    // keepBadge: strona główna pokazuje pełne nazwy z plakietką 24h (jak w 0.23.27).
-    return esc(keepBadge ? text : displayProductName(text)).replace(/(24h)/gi, '<span class="service-badge-24h">$1</span>');
+  function format24hLabel(text) {
+    return esc(text).replace(/(24h)/gi, '<span class="service-badge-24h">$1</span>');
   }
 
   function renderNavigation() {
@@ -2994,15 +2955,9 @@
       // Only the extra visual duplicate is hidden in favour of the three technology buttons.
       select.closest(".field")?.classList.add("d24-poster-original-print");
     }
-    field.innerHTML = `<div class="d24-technology-select__head"><strong>Szybko czy ekonomicznie?</strong><small>Wybierz sposób druku. Terminy są orientacyjne.</small></div>
+    field.innerHTML = `<div class="d24-technology-select__head"><strong>Technologia druku <span class="d24-experimental">BETA</span></strong><small>Wybierz sposób produkcji. Ceny pochodzą z rzeczywistego cennika; termin potwierdzi drukarnia.</small></div>
       <div class="d24-technology-select__buttons">${available.map(o=>`<button type="button" data-print-mode="${o.key}" aria-pressed="false"><strong>${o.name}${o.badge24h ? ' <span class="service-badge-24h">24h</span>' : ""}</strong><small>${o.detail}</small></button>`).join("")}</div>`;
     host.insertBefore(field, form);
-    // Ten sam wybór był pokazywany drugi raz jako „Rodzaj druku”. Natywny select zostaje w DOM
-    // (kalkulator i asystent nadal z niego korzystają), ale klient widzi tylko jedną decyzję.
-    const duplicatedField = select.closest(".field");
-    const onlyTwoModes = Array.from(select.options).filter(o => o.value)
-      .every(o => /cyfrow|offset|ofset|wielkoformat/i.test(o.value || o.textContent));
-    if (duplicatedField && onlyTwoModes) duplicatedField.classList.add("d24-field-merged");
     const sync = () => field.querySelectorAll("[data-print-mode]").forEach(button => {
       const choice = available.find(item => item.key === button.dataset.printMode);
       button.setAttribute("aria-pressed", String(!!choice && choice.test.test(select.value)));
@@ -3032,49 +2987,7 @@
     button.dataset.livePrice = draft ? String(draft.price) : "";
     button.textContent = draft?.meta?.requiresManualPrice ? "Dodaj do koszyka · cena do ustalenia" : draft ? `Dodaj do koszyka · ${money(draft.price)} zł` : "Dodaj do koszyka · sprawdź parametry";
     const headline = document.getElementById("d24LivePriceValue");
-    if (headline) headline.textContent = draft?.meta?.requiresManualPrice ? "Cena do potwierdzenia mailowo" : draft ? `${money(draft.price)} zł` : "Uzupełnij parametry";
-    updatePriceBar(draft);
-  }
-
-  // Cena za sztukę liczona z tej samej ceny łącznej i ilości z formularza (bez własnego cennika).
-  function currentUnitPriceInfo(totalPrice) {
-    const form = content.querySelector(":scope > .card .form-grid");
-    if (!form || !Number.isFinite(Number(totalPrice))) return null;
-    const control = Array.from(form.querySelectorAll("select[id], input[id]")).find(el =>
-      /(Quantity|Qty)$/.test(el.id) && !el.disabled && el.type !== "file" && !el.closest(".hidden, [hidden]"));
-    if (!control) return null;
-    const quantity = Number(String(control.value).replace(",", "."));
-    if (!Number.isInteger(quantity) || quantity < 2) return null;
-    const label = control.closest(".field")?.querySelector(":scope > label")?.textContent || "";
-    const unit = /kopii/i.test(label) ? "za kopię" : /stron/i.test(label) ? "za stronę"
-      : /ilość|nakład|bloczków|notesów/i.test(label) ? "za sztukę" : "";
-    if (!unit) return null;
-    return { quantity, perUnit: Number(totalPrice) / quantity, unit };
-  }
-
-  // Jedno miejsce odświeżające wszystkie widoki aktualnej ceny: blok przy formularzu
-  // oraz przyklejony pasek na telefonie. Nie liczy niczego poza dzieleniem przez ilość.
-  function updatePriceBar(draft) {
-    const unit = draft ? currentUnitPriceInfo(draft.price) : null;
-    const unitText = unit ? `${money(unit.perUnit)} zł ${unit.unit}` : "";
-    const glanceUnit = document.getElementById("d24LiveUnitPrice");
-    if (glanceUnit) glanceUnit.textContent = draft && !draft.meta?.requiresManualPrice ? ["w tym VAT", unitText].filter(Boolean).join(" • ") : "";
-    if (!mobilePriceBar) return;
-    const manual = Boolean(draft?.meta?.requiresManualPrice);
-    if (mobilePriceValue) mobilePriceValue.textContent = draft && !manual ? `${money(draft.price)} zł` : "—";
-    if (mobilePriceHint) mobilePriceHint.textContent = manual
-      ? "Cenę potwierdzimy mailowo"
-      : draft
-        ? ["brutto", unitText].filter(Boolean).join(" • ")
-        : "Uzupełnij parametry";
-    if (mobileAddButton) mobileAddButton.disabled = !draft;
-  }
-
-  function setPriceBarActive(active) {
-    priceBarActive = Boolean(active);
-    if (mobilePriceBar) mobilePriceBar.hidden = !priceBarActive;
-    if (!priceBarActive) updatePriceBar(null);
-    updateMobileCartBar();
+    if (headline) headline.textContent = draft?.meta?.requiresManualPrice ? "Cena do potwierdzenia mailowo" : draft ? `${money(draft.price)} zł brutto` : "Uzupełnij parametry";
   }
 
   function setupQuickAddForCurrentPage() {
@@ -3082,13 +2995,13 @@
     ++currentPriceRequest;
     setupPrintChoices();
     const button = content.querySelector("#calculate, #calculateCanvas");
-    const card = button?.closest(".card");
-    if (!button || !card) { setPriceBarActive(false); return; }
+    if (!button) return;
+    const card = button.closest(".card");
+    if (!card) return;
     const action = button.closest(".actions");
     if (action && !card.querySelector(".d24-price-at-a-glance")) {
-      action.insertAdjacentHTML("beforebegin", `<div class="d24-price-at-a-glance"><div><small>Cena brutto</small><strong id="d24LivePriceValue">Sprawdzanie…</strong><span class="d24-price-unit" id="d24LiveUnitPrice"></span></div><small class="d24-price-note">Cenę i termin potwierdzi drukarnia przed realizacją.</small></div>`);
+      action.insertAdjacentHTML("beforebegin", `<div class="d24-price-at-a-glance"><div><small>Aktualna cena brutto</small><strong id="d24LivePriceValue">Sprawdzanie…</strong></div><small>Ostateczna cena i termin po potwierdzeniu przez drukarnię.</small></div>`);
     }
-    setPriceBarActive(true);
     livePriceTimer = setTimeout(() => refreshQuickAddPrice(button), 180);
   }
 
@@ -3118,31 +3031,17 @@
   document.getElementById("d24BrandHome")?.addEventListener("click", event => {
     event.preventDefault(); navigateToPage("Start");
   });
-  // Dodanie aktualnej konfiguracji do koszyka — ta sama ścieżka dla przycisku w formularzu
-  // i dla przyklejonego paska ceny na telefonie.
-  function addCurrentConfigurationToCart() {
-    const button = content.querySelector("#calculate, #calculateCanvas");
-    if (!button) return false;
-    clearTimeout(livePriceTimer);
-    const draft = captureCurrentFormQuote(button);
-    if (!draft) { button.click(); refreshQuickAddPrice(button); return false; }
-    showQuote(draft);
-    document.getElementById("addToCart")?.click();
-    refreshQuickAddPrice(button);
-    return true;
-  }
   content.addEventListener("click", event => {
     const button = event.target.closest("#calculate, #calculateCanvas");
     if (!button || !event.isTrusted || !content.contains(button)) return;
     event.preventDefault(); event.stopImmediatePropagation();
-    addCurrentConfigurationToCart();
+    clearTimeout(livePriceTimer);
+    const draft = captureCurrentFormQuote(button);
+    if (!draft) { button.click(); refreshQuickAddPrice(button); return; }
+    showQuote(draft);
+    document.getElementById("addToCart")?.click();
+    refreshQuickAddPrice(button);
   }, true);
-  mobileAddButton?.addEventListener("click", () => {
-    if (!addCurrentConfigurationToCart()) {
-      showToast("Uzupełnij parametry, aby dodać produkt.");
-      document.getElementById("quoteArea")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  });
 
   function showQuote(quote) {
     if (quoteCapture) {
@@ -3170,9 +3069,6 @@
       }
 
       const quoteFiles = Array.isArray(quote.files) ? quote.files.filter(file => file instanceof File) : [];
-      // Plik wybrany w „Pliku i podglądzie projektu” dołączamy do zamówienia bez ponownego wybierania.
-      const artworkFile = window.Druk24PreviewArtwork?.getFile?.();
-      if (artworkFile instanceof File && !quoteFiles.includes(artworkFile)) quoteFiles.push(artworkFile);
       if (quoteFiles.length) {
         const newFiles = quoteFiles.filter(file => !orderFiles.some(existing =>
           existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified
@@ -3703,7 +3599,6 @@
   }
 
 
-  // 0.24.4: strona główna (Start) wraca do wyglądu z 0.23.27 — wersja przed uproszczeniem z 0.24.0.
   function renderHome() {
     const iconSvg = body => `<svg viewBox="0 0 24 24" class="home-product-tile__icon-svg" aria-hidden="true" focusable="false">${body}</svg>`;
     const tileIcons = {
@@ -3763,7 +3658,7 @@
     const tile = (name, featured = false) => `
       <button class="home-product-tile${featured ? " home-product-tile--featured" : ""}" type="button" data-home-page="${esc(name)}">
         <span class="home-product-tile__icon" aria-hidden="true">${tileIcons[name] || fallbackIcon}</span>
-        <span class="home-product-tile__content"><strong>${format24hLabel(name, true)}</strong><span>${esc(productMeta[name] || "Przejdź do koszyka")}</span></span>
+        <span class="home-product-tile__content"><strong>${format24hLabel(name)}</strong><span>${esc(productMeta[name] || "Przejdź do koszyka")}</span></span>
         <span class="home-product-tile__arrow" aria-hidden="true">→</span>
       </button>`;
     const popularTiles = popularNames.map(name => tile(name, true)).join("");
@@ -3874,7 +3769,7 @@
       const matchHtml = matches.length ? matches.map((match, index) => `
         <button type="button" data-home-search-page="${esc(match.pageName)}">
           <span>${searchResultDescription(match, index === 0 ? "Najlepsze dopasowanie" : "")}</span>
-          <strong>${format24hLabel(match.pageName, true)}</strong><b aria-hidden="true">→</b>
+          <strong>${format24hLabel(match.pageName)}</strong><b aria-hidden="true">→</b>
         </button>`).join("") : "";
       homeResults.innerHTML = matchHtml || `<div class="home-search-results__empty">Brak dopasowania. Wpisz nazwę produktu albo wybierz kategorię poniżej.</div>`;
       homeResults.querySelectorAll("[data-home-search-page]").forEach(button => button.addEventListener("click", () => {
@@ -4696,7 +4591,7 @@
       <div class="field half"><label>Format</label><select id="bcFormat">${options(p.formaty)}</select></div>
       <div class="field half"><label>Rodzaj druku</label><select id="bcPrint">${options(["Cyfrowy 24h", "Offsetowy"])}</select></div>
       <div class="field half"><label>Wykończenie</label><select id="bcFinish"></select></div>
-      <div class="field half"><label>Ile stron zadrukować</label><select id="bcSides"></select></div>
+      <div class="field half"><label>Zadruk</label><select id="bcSides"></select></div>
       <div class="field"><label>Ilość sztuk</label><select id="bcQuantity"></select></div>
     </div><div class="actions"><button class="button" id="calculate">Oblicz cenę</button></div></div><div id="quoteArea"></div>`;
     const print = document.getElementById("bcPrint"), finish = document.getElementById("bcFinish"), sides = document.getElementById("bcSides"), qty = document.getElementById("bcQuantity");
@@ -4834,7 +4729,7 @@
         <div class="field half"><label>Rodzaj produktu</label><select id="noteType">${options(productTypes)}</select></div>
         <div class="field half"><label>Wariant</label><select id="noteVariant"></select></div>
         <div class="field half"><label>Format</label><select id="noteFormat"></select></div>
-        <div class="field half"><label>Ilość sztuk</label><select id="noteQty"></select></div>
+        <div class="field half"><label>Nakład</label><select id="noteQty"></select></div>
       </div>
       <div id="noteInfo"></div>
       <details open><summary>Cennik wybranego wariantu</summary><div id="notePriceTable"></div></details>
@@ -4883,7 +4778,7 @@
 
     document.getElementById("calculate").addEventListener("click", () => { try {
       const result = C.calculateNotepads(state.prices, type.value, variant.value, format.value, Number(quantity.value));
-      const quantityLabel = type.value === "Bloczki samokopiujące" ? "Liczba bloczków" : "Ilość notesów";
+      const quantityLabel = type.value === "Bloczki samokopiujące" ? "Liczba bloczków" : "Nakład notesów";
       showQuote({
         title: type.value,
         description: `${variant.value}, format ${format.value}, ${quantity.value} szt.`,
@@ -4908,7 +4803,7 @@
         <div class="field half"><label>Rodzaj produktu</label><select id="${prefix}Type">${options(productTypes)}</select></div>
         <div class="field half"><label>Wariant</label><select id="${prefix}Variant"></select></div>
         <div class="field half"><label>Format</label><select id="${prefix}Format"></select></div>
-        <div class="field half"><label>Ilość sztuk</label><select id="${prefix}Qty"></select></div>
+        <div class="field half"><label>Nakład</label><select id="${prefix}Qty"></select></div>
       </div>
       <div id="${prefix}Info"></div>
       <details open><summary>Cennik wybranego wariantu</summary><div id="${prefix}PriceTable"></div></details>
@@ -5052,7 +4947,7 @@
         <div class="field half"><label>Rodzaj produktu</label><select id="hospitalityType">${options(productTypes)}</select></div>
         <div class="field half"><label>Wariant</label><select id="hospitalityVariant"></select></div>
         <div class="field half"><label>Format</label><select id="hospitalityFormat"></select></div>
-        <div class="field half"><label>Ilość sztuk</label><select id="hospitalityQty"></select></div>
+        <div class="field half"><label>Nakład</label><select id="hospitalityQty"></select></div>
       </div>
       <div id="hospitalityInfo"></div>
       <details open><summary>Cennik wybranego wariantu</summary><div id="hospitalityPriceTable"></div></details>
@@ -5101,7 +4996,7 @@
 
     document.getElementById("calculate").addEventListener("click", () => { try {
       const result = C.calculateCatalogProduct(root, type.value, variant.value, format.value, Number(quantity.value));
-      const quantityLabel = type.value === "Bloczki samokopiujące" ? "Liczba bloczków" : "Ilość sztuk";
+      const quantityLabel = type.value === "Bloczki samokopiujące" ? "Liczba bloczków" : "Nakład";
       showQuote({
         title: type.value,
         description: `${variant.value}, format ${format.value}, ${quantity.value} szt.`,
@@ -5539,7 +5434,7 @@
         <div class="field half"><label>Rodzaj produktu</label><select id="weddingProduct">${options(Object.keys(root))}</select></div>
         <div class="field half"><label>Wariant</label><select id="weddingVariant"></select></div>
         <div class="field half"><label>Format</label><select id="weddingFormat"></select></div>
-        <div class="field half"><label id="weddingQtyLabel">Ilość sztuk</label><select id="weddingQty"></select><input id="weddingQtyInput" class="hidden" type="number" min="1" step="1" value="1"></div>
+        <div class="field half"><label id="weddingQtyLabel">Nakład</label><select id="weddingQty"></select><input id="weddingQtyInput" class="hidden" type="number" min="1" step="1" value="1"></div>
       </div>
       <div id="weddingInfo"></div>
       <div class="actions">
@@ -5564,7 +5459,7 @@
       const isPackage = data.tryb === "pakiet";
       qtySelect.classList.toggle("hidden", !isPackage);
       qtyInput.classList.toggle("hidden", isPackage);
-      qtyLabel.textContent = "Ilość sztuk";
+      qtyLabel.textContent = isPackage ? "Nakład" : "Ilość sztuk";
       if (isPackage) qtySelect.innerHTML = options(Object.keys(formatData));
       const pricingInfo = isPackage
         ? alertBox("Cena dotyczy całego wybranego nakładu.", "info")
@@ -5752,12 +5647,12 @@
           <div class="field third"><label>Wysokość netto [mm]</label><input id="digHeight" type="number" min="1" step="1" value="50"></div>
           <div class="field third"><label>Liczba gotowych sztuk</label><input id="digQty" type="number" min="1" step="1" value="100"></div>
           <div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy), "Kolorowy")}</select></div>
-          <div class="field half"><label>Ile stron zadrukować</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku), "Jednostronny")}</select></div>
+          <div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku), "Jednostronny")}</select></div>
           <div class="field half"><label>Papier</label><select id="digPaper">${options(impositionPapers)}</select></div>
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Ile stron zadrukować</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field"><label>Liczba kartek</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field"><label>Liczba kartek</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
         note = "Druk dwustronny: cena druku × 2. Koszt papieru jest doliczany tylko raz.";
       } else if (service.value === "Ksero i druk") {
         html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.ksero_i_druk))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field"><label>Rodzaj papieru</label><select id="digPaper">${options(standardPapers)}</select></div><div class="field"><label>Liczba kopii</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
@@ -6461,18 +6356,10 @@
     const count = state.cart.length;
     const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
     const totalWithDelivery = total + orderDeliveryFee(total);
-    // Na stronie produktu pasek pokazuje aktualną cenę i „Dodaj do koszyka”;
-    // koszyk jest wtedy małym przyciskiem z liczbą pozycji (tylko gdy coś w nim jest).
-    mobileCartSummary.textContent = priceBarActive
-      ? String(count)
-      : count
-        ? `${count} ${count === 1 ? "pozycja" : count >= 2 && count <= 4 ? "pozycje" : "pozycji"} • ${money(totalWithDelivery)} zł brutto`
-        : "0 pozycji";
+    mobileCartSummary.textContent = count
+      ? `${count} ${count === 1 ? "pozycja" : count >= 2 && count <= 4 ? "pozycje" : "pozycji"} • ${money(totalWithDelivery)} zł brutto`
+      : "0 pozycji";
     mobileCartBar.classList.toggle("has-items", count > 0);
-    mobileCartBar.classList.toggle("has-price", priceBarActive);
-    if (mobileCartButton) mobileCartButton.hidden = priceBarActive && count === 0;
-    mobileCartBar.hidden = !priceBarActive && count === 0;
-    document.body.classList.toggle("has-price-bar", priceBarActive);
   }
 
   function updateQuoteDock() {
@@ -6480,8 +6367,8 @@
     const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
     if (quoteDock) quoteDock.classList.toggle("quote-dock--filled", count > 0);
     if (quoteDockDescription) quoteDockDescription.textContent = count
-      ? `${count} ${count === 1 ? "produkt" : count >= 2 && count <= 4 ? "produkty" : "produktów"} w zamówieniu`
-      : "Dodaj produkt do koszyka";
+      ? `${count} ${count === 1 ? "produkt" : count >= 2 && count <= 4 ? "produkty" : "produktów"} w zapytaniu`
+      : "Dodaj produkt, aby przygotować zapytanie";
     if (quoteDockPrice) quoteDockPrice.hidden = count === 0;
     if (quoteDockTotalLabel) quoteDockTotalLabel.textContent = orderTotalLabel();
     if (quoteDockTotal) quoteDockTotal.textContent = `${money(total + orderDeliveryFee(total))} zł`;
@@ -6509,7 +6396,7 @@
           <h3>Wybrane produkty</h3>
           <div class="cart-list">${state.cart.map((item, index) => `<article class="cart-card">
             <div class="d24-cart-row"><span class="d24-cart-number">${index + 1}</span><div class="d24-cart-data">
-              <h4>${esc(displayProductName(item.title))}</h4><p>${esc(item.description)}</p>
+              <h4>${esc(item.title)}</h4><p>${esc(item.description)}</p>
               ${Array.isArray(item.details) && item.details.length ? `<details class="d24-cart-details"><summary>Zobacz konfigurację</summary><dl>${item.details.slice(0, 25).filter(entry => Array.isArray(entry)).map(([key, val]) => `<dt>${esc(key)}</dt><dd>${esc(val)}</dd>`).join("")}</dl></details>` : ""}
             </div></div>
             <div class="cart-card-footer"><strong>${item.meta?.requiresManualPrice ? "Do ustalenia" : `${money(item.price)} zł`}</strong><button class="button danger" data-remove="${esc(item.id)}" type="button">Usuń</button></div>
@@ -6715,7 +6602,7 @@
       <div class="order-card__head"><span class="order-step-badge">1</span><div><h3>Kontakt i dostawa</h3><p>Podaj kontakt, żebyśmy mogli potwierdzić termin, dostępność i realizację.</p></div></div>
       <div class="order-form-grid">
         <div class="field"><label>Imię i nazwisko / firma *</label><input id="orderName" value="${esc(state.order.name)}" placeholder="np. Jan Kowalski / Firma ABC" autocomplete="name" required></div>
-        <div class="field"><label>E-mail *</label><input id="orderEmail" type="email" value="${esc(state.order.email)}" autocomplete="email" placeholder="np. kontakt@firma.pl" required><small>Na ten adres wyślemy potwierdzenie otrzymania zamówienia.</small></div>
+        <div class="field"><label>E-mail *</label><input id="orderEmail" type="email" value="${esc(state.order.email)}" autocomplete="email" placeholder="np. kontakt@firma.pl" required><small>Na ten adres wyślemy potwierdzenie otrzymania zapytania.</small></div>
         <div class="field"><label>Telefon</label><input id="orderPhone" value="${esc(state.order.phone)}" autocomplete="tel" placeholder="np. 500 000 000"></div>
         <div class="field"><label>Sposób odbioru / dostawy</label><select id="orderPickup">${options(["Odbiór osobisty", "Dostawa na terenie Szczecina", "Wysyłka kurierska (do ustalenia)"], ["Odbiór osobisty", "Dostawa na terenie Szczecina", "Wysyłka kurierska (do ustalenia)"].includes(state.order.pickup) ? state.order.pickup : "Odbiór osobisty")}</select></div>
         <div class="field d24-shipping-address" id="orderDeliveryAddressField" ${state.order.pickup === "Dostawa na terenie Szczecina" ? "" : "hidden"}><label>Adres dostawy w Szczecinie *</label><input id="orderDeliveryAddress" maxlength="220" value="${esc(state.order.deliveryAddress || "")}" placeholder="Ulica, numer budynku/lokalu, Szczecin" autocomplete="street-address"></div>
@@ -7025,7 +6912,7 @@
       const message = networkFailure
         ? "Nie udało się połączyć z serwerem podczas wysyłki. Możliwy jest limit hostingu, blokada zabezpieczeń lub przerwane połączenie. Sprawdź pocztę przed ponowną próbą — zgłoszenie mogło już dotrzeć."
         : (error.message || String(error));
-      status.innerHTML = alertBox(`${message} Możesz także skopiować tekst zamówienia poniżej i przesłać go na ${CONTACT_EMAIL}.`, "error");
+      status.innerHTML = alertBox(`${message} Możesz także skopiować tekst zapytania poniżej i przesłać go na ${CONTACT_EMAIL}.`, "error");
     } finally {
       button.disabled = false;
       button.textContent = originalText;

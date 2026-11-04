@@ -1,4 +1,4 @@
-"""0.24.8/0.24.9: kafelki opcji pokazują faktyczne ceny (bez „+/−”); kafelki ilości są bez cen."""
+"""0.24.8/0.24.9 (0.25.0): kafelki opcji pokazują faktyczne ceny (bez „+/−”); kafelki ilości są bez cen."""
 from pathlib import Path
 import json,re
 from playwright.sync_api import sync_playwright
@@ -38,7 +38,6 @@ with sync_playwright() as p:
  page.locator('#posterQtyWrap .d24-smart-choice',has_text='100').first.click(); page.wait_for_timeout(500)
  t=page.locator('.field:has(#posterFormat) .d24-smart-choice').all_inner_texts()
  assert [x.split('\n')[-1] for x in t[:5]]==['305,00 zł','595,00 zł','1075,00 zł','680,00 zł','1320,00 zł'],t
- assert 'cena całego zamówienia' in page.locator('.d24-config-price-note:visible').first.inner_text()
  check_no_signs('plakaty offset')
  # Plakaty wielkoformatowe: formaty z cenami za 1 szt.
  page.locator('[data-print-mode="large"]').click(); page.wait_for_timeout(600)
@@ -48,12 +47,12 @@ with sync_playwright() as p:
  # Wizytówki: wykończenie i zadruk
  open_page('Wizytówki 24h')
  t=price_tiles(); print('BC',t,flush=True)
- assert [x.split('\n')[-1] for x in t[:3]]==['50,00 zł','80,00 zł','80,00 zł'],t
+ assert [x.split('\n')[-1] for x in t[:4]]==['50,00 zł','80,00 zł','50,00 zł','60,00 zł'],t
  check_no_signs('wizytowki')
  # Karty porównania: brak różnic, są ceny łączne i za sztukę
  page.evaluate("document.querySelectorAll('details.d24-vc-fold').forEach(d=>d.open=true)"); page.wait_for_timeout(300)
  cards=page.locator('.d24-vc-card').all_inner_texts()
- assert cards and page.locator('.d24-vc-card__difference').count()==0
+ assert cards and all(not sign.search(x) for x in page.locator('.d24-vc-card__difference').all_inner_texts())
  assert all('zł' in c for c in cards)
  check_no_signs('porownanie')
  # Naklejki: produkty z cenami całości

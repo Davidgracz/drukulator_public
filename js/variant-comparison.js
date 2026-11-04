@@ -153,17 +153,14 @@
     unit.append(make('strong','',money(item.unitPrice)),make('span','',tr('za sztukę','per piece')));
     node.append(unit);
     // 0.24.8: karta pokazuje faktyczną cenę wariantu (łączną i za sztukę) — bez różnic „+/−” względem wybranego wariantu.
+    if (current) node.append(make('p','d24-vc-card__difference',tr('Aktualny wariant','Current option')));
     const buttons = make('div','d24-vc-card__buttons');
-    // 0.24.0: jeden przycisk na kartę. Wybór ustawia wariant w formularzu; do koszyka dodaje
-    // jeden, stały przycisk przy cenie (pasek ceny), więc nie ma dwóch różnych „Dodaj”.
-    if (current) {
-      node.append(make('p','d24-vc-card__current',tr('✓ Wybrane','✓ Selected')));
-    } else {
-      const choose = make('button','button secondary d24-vc-button',tr('Wybierz ten wariant','Choose this option'));
-      choose.type='button'; choose.dataset.compareChoice=item.value;
-      choose.dataset.compareAdd='0'; buttons.append(choose);
-      node.append(buttons);
-    }
+    const choose = make('button','button secondary d24-vc-button',current?tr('Przelicz','Recalculate'):tr('Wybierz wariant','Select variant'));
+    choose.type='button'; choose.dataset.compareChoice=item.value;
+    choose.dataset.compareAdd='0'; buttons.append(choose);
+    const add = make('button','button d24-vc-button',tr('Dodaj do koszyka','Add to cart'));
+    add.type='button';add.dataset.compareChoice=item.value;add.dataset.compareAdd='1';buttons.append(add);
+    node.append(buttons);
     return node;
   }
   let queued=false;
@@ -204,19 +201,19 @@
     const fold=make('details','d24-fold d24-vc-fold');fold.open=wasOpen;
     const summary=make('summary','d24-fold__summary');
     summary.append(make('span','d24-fold__label',tr('Porównaj warianty','Compare options')),
-      make('span','d24-fold__hint',tr('Cena łączna i za sztukę','Total and per-piece prices')),
+      make('span','d24-fold__hint',tr('Cena całkowita i cena za sztukę','Total and per-unit prices')),
       make('span','d24-fold__chevron','⌄'));
     fold.append(summary);
     const body=make('div','d24-fold__body');fold.append(body);host.append(fold);
     const header=make('div','d24-vc-heading');
     const title = make('div','');
-    title.append(make('span','d24-vc-overline',tr('Szybkie porównanie','Quick comparison')),
+    title.append(make('span','d24-vc-overline',tr('SZYBKIE PORÓWNANIE','QUICK COMPARISON')),
       make('h3','',tr('Porównaj warianty','Compare options')),
-      make('p','',tr('Te same parametry, inny wybrany element. Ilość pozostaje bez zmian.', 'Same settings, one element changed. The quantity stays the same.')));
+      make('p','',tr('Te same parametry, różne warianty. Bez ukrytych zmian nakładu.', 'Same settings, different variants. No hidden quantity changes.')));
     header.append(title);body.append(header);
     const controls=make('div','d24-vc-controls');
     const modes=make('div','d24-vc-modes');
-    modes.append(make('span','d24-vc-mode-label',tr('Co chcesz porównać?','What do you want to compare?')));
+    modes.append(make('span','d24-vc-mode-label',tr('Co porównać?','Compare by')));
     fields.forEach(id=>{
       const button=make('button','d24-vc-mode-button',fieldMap[page][id]);
       button.type='button';button.dataset.compareMode=id;
@@ -224,13 +221,13 @@
       modes.append(button);
     });
     controls.append(modes);
-    controls.append(make('small','',tr('Kwoty brutto z aktualnego cennika Druk24','Gross prices from the current Druk24 price list')));
+    controls.append(make('small','',tr('Kwoty z aktualnego cennika Druk24','Prices from the current Druk24 price list')));
     body.append(controls);
     const cards=make('div','d24-vc-grid');
     const minUnit=Math.min(...data.items.map(item=>item.unitPrice));
     data.items.forEach(item=>cards.append(buildCard(item,data,minUnit)));
     body.append(cards);
-    body.append(make('p','d24-vc-note',tr('Maksymalna wartość zamówienia online: 5 000 zł.', 'Maximum online order amount: PLN 5,000.')));
+    body.append(make('p','d24-vc-note',tr('Porównanie orientacyjne. „Dodaj do koszyka” ponownie uruchamia kalkulator i sprawdza zgodność ceny. Maksymalna wartość zamówienia online: 5 000 zł.', 'Indicative comparison. “Add to cart” reruns the calculator and verifies pricing. Maximum online order amount: PLN 5,000.')));
   }
   new MutationObserver(schedule).observe(content,{childList:true});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});

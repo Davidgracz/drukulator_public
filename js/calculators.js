@@ -2,17 +2,13 @@
   "use strict";
 
   const NO_PRINT = "Brak";
-  // 0.24.0: klient wybiera konkretną folię. Obie etykiety folii korzystają z tego samego
-  // wiersza cennika, więc ceny i sposób liczenia pozostają bez zmian.
   const DIGITAL_FINISH_KEYS = {
     "Standard": "standard",
-    "Folia Soft Touch": "folia_soft_touch_lub_blysk",
-    "Folia błyszcząca": "folia_soft_touch_lub_blysk"
+    "Folia Soft Touch lub błysk": "folia_soft_touch_lub_blysk"
   };
   const OFFSET_FINISH_KEYS = {
     "Standard dwustronne": "standard_dwustronne",
-    "Foliowane — Soft Touch": "foliowane_blysk_lub_soft_touch",
-    "Foliowane — błysk": "foliowane_blysk_lub_soft_touch",
+    "Foliowane błysk lub Soft Touch": "foliowane_blysk_lub_soft_touch",
     "Złocenie lub srebrzenie + Soft Touch": "zlocenie_lub_srebrzenie_plus_soft_touch",
     "Lakier UV 3D + Soft Touch": "lakier_uv_3d_plus_soft_touch"
   };

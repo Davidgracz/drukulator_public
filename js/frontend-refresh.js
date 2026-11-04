@@ -36,7 +36,6 @@
     // Recent products are no longer shown in the sidebar.
     sidebar.querySelector('.refresh-recents')?.remove();
   }
-  // 0.24.4: skróty „Popularne” na stronie głównej wracają (jak w 0.23.27).
   const shortcuts = [
     ['Wizytówki 24h','Wizytówki','Business cards'],
     ['Ulotki 24h','Ulotki','Flyers'],
@@ -84,8 +83,9 @@
     }
     const journey = content.querySelector('.refresh-journey');
     const steps = isEnglish()
-      ? [['01','Set options','Choose your options'],['02','Add to cart','Price updates live'],['03','Send your order','The print shop confirms it']]
-      : [['01','Ustaw parametry','Wybierz opcje'],['02','Dodaj do koszyka','Cenę widzisz od razu'],['03','Wyślij zamówienie','Drukarnia je potwierdzi']];
+      ? [['01','Choose options','Specify the print'],['02','Check price','Review the quote'],['03','Add to cart','Await confirmation']]
+      : [['01','Ustaw parametry','Wybierz druk'],['02','Sprawdź cenę','Wybierz produkt'],['03','Dodaj do koszyka','Potwierdzi drukarnia']];
+
     const step = content.querySelector('.quote-card') ? 1 : 0;
     const signature = (isEnglish() ? 'en':'pl') + step;
     if (journey.dataset.signature !== signature) {
@@ -96,7 +96,7 @@
     if (!card.querySelector('.refresh-form-heading')) {
       const heading = document.createElement('div');
       heading.className = 'refresh-form-heading';
-      heading.innerHTML = `<div><strong>${tr('Parametry zamówienia','Order specifications')}</strong><small>${tr('Wybierz opcje — cena brutto aktualizuje się na bieżąco.','Choose your options — the gross price updates live.')}</small></div>`;
+      heading.innerHTML = `<span aria-hidden="true">01</span><div><strong>${tr('Parametry zamówienia','Order specifications')}</strong><small>${tr('Wybierz warianty, a następnie oblicz cenę brutto.','Choose options, then calculate the gross price.')}</small></div>`;
       card.prepend(heading);
     } else {
       const heading = card.querySelector('.refresh-form-heading div');
@@ -104,7 +104,8 @@
       if (heading?.dataset.lang !== lang) {
         heading.dataset.lang = lang;
         heading.querySelector('strong').textContent = tr('Parametry zamówienia','Order specifications');
-        heading.querySelector('small').textContent = tr('Wybierz opcje — cena brutto aktualizuje się na bieżąco.','Choose your options — the gross price updates live.');
+        heading.querySelector('small').textContent = tr('Wybierz warianty, a następnie oblicz cenę brutto.','Choose options, then calculate the gross price.');
+        heading.dataset.lang = lang;
       }
     }
     for (const field of form.querySelectorAll('.field')) {
@@ -113,8 +114,7 @@
       if (label && input?.id && !label.hasAttribute('for')) label.setAttribute('for',input.id);
       if (!input || input.disabled || field.closest('[hidden]')) continue;
       if (input.matches('input[type="number"]')) enhanceNumber(input);
-      // Szybkie przyciski ilości dublowały duże kafelki wyboru ilości — usuwamy je.
-      field.querySelector(':scope > .refresh-choice-row')?.remove();
+      if (input.matches('select') && /qty|quantity|naklad/i.test(input.id)) enhanceQuantities(input);
     }
   }
   function enhanceNumber(input) {
@@ -146,6 +146,40 @@
         }
       });
     }
+  }
+  function enhanceQuantities(select) {
+    const field = select.closest('.field');
+    if (!field) return;
+    const values = Array.from(select.options).filter(option => !option.disabled && option.value).map(option => ({value:option.value, label:option.textContent.trim()}));
+    // Presets are only shown for small sets of actual quantities configured by the calculator.
+    let row = field.querySelector('.refresh-choice-row');
+    if (values.length < 2 || values.length > 8 || values.some(option => option.label.length > 13)) {
+      if (row) row.remove(); return;
+    }
+    if (!row) {
+      row = document.createElement('div'); row.className = 'refresh-choice-row';
+      row.setAttribute('role','group'); row.setAttribute('aria-label',tr('Szybki wybór nakładu','Quick quantity selection'));
+      select.after(row);
+      row.addEventListener('click', event => {
+        const button = event.target.closest('button[data-quantity]');
+        if (!button || select.disabled) return;
+        if (Array.from(select.options).some(option => option.value === button.dataset.quantity)) {
+          select.value = button.dataset.quantity;
+          select.dispatchEvent(new Event('change',{bubbles:true}));
+        }
+      });
+    }
+    const signature = JSON.stringify(values) + (isEnglish() ? ':en':':pl');
+    if (row.dataset.signature !== signature) {
+      row.dataset.signature = signature;
+      row.replaceChildren();
+      for (const option of values) {
+        const button = document.createElement('button'); button.type = 'button';
+        button.dataset.quantity = option.value; button.textContent = option.label;
+        row.append(button);
+      }
+    }
+    row.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.quantity === select.value)));
   }
   function refresh() {
     queued = false;

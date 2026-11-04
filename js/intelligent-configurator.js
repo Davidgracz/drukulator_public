@@ -19,24 +19,6 @@
     'Naklejki, etykiety i magnesy': ['stickProduct'],
     'Roll-upy i X-banery': ['rollSize']
   };
-  // 0.24.0: ilości pokazują cenę łączną i cenę za sztukę bezpośrednio na kafelkach wyboru.
-  const quantityFields = {
-    'Wizytówki 24h': ['bcQuantity'],
-    'Ulotki 24h': ['flyQuantity'],
-    'Plakaty 24h': ['posterQty'],
-    'Druk cyfrowy i ksero 24h': ['digQty'],
-    'Folie i banery 24h': ['bannerQty'],
-    'Naklejki, etykiety i magnesy': ['stickQty'],
-    'Roll-upy i X-banery': ['rollQty']
-  };
-  const finishInfo = label => {
-    const text = label.toLowerCase();
-    if (/złocen|srebrz|lakier/.test(text)) return '';
-    if (/soft touch/.test(text)) return tr('Matowa, miękka w dotyku', 'Matte, soft to the touch');
-    if (/błysk|błyszcz/.test(text)) return tr('Z połyskiem', 'Glossy');
-    if (/^standard/.test(text)) return tr('Bez folii', 'No lamination');
-    return '';
-  };
   const papers = [
     [/80\s*g/i, ['Lekki papier', 'Lightweight']],
     [/130\s*g/i, ['Papier o niższej gramaturze', 'Lighter paper']],
@@ -94,7 +76,6 @@
       if (/dwu|double/i.test(label)) return tr('Zadruk dwóch stron', 'Print on both sides');
       if (/jedno|single/i.test(label)) return tr('Zadruk jednej strony', 'Print on one side');
     }
-    if (type === 'finish') return finishInfo(label);
     return '';
   }
   function enrichChoices(card, values) {
@@ -102,18 +83,12 @@
       const select = field.querySelector(':scope > select');
       const chipRow = field.querySelector(':scope > .d24-smart-options');
       if (!select || !chipRow || !visible(select)) return;
-      const labelText = field.querySelector(':scope > label')?.textContent || '';
-      const isQuantity = (quantityFields[pricing.page()] || []).includes(select.id);
-      const kind = isQuantity ? 'quantity'
-        : select.id === 'bcFinish' ? 'finish'
-        // 0.24.2: roll-upy, X-bannery i obrazy na płótnie — bez miniaturek-prostokątów przy formatach.
-        : /^(rollSize|canvas)/.test(select.id) ? 'other'
-        : /papier|gramatura/i.test(labelText) ? 'paper'
-        : /format/i.test(labelText) ? 'format'
-        : /zadruk|stronność|stron zadrukować/i.test(labelText) ? 'print' : 'other';
+      const kind = /^(rollSize|canvas)/.test(select.id) ? 'other' // 0.24.2: roll-upy i płótna — bez miniaturek-prostokątów przy formatach
+        : /papier|gramatura/i.test(field.querySelector(':scope > label')?.textContent || '') ? 'paper'
+        : /format/i.test(field.querySelector(':scope > label')?.textContent || '') ? 'format'
+        : /zadruk|stronność/i.test(field.querySelector(':scope > label')?.textContent || '') ? 'print' : 'other';
       const available = permitted(select);
-      // 0.24.9: kafelki ilości nie pokazują żadnych cen (ani łącznej, ani „za sztukę”) — kwoty są tylko przy formatach i innych opcjach.
-      const priceEnabled = !isQuantity && (previewFields[pricing.page()] || []).includes(select.id);
+      const priceEnabled = (previewFields[pricing.page()] || []).includes(select.id);
       const prices = new Map();
       if (priceEnabled) available.forEach(o => {
         const price = pricing.preview(select.id, o.value, values);
@@ -125,7 +100,7 @@
       chipRow.querySelectorAll('button[data-option-index]').forEach(button => {
         const option = select.options[Number(button.dataset.optionIndex)];
         if (!option) return;
-        button.querySelectorAll('.d24-config-price, .d24-config-unit, .d24-config-context, .d24-choice-visual').forEach(node => node.remove());
+        button.querySelectorAll('.d24-config-price, .d24-config-context, .d24-choice-visual').forEach(node => node.remove());
         const note = smallInfo(kind, option.label);
         decoration(button,kind,option.label);
         if (note) {
@@ -134,8 +109,8 @@
           button.append(context);
         }
         const amount = prices.get(option.value);
-        // Opcje (formaty, papier, wykończenie…) pokazują faktyczną cenę całego zamówienia po wybraniu danej opcji
-        // (0.24.8: bez „+/−”). Opcja bez ceny dla bieżącej ilości (np. offset A2 × 500 szt.) nie ma kwoty.
+        // 0.24.5: kwota przy formacie zostaje także wtedy, gdy dana ilość jest dostępna tylko w jednym formacie
+        // (np. offset A3 × 500 szt. = 575 zł); chodzi o liczbę dostępnych opcji, nie o liczbę policzonych cen.
         if (amount !== undefined && available.length > 1) {
           const label = document.createElement('span');
           label.className = 'd24-config-price';
@@ -143,21 +118,6 @@
           button.append(label);
         }
       });
-      // Jedno zdanie wyjaśnia, co oznaczają kwoty na opcjach (nie są sumowane).
-      let priceNote = field.querySelector(':scope > .d24-config-price-note');
-      if (priceEnabled && kind !== 'quantity' && prices.size > 0 && available.length > 1) {
-        if (!priceNote) {
-          priceNote = document.createElement('small');
-          priceNote.className = 'd24-config-price-note';
-          chipRow.after(priceNote);
-        }
-        priceNote.textContent = tr('Kwoty to cena całego zamówienia z daną opcją.', 'Amounts are the price of the whole order with that option.');
-      } else if (priceNote) {
-        priceNote.remove();
-      }
-      // Wyjaśnienie kwot wystarczy raz na kartę produktu.
-      const card = field.closest('.card');
-      card?.querySelectorAll('.d24-config-price-note').forEach((node, index) => { node.hidden = index > 0; });
     });
   }
   function getComparable(card, values) {
@@ -245,6 +205,7 @@
       button.setAttribute('aria-pressed',String(selected));
       const name=makeNode('span','d24-config-comparison__option-name',item.label);
       const amount=makeNode('strong','',money(item.price));
+      // 0.24.8: faktyczna cena zamiast „+X zł” / „taniej” — różnice w kwotach klient widzi sam.
       const secondary=makeNode('small','',selected ? tr('Wybrany wariant','Selected option') : '');
       button.append(name,amount);if (selected) button.append(secondary);rows.append(button);
     });
