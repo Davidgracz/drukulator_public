@@ -20,19 +20,14 @@ with sync_playwright() as p:
   # 0.24.1: no print-area overlay or controls under the visualisation, only colour (and cut) choices.
   for gone in ('.d24-malfini-print-area','.d24-malfini-print-controls','.d24-malfini-print-toggle','.d24-malfini-print-reset','.d24-malfini-print-hint'):
    assert page.locator(gone).count()==0,gone
-  # Cut chips replace the static "Koszulka męska".
-  assert page.locator('[data-app-cut]').all_inner_texts()==['Męska','Damska','Dziecięca']
-  # 0.24.6: opis pod nazwą = rodzaj · gramatura · unisex; osobna linia z dostępnymi krojami (nie zależy od wybranego kroju).
+  # 0.24.7: przyciski wyboru kroju i cały blok „Krój” usunięte; opis i dostępne kroje zostają jako tekst.
+  for gone in ('[data-app-cut]','.d24-malfini-cuts','.d24-malfini-cut-options','.d24-malfini-cut-note','.d24-malfini-cut-fixed'):
+   assert page.locator(gone).count()==0,gone
+  assert 'Krój' not in page.locator('.d24-malfini-detail').inner_text().replace('Dostępne kroje','')
   assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g · unisex',page.locator('.d24-malfini-subtitle').inner_text()
   assert page.locator('.d24-malfini-availability').inner_text().strip()=='Dostępne kroje: męski, damski i dziecięcy'
-  assert page.locator('.d24-malfini-cut-note').is_hidden()
-  page.locator('[data-app-cut="Damska"]').click()
-  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g · unisex'
-  assert 'krój' not in page.locator('.d24-malfini-subtitle').inner_text()
-  assert page.locator('[data-app-cut="Damska"]').get_attribute('aria-pressed')=='true'
-  assert page.locator('.d24-malfini-cut-note').is_visible()
-  assert page.evaluate('gallery.selection().cut')=='Damska'
-  assert page.evaluate('gallery.selection().cutLabel')=='damski'
+  # Krój nie jest wybierany, więc nie trafia do zamówienia (modele z wieloma krojami).
+  assert page.evaluate('gallery.selection().cut')=='' and page.evaluate('gallery.selection().cutLabel')==''
   page.locator('[data-app-color="01"]').click()
   assert 'Czarny' in page.locator('.d24-malfini-color-label').inner_text()
   page.locator('[data-app-view="back"]').click()
@@ -42,12 +37,13 @@ with sync_playwright() as p:
   assert not overflow, width
   page.evaluate("gallery.render({category:'Koszulki bawełniane',product:'Heavy New 200 g'})")
   assert 'Heavy New 137' in page.locator('.d24-malfini-title').inner_text()
-  assert page.locator('[data-app-cut]').count()==0 and 'Unisex' in page.locator('.d24-malfini-cut-fixed').inner_text()
+  assert page.locator('[data-app-cut]').count()==0 and page.locator('.d24-malfini-cut-fixed').count()==0
+  assert page.evaluate('gallery.selection().cutLabel')=='unisex'   # jedyny możliwy krój zostaje w zamówieniu
   assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana oversize · 200 g · unisex'
   assert page.locator('.d24-malfini-availability').count()==0
-  # Chosen cut survives a model change when the new model offers it.
+  # Zmiana modelu nie przywraca wyboru kroju (przyciski usunięte).
   page.evaluate("gallery.render({category:'Koszulki bawełniane',product:'Basic 160 g'});gallery.render({category:'Koszulki bawełniane',product:'Classic New 145 g'})")
-  assert page.evaluate('gallery.selection().cut')=='Męska'
+  assert page.evaluate('gallery.selection().cut')=='' and page.locator('[data-app-cut]').count()==0
   # Vests: two models, two colours each, shown like shirts.
   page.evaluate("gallery.render({category:'Kamizelki odblaskowe',product:'Brixton Flash'})")
   assert 'Brixton Flash' in page.locator('.d24-malfini-title').inner_text()

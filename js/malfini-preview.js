@@ -320,19 +320,6 @@
     function cutText() {
       const subtitle = node.querySelector('.d24-malfini-subtitle');
       if (subtitle) subtitle.textContent = subtitleFor(activeModel, cutsFor(), current.category);
-      node.querySelectorAll('[data-app-cut]').forEach(button => {
-        const on = button.dataset.appCut === activeCut;
-        button.classList.toggle('is-active', on);
-        button.setAttribute('aria-pressed', String(on));
-      });
-      const note = node.querySelector('.d24-malfini-cut-note');
-      if (note) {
-        const differs = Boolean(activeCut && activeModel?.photoCut && activeCut !== activeModel.photoCut);
-        note.hidden = !differs;
-        note.textContent = differs
-          ? `Zdjęcia są poglądowe — krój ${cutAdjective[activeCut] || activeCut.toLowerCase()} ma nieco inny fason, kolory są takie same.`
-          : '';
-      }
     }
 
     function loadPrimary() {
@@ -432,7 +419,6 @@
 
     function render(next) {
       const changed = next.product !== current.product || next.category !== current.category;
-      const previousCut = activeCut;
       current = { category: next.category, product: next.product };
       activeModel = products[current.product] || null;
       const colors = colorsFor();
@@ -442,11 +428,11 @@
         activeColor = /torby|worki/i.test(current.category) && colors.some(c => c[0] === '10')
           ? '10'
           : colors.some(c => c[0] === '01') ? '01' : colors[0]?.[0] || '';
-        // Zachowaj wybrany krój przy zmianie modelu, jeśli nowy model go oferuje.
-        activeCut = cuts.includes(previousCut) ? previousCut : (cuts.includes(activeModel?.photoCut) ? activeModel.photoCut : cuts[0] || '');
       }
       if (!colors.some(c => c[0] === activeColor)) activeColor = colors[0]?.[0] || '';
-      if (!cuts.includes(activeCut)) activeCut = cuts.includes(activeModel?.photoCut) ? activeModel.photoCut : cuts[0] || '';
+      // 0.24.7: przyciski wyboru kroju usunięte. Krój wybrany przez klienta nie jest zapisywany;
+      // modele z jedynym krojem (unisex) zachowują go w zamówieniu, modele z wieloma krojami — bez kroju.
+      activeCut = cuts.length === 1 ? cuts[0] : '';
       const viewList = viewsFor();
       if (!viewList.some(v => v.id === activeView)) activeView = 'front';
       const name = activeModel ? `${activeModel.name}${activeModel.code ? ` ${activeModel.code}` : ''}` : current.product;
@@ -458,11 +444,6 @@
         ['Rozmiary', activeModel?.sizes || 'Do ustalenia']
       ];
       if (activeModel?.norm) facts.push(['Norma', activeModel.norm]);
-      const cutsHtml = cuts.length
-        ? `<div class="d24-malfini-cuts"><div class="d24-malfini-cuts__heading"><strong>Krój</strong></div>${cuts.length > 1
-          ? `<div class="d24-malfini-cut-options" role="group" aria-label="Wybierz krój">${cuts.map(cut => `<button type="button" class="d24-malfini-cut" data-app-cut="${escapeHtml(cut)}" aria-pressed="false">${escapeHtml(cut)}</button>`).join('')}</div>`
-          : `<span class="d24-malfini-cut-fixed">${escapeHtml(cuts[0])}</span>`}<p class="d24-malfini-cut-note" aria-live="polite" hidden></p></div>`
-        : '';
       node.innerHTML = `
         <div class="d24-malfini-gallery">
           <div class="d24-malfini-gallery__stage" aria-label="Podgląd wybranego produktu">
@@ -485,15 +466,13 @@
           <div class="d24-malfini-facts${facts.length > 3 ? ' has-extra' : ''}">
             ${facts.map(([label, value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}
           </div>
-          ${cutsHtml}
           ${colors.length ? `<div class="d24-malfini-colors"><div class="d24-malfini-colors__heading"><strong>Kolor produktu</strong><span class="d24-malfini-color-label"></span></div><div class="d24-malfini-swatches" role="group" aria-label="Wybierz kolor">${colors.map(([code, label, hex]) => `<button type="button" class="d24-malfini-swatch" data-app-color="${escapeHtml(code)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" aria-pressed="false"><span style="--swatch:${escapeHtml(hex)}"></span></button>`).join('')}</div></div>` : ''}
           <div class="d24-malfini-help"><strong>Indywidualne zamówienie</strong><p>Podaj ilość sztuk i ewentualne uwagi. Rozmiary, kolor, dostępność i ostateczną cenę potwierdzimy mailowo.</p></div>
           ${modelLink ? `<a class="d24-malfini-link" href="${escapeHtml(modelLink)}" target="_blank" rel="noopener noreferrer">${escapeHtml(activeModel?.linkLabel || 'Zobacz produkt w katalogu Malfini')} <span aria-hidden="true">↗</span></a>` : ''}
-          <small class="d24-malfini-disclaimer">${hasImages ? 'Podgląd ma charakter poglądowy — część ujęć może pochodzić ze zdjęć katalogowych, a część z wizualizacji.' : ''} Wybrany kolor${cuts.length ? ' i krój' : ''} zapisujemy jako preferencję, bez potwierdzania stanu magazynowego.</small>
+          <small class="d24-malfini-disclaimer">${hasImages ? 'Podgląd ma charakter poglądowy — część ujęć może pochodzić ze zdjęć katalogowych, a część z wizualizacji.' : ''} Wybrany kolor zapisujemy jako preferencję, bez potwierdzania stanu magazynowego.</small>
         </div>`;
       node.querySelectorAll('[data-app-view]').forEach(btn => btn.addEventListener('click', () => { activeView = btn.dataset.appView; updateGallery(); }));
       node.querySelectorAll('[data-app-color]').forEach(btn => btn.addEventListener('click', () => { activeColor = btn.dataset.appColor; updateGallery(); }));
-      node.querySelectorAll('[data-app-cut]').forEach(btn => btn.addEventListener('click', () => { activeCut = btn.dataset.appCut; cutText(); }));
       updateGallery();
     }
 
