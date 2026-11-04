@@ -112,14 +112,14 @@
         : /format/i.test(labelText) ? 'format'
         : /zadruk|stronność|stron zadrukować/i.test(labelText) ? 'print' : 'other';
       const available = permitted(select);
-      const priceEnabled = isQuantity || (previewFields[pricing.page()] || []).includes(select.id);
+      // 0.24.9: kafelki ilości nie pokazują żadnych cen (ani łącznej, ani „za sztukę”) — kwoty są tylko przy formatach i innych opcjach.
+      const priceEnabled = !isQuantity && (previewFields[pricing.page()] || []).includes(select.id);
       const prices = new Map();
       if (priceEnabled) available.forEach(o => {
         const price = pricing.preview(select.id, o.value, values);
         if (price !== null) prices.set(o.value, price);
       });
-      const noUnit = select.dataset.d24NoUnitPrice === '1';
-      const signature = JSON.stringify([document.documentElement.lang, select.id, kind, select.value, noUnit, available, Array.from(prices.entries())]);
+      const signature = JSON.stringify([document.documentElement.lang, select.id, kind, select.value, available, Array.from(prices.entries())]);
       if (chipRow.dataset.configuratorSignature === signature) return;
       chipRow.dataset.configuratorSignature = signature;
       chipRow.querySelectorAll('button[data-option-index]').forEach(button => {
@@ -134,28 +134,13 @@
           button.append(context);
         }
         const amount = prices.get(option.value);
-        // 0.24.5/0.24.8: ilości pokazują cenę łączną; pozostałe opcje — faktyczną cenę całego zamówienia po wybraniu
-        // danej opcji (bez „+/−”). Opcja bez ceny dla bieżącej ilości (np. offset A2 × 500 szt.) nie ma kwoty.
-        const showPrice = amount !== undefined && (kind === 'quantity' ? prices.size > 1 : available.length > 1);
-        if (showPrice) {
+        // Opcje (formaty, papier, wykończenie…) pokazują faktyczną cenę całego zamówienia po wybraniu danej opcji
+        // (0.24.8: bez „+/−”). Opcja bez ceny dla bieżącej ilości (np. offset A2 × 500 szt.) nie ma kwoty.
+        if (amount !== undefined && available.length > 1) {
           const label = document.createElement('span');
           label.className = 'd24-config-price';
-          if (kind === 'quantity') {
-            // Ilość: cena łączna i cena za sztukę.
-            label.textContent = money(amount);
-            button.append(label);
-            const qty = Number(option.value);
-            if (Number.isInteger(qty) && qty > 1 && !noUnit) {
-              const unit = document.createElement('small');
-              unit.className = 'd24-config-unit';
-              unit.textContent = `${money(amount / qty)} ${tr('za sztukę', 'per piece')}`;
-              button.append(unit);
-            }
-          } else {
-            // Pozostałe opcje: faktyczna cena całego zamówienia z tą opcją (0.24.8: bez różnic „+/−”).
-            label.textContent = money(amount);
-            button.append(label);
-          }
+          label.textContent = money(amount);
+          button.append(label);
         }
       });
       // Jedno zdanie wyjaśnia, co oznaczają kwoty na opcjach (nie są sumowane).

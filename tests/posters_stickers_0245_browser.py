@@ -29,6 +29,7 @@ with sync_playwright() as p:
   page.locator(f'nav#navigation button[data-page="{name}"]').first.evaluate('(b)=>b.click()')
   page.wait_for_timeout(600)
  tiles=lambda sel: page.locator(sel).all_inner_texts()
+ fmt_prices=lambda: [t.split('\n')[-1] for t in page.locator('.field:has(#posterFormat) .d24-smart-choice').all_inner_texts()]
  open_page('Plakaty 24h')
  fmt='.field:has(#posterFormat) .d24-smart-choice'
  qtyt='#posterQtyWrap .d24-smart-choice'
@@ -42,9 +43,8 @@ with sync_playwright() as p:
  a3=page.locator(fmt).first.inner_text()
  print('A3 tile @500:',repr(a3),flush=True)
  assert a3.startswith('A3') and '575,00 zł' in a3,a3
- q500=page.locator(qtyt,has_text='500').first.inner_text()
- assert '575,00 zł' in q500 and q500.count('za sztukę')==1,q500   # brak zdublowanej linii po kliknięciu
- for t in tiles(qtyt): assert t.count('za sztukę')==1,t
+ # 0.24.9: kafelki ilości bez cen (ani łącznej, ani „za sztukę”) — kwoty tylko przy formatach.
+ assert tiles(qtyt)==['100','250','500'],tiles(qtyt)
  # przy 100 szt. nadal pokazują się różnice cen pozostałych formatów
  page.locator(qtyt,has_text='100').first.click(); page.wait_for_timeout(500)
  texts=tiles(fmt)
@@ -63,13 +63,11 @@ with sync_playwright() as p:
  choices=page.locator(qtyt)
  assert [c.get_attribute('data-option-value') for c in choices.all()]==['1','3','6','10','20']
  txt=tiles(qtyt); print('Large tiles:',txt,flush=True)
- for t in txt:
-  assert 'szt.' not in t and 'za sztukę' not in t and 'zł/szt' not in t,t
-  assert 'zł' in t,t
- assert txt[0].split('\n')[0]=='1' and '30,00 zł' in txt[0]
- assert '75,00 zł' in txt[1] and '132,00 zł' in txt[2] and '200,00 zł' in txt[3] and '400,00 zł' in txt[4],txt
+ assert txt==['1','3','6','10','20'],txt
  page.locator(qtyt+'[data-option-value="6"]').click(); page.wait_for_timeout(500)
- for t in tiles(qtyt): assert 'za sztukę' not in t,t
+ assert tiles(qtyt)==['1','3','6','10','20']
+ # ceny są przy formatach i zależą od wybranej ilości (6 szt. A2 = 6 × 22 zł)
+ assert fmt_prices()[0]=='132,00 zł',fmt_prices()
  assert page.locator('#posterQty').input_value()=='6'
  assert [o for o in page.locator('#posterQty option').all_inner_texts()][:3]==['1','2','3']
  assert page.locator('#posterQty option').count()==30   # 1–30 zostaje dla asystenta i presetów

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.24.8v";
+  const VERSION = "0.24.9v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -5324,9 +5324,8 @@
       if (isLarge) {
         // Wszystkie wartości 1–30 zostają w polu (asystent i presety zamówień z tekstu z nich korzystają).
         // 0.24.5: jako szybkie kafelki pokazujemy tylko 1, 3, 6, 10 i 20 — tak samo jak w druku cyfrowym
-        // i offsetowym: sama ilość i cena łączna (bez ceny za sztukę).
+        // i offsetowym (0.24.9: sama ilość, bez cen; kwoty są przy formatach).
         qty.dataset.d24FeaturedQuantities = "1,3,6,10,20";
-        qty.dataset.d24NoUnitPrice = "1";
         const quantities = Array.from({ length: POSTER_LARGE_MAX_QUANTITY }, (_, index) => String(index + 1));
         qty.innerHTML = options(quantities);
         qty.value = quantities.includes(previousQty) ? previousQty : "1";
@@ -5344,7 +5343,6 @@
         info.innerHTML = `${customBillingNotice(billing)}${alertBox(`Papier satynowy 135 g. Możesz zamówić już od 1 sztuki; własny nakład od 1 do ${POSTER_LARGE_MAX_QUANTITY} sztuk. Własny wymiar jest liczony jak najmniejszy standardowy format, w którym mieści się cały plakat, również po obróceniu. ${LIMIT_CONTACT_TEXT}`, "info")}<details><summary>Cennik: ${esc(formatLabel(billing.formatName))}</summary><table class="tier-table"><thead><tr><th>Nakład</th><th>Cena jednostkowa</th></tr></thead><tbody>${rows}</tbody></table></details>`;
       } else {
         delete qty.dataset.d24FeaturedQuantities;
-        delete qty.dataset.d24NoUnitPrice;
         const quantities = Object.keys(formatData);
         qty.innerHTML = options(quantities);
         if (quantities.includes(previousQty)) qty.value = previousQty;

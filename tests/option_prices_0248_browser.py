@@ -1,4 +1,4 @@
-"""0.24.8: kafelki opcji i karty porównania pokazują faktyczne ceny, a nie różnice „+/−”."""
+"""0.24.8/0.24.9: kafelki opcji pokazują faktyczne ceny (bez „+/−”); kafelki ilości są bez cen."""
 from pathlib import Path
 import json,re
 from playwright.sync_api import sync_playwright
@@ -69,6 +69,22 @@ with sync_playwright() as p:
  open_page('Wizytówki 24h'); page.locator('#calculate').click(); page.wait_for_timeout(900)
  up=page.evaluate("document.querySelector('.variant-upgrade-card')?.textContent||''")
  assert 'za całe zamówienie (obecnie 50,00 zł)' in up and '+' not in up.replace('+ ',''),up
+ # 0.24.9: kafelki „Ilość sztuk” bez żadnych cen (ani łącznej, ani „za sztukę”); ceny zostają przy formatach i innych opcjach.
+ qty_probe="""()=>{const ids=['bcQuantity','flyQuantity','posterQty','digQty','bannerQty','stickQty','rollQty'];
+   const out={rows:0,pricedQtyTiles:0,pricedOtherTiles:0};
+   document.querySelectorAll('#content .field').forEach(f=>{const sel=f.querySelector(':scope > select');const row=f.querySelector(':scope > .d24-smart-options');if(!sel||!row)return;
+     const n=row.querySelectorAll('.d24-config-price,.d24-config-unit').length;
+     if(ids.includes(sel.id)){out.rows++;out.pricedQtyTiles+=n;}else out.pricedOtherTiles+=n;});
+   return out;}"""
+ for pg in ['Wizytówki 24h','Ulotki 24h','Plakaty 24h','Druk cyfrowy i ksero 24h','Folie i banery 24h','Naklejki, etykiety i magnesy','Roll-upy i X-banery']:
+  open_page(pg)
+  r=page.evaluate(qty_probe)
+  assert r['pricedQtyTiles']==0,(pg,r)
+  assert r['pricedOtherTiles']>0,(pg,r)   # ceny są przy formatach / materiałach / wykończeniach
+ open_page('Plakaty 24h'); setv('#posterPrint','Offsetowy'); setv('#posterFormat','A3')
+ page.locator('#posterQtyWrap .d24-smart-choice',has_text='500').first.click(); page.wait_for_timeout(500)
+ assert page.locator('#posterQtyWrap .d24-smart-choice').all_inner_texts()==['100','250','500']
+ assert page.locator('.field:has(#posterFormat) .d24-smart-choice').first.inner_text().split('\n')[-1]=='575,00 zł'
  assert not errors,errors
- print('OPTION PRICES 0.24.8 BROWSER OK',flush=True)
+ print('OPTION PRICES 0.24.9 BROWSER OK',flush=True)
  browser.close()
