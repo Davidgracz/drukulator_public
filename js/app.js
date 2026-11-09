@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.2v";
+  const VERSION = "0.25.3v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -81,7 +81,7 @@
     searchQuery: "",
     smartQuotePreset: null,
     adminUnlocked: loadSessionFlag(ADMIN_SESSION_KEY),
-    cart: loadJson("drukulator_cart", []),
+    cart: upgradeLegacyCart(loadJson("drukulator_cart", [])),
     order: loadJson("drukulator_order", {
       name: "", email: "", phone: "", pickup: "Odbiór osobisty", notes: ""
     }),
@@ -2689,6 +2689,23 @@
     return pricesToMigrate;
   }
 
+  // 0.25.3: X-banery, roll-upy i komplety taxi dodane do koszyka w starszych wersjach nie miały typu produktu, przez co serwer
+  // odrzucał zamówienie komunikatem o „starszej wersji kalkulatora”. Te produkty nie mają limitów do sprawdzenia, więc typ uzupełniamy.
+  // Pozostałe pozycje bez typu (np. plakaty, PCV, obrazy) zostają bez zmian — dla nich serwer nadal wymaga ponownego obliczenia.
+  function legacyProductType(item) {
+    const title = String(item?.title || "");
+    if (/^(roll-up|x-baner|wkład z wymianą)/i.test(title)) return "rollup";
+    if (/naklejki taxi/i.test(title)) return "taxi";
+    return "";
+  }
+  function upgradeLegacyCart(items) {
+    if (!Array.isArray(items)) return [];
+    return items.map(item => {
+      if (!item || typeof item !== "object" || item.meta?.productType) return item;
+      const type = legacyProductType(item);
+      return type ? { ...item, meta: { ...(item.meta && typeof item.meta === "object" ? item.meta : {}), productType: type } } : item;
+    });
+  }
   function loadJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
   }
@@ -3110,7 +3127,9 @@
       }
 
       const { files, ...cartQuote } = quote;
-      state.cart.push({ ...cartQuote, id: Date.now() + Math.random() });
+      // 0.25.3: każda pozycja dodana w tej wersji ma typ produktu — serwer nie bierze jej za pozycję „ze starszej wersji kalkulatora”.
+      const quoteMeta = cartQuote.meta && typeof cartQuote.meta === "object" ? cartQuote.meta : {};
+      state.cart.push({ ...cartQuote, meta: { ...quoteMeta, productType: quoteMeta.productType || "other" }, id: Date.now() + Math.random() });
       saveState();
       renderCart();
       analyticsTrack("add_to_cart", { product: quote.title, page: state.page, value: Number(quote.price) });
@@ -4744,7 +4763,7 @@
       const result = C.calculateStickers(state.prices, product.value, quantity, surface ? numberValue("stickWidth") : null, surface ? numberValue("stickHeight") : null);
       if (surface) {
         showQuote({ title: product.value, description: `${product.value}, ${value("stickWidth")} × ${value("stickHeight")} mm, zamawiana ilość ${quantity} szt.`, price: result.price, details: [["Naklejek w rzędzie", result.stickersPerRow], ["Liczba rzędów", result.rows], ["Łącznie wykonanych naklejek", result.totalStickers], ["Dodatkowych naklejek", result.extraStickers], ["Długość przed zaokrągleniem", `${num(result.baseLengthM, 3)} mb`], ["Długość rozliczeniowa", `${num(result.billedLengthM, 1)} mb`], ["Cena za mb", `${money(result.pricePerLinearMeter)} zł`], ["Wymiar produkcyjny", `${num(result.productionWidthMm, 1)} × ${num(result.productionHeightMm, 1)} mm`]], meta: { productType: "sticker", widthMm: numberValue("stickWidth"), heightMm: numberValue("stickHeight"), quantity } });
-      } else showQuote({ title: product.value, description: `${product.value}, ${quantity} szt./kompletów`, price: result.price, details: [["Cena jednostkowa", `${money(result.unitPrice)} zł`]] });
+      } else showQuote({ title: product.value, description: `${product.value}, ${quantity} szt./kompletów`, price: result.price, details: [["Cena jednostkowa", `${money(result.unitPrice)} zł`]], meta: { productType: "taxi", quantity } });
     } catch (e) { setResultError(e); } });
   }
 
@@ -5370,7 +5389,7 @@
       const quantity = numberValue("rollQty");
       const result = C.calculateRollup(state.prices, product.value, size.value, quantity);
       const tierLabel = result.tierMinQuantity >= 5 ? "Od 5 sztuk" : result.tierMinQuantity >= 2 ? "2–4 sztuki" : "1 sztuka";
-      showQuote({ title: product.value, description: `${product.value}, ${size.value}, ${quantity} szt.`, price: result.price, details: [["Próg ilościowy", tierLabel], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]] });
+      showQuote({ title: product.value, description: `${product.value}, ${size.value}, ${quantity} szt.`, price: result.price, details: [["Próg ilościowy", tierLabel], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]], meta: { productType: "rollup", quantity } });
     } catch (e) { setResultError(e); } });
   }
 
@@ -6614,7 +6633,7 @@
 
   function sanitizeLoadedSharedCart(items) {
     if (!Array.isArray(items)) return [];
-    return items.slice(0, 30).map((item, index) => ({
+    return upgradeLegacyCart(items.slice(0, 30)).map((item, index) => ({
       title: String(item?.title || "Pozycja"),
       description: String(item?.description || ""),
       price: Number(item?.price || 0),

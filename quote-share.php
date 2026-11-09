@@ -7,7 +7,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('X-Content-Type-Options: nosniff');
 
 const D24_SHARED_QUOTES_DB_VERSION = '1.0';
-const D24_SHARED_QUOTES_RETENTION_DAYS = 30;
+const D24_SHARED_QUOTES_RETENTION_DAYS = 7;
 const D24_SHARED_QUOTES_MAX_ITEMS = 30;
 const D24_SHARED_QUOTES_MAX_TOTAL = 5000.0;
 
