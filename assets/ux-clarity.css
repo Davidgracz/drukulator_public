@@ -1,5 +1,5 @@
-/* Drukulator 0.25.3v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
-   obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
+/* Drukulator 0.25.4v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+   obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
 
@@ -56,3 +56,21 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
 /* Podgląd produktu z plikiem z kalkulatora: bez drugiego pola wgrywania. */
 .d24-preview-upload.is-external > input[type="file"] { display: none; }
 .d24-preview-upload.is-external > label { pointer-events: none; }
+
+/* 0.25.4: pianki — tabela cen za sztukę według progów ilościowych (1 / 2–4 / 5–9 / od 10 szt.). Wybrany format i próg są wyróżnione. */
+.d24-foam-tiers { margin-top: 14px; }
+.d24-foam-tiers h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.d24-foam-tier-scroll { overflow-x: auto; }
+.d24-foam-tier-table { margin-top: 0; min-width: 420px; }
+.d24-foam-tier-table th, .d24-foam-tier-table td { padding: 9px 10px; white-space: nowrap; }
+.d24-foam-tier-table th:not(:first-child), .d24-foam-tier-table td:not(:first-child) { text-align: right; }
+.d24-foam-tier-table .is-active-tier { font-weight: 800; }
+.d24-foam-tier-table tbody tr.is-selected td { background: var(--nav-active); color: var(--text); font-weight: 700; }
+.d24-foam-tier-table tbody tr.is-selected td.is-active-tier { color: var(--accent); font-weight: 800; box-shadow: inset 0 -2px 0 var(--accent); }
+.d24-foam-tier-table thead th.is-active-tier { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+@media (max-width: 520px) {
+  .d24-foam-tier-table { min-width: 0; font-size: .92rem; }
+  .d24-foam-tier-table th, .d24-foam-tier-table td { padding: 8px 6px; }
+  .d24-foam-tier-table td:first-child { white-space: normal; }
+  .d24-foam-tier-table td:first-child small { display: block; font-size: .78rem; opacity: .85; }
+}

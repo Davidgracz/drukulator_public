@@ -351,11 +351,22 @@
     return formats;
   }
 
+  // 0.25.4: pianki mają progi ilościowe (1 / 2–4 / 5–9 / od 10 szt.) — tak samo jak plakaty wielkoformatowe.
+  // Starszy cennik z jedną ceną „cena_sztuki” (bez progów) nadal działa jako jedna cena dla każdej ilości.
+  function getFoamBoardUnitPrice(format, quantity) {
+    const tiers = Array.isArray(format?.progi_ilosciowe) ? format.progi_ilosciowe : [];
+    const unitPrice = tiers.length
+      ? Number(getQuantityUnitPrice(quantity, tiers).cena_sztuki)
+      : Number(format?.cena_sztuki);
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new Error("Brak ceny dla wybranego formatu planszy.");
+    return unitPrice;
+  }
+
   function calculateFoamBoardStandard(prices, productType, formatName, quantity) {
     assertWholeQuantity(quantity);
     const format = getFoamBoardFormats(prices, productType)[formatName];
     if (!format) throw new Error("Nie znaleziono wybranego formatu planszy.");
-    const unitPrice = Number(format.cena_sztuki);
+    const unitPrice = getFoamBoardUnitPrice(format, quantity);
     const materialPrice = round2(unitPrice * Number(quantity));
     const productData = prices.pvc?.[productType];
     const cutting = calculateOptionalManualCutting(prices, productData, Number(format.szerokosc_cm), Number(format.wysokosc_cm), quantity, false);
@@ -365,7 +376,7 @@
     };
   }
 
-  function findFoamBoardBillingFormat(prices, productType, widthCm, heightCm) {
+  function findFoamBoardBillingFormat(prices, productType, widthCm, heightCm, quantity = 1) {
     assertPositive(widthCm, "Szerokość planszy");
     assertPositive(heightCm, "Wysokość planszy");
     const requestedWidth = Number(widthCm);
@@ -379,13 +390,16 @@
         formatName,
         widthCm: formatWidth,
         heightCm: formatHeight,
-        price: Number(format.cena_sztuki),
+        format,
         areaCm2: formatWidth * formatHeight,
         rotated: !fitsNormally && fitsRotated,
         contains: fitsNormally || fitsRotated
       };
     });
-    const containing = candidates.filter(item => item.contains).sort((a, b) => a.areaCm2 - b.areaCm2 || a.price - b.price);
+    const containing = candidates
+      .filter(item => item.contains)
+      .map(({ format, ...item }) => ({ ...item, price: getFoamBoardUnitPrice(format, quantity) }))
+      .sort((a, b) => a.areaCm2 - b.areaCm2 || a.price - b.price);
     if (!containing.length) throwLimit("Dla podanego wymiaru pianki nie ma ceny automatycznej w cenniku.");
     return { ...containing[0], billingMethod: "Najmniejszy format z cennika mieszczący podany wymiar" };
   }
@@ -395,7 +409,7 @@
     const shorterSide = Math.min(Number(widthCm), Number(heightCm));
     const longerSide = Math.max(Number(widthCm), Number(heightCm));
     if (shorterSide > 100 || longerSide > 140) throwLimit("Maksymalny wymiar pianki to 100 × 140 cm, również po obróceniu.");
-    const billing = findFoamBoardBillingFormat(prices, productType, widthCm, heightCm);
+    const billing = findFoamBoardBillingFormat(prices, productType, widthCm, heightCm, quantity);
     const materialPrice = round2(billing.price * Number(quantity));
     const productData = prices.pvc?.[productType];
     const cutting = calculateOptionalManualCutting(prices, productData, widthCm, heightCm, quantity, false);
@@ -840,7 +854,7 @@
     NO_PRINT, DIGITAL_FINISH_KEYS, OFFSET_FINISH_KEYS,
     getBannerPricePerM2, calculateManualCutting, calculateOptionalManualCutting, calculateBanner, calculateBusinessCards, calculateFlyers,
     getStickerPricePerLinearMeter, calculateStickers, calculateNotepads, calculateCatalogProduct,
-    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
+    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
     calculateLamination, getCanvasSuggestions, calculateProportionalCanvasSize, calculateCanvasStandard, calculateCanvasCustom, calculateWedding,
     getQuantityTier, roundUpToStep
   };

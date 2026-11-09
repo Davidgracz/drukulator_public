@@ -1,4 +1,4 @@
-/* Drukulator 0.23.1 (0.25.2: data-d24-detail) — progressive form enhancements. Business logic stays in app.js. */
+/* Drukulator 0.23.1 (0.25.2: data-d24-detail, 0.25.4: pianki jak plakaty) — progressive form enhancements. Business logic stays in app.js. */
 (() => {
   'use strict';
   const content = document.getElementById('content');
@@ -17,6 +17,8 @@
     'bcFormat', 'bcSides', 'bcQuantity',
     'flyFormat', 'flyQuantity',
     'posterFormat', 'posterQty',
+    // 0.25.4: pianki wyglądają jak plakaty wielkoformatowe — bez dodatkowego opisu pod formatem.
+    'foamFormat',
     'appQty',
     // 0.24.2: roll-upy — bez dodatkowego opisu „Wybierz gotowy rozmiar produktu” pod formatem.
     'rollSize'
@@ -165,7 +167,8 @@
     const input = field.querySelector(':scope > input, :scope > select, :scope > textarea');
     if (!label || !input || input.disabled || input.type === 'hidden') return;
     if (!label.htmlFor && input.id) label.htmlFor = input.id;
-    if (conciseProductFields.has(input.id)) {
+    // 0.25.4: „pvcQty” jest listą (kafelki ilości) tylko przy piankach; przy PCV to zwykłe pole liczby z opisem nakładu.
+    if (conciseProductFields.has(input.id) || (input.id === 'pvcQty' && input.tagName === 'SELECT')) {
       field.querySelector(':scope > .d24-control-guide')?.remove();
     } else if (!field.querySelector(':scope > .d24-control-guide') && !field.querySelector(':scope > small')) {
       const guide = guides.find(([pattern]) => pattern.test(label.textContent));

@@ -52,40 +52,40 @@
 .content .d24-technology-select--posters .d24-technology-select__buttons button {
   min-height: 72px;
 }
-.content #posterQtyWrap .d24-smart-options { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
-.content #posterQtyWrap .d24-smart-choice { min-height: 48px; }
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-smart-options { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-smart-choice { min-height: 48px; }
 @media (max-width: 720px) {
   .content .d24-technology-select--posters .d24-technology-select__buttons {
     grid-template-columns: 1fr;
   }
-  .content #posterQtyWrap .d24-smart-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .content :is(#posterQtyWrap,#foamQtyWrap) .d24-smart-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 380px) {
-  .content #posterQtyWrap .d24-smart-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .content :is(#posterQtyWrap,#foamQtyWrap) .d24-smart-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 
 /* 0.23.12v: own quantity remains a separate visible button next to poster presets. */
-.content #posterQtyWrap .d24-poster-own-toggle {
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-toggle {
   display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:160px;
   padding:11px 17px;margin-top:10px;border:1.5px dashed var(--accent);border-radius:11px;
   background:var(--panel);color:var(--text);font:inherit;font-size:.95rem;font-weight:800;cursor:pointer;
 }
-.content #posterQtyWrap .d24-poster-own-toggle[aria-pressed="true"] {
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-toggle[aria-pressed="true"] {
   background:var(--nav-active);border-style:solid;box-shadow:inset 0 0 0 1px var(--accent);
 }
-.content #posterQtyWrap .d24-poster-own-toggle:focus-visible,.content #posterQtyWrap .d24-poster-own-entry input:focus-visible {
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-toggle:focus-visible,.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-entry input:focus-visible {
   outline:3px solid var(--accent);outline-offset:3px;
 }
-.content #posterQtyWrap .d24-poster-own-panel[hidden],
-.content #posterQtyWrap .d24-poster-own-toggle[hidden] {display:none!important;}
-.content #posterQtyWrap .d24-poster-own-panel {
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-panel[hidden],
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-toggle[hidden] {display:none!important;}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-panel {
   padding:15px;margin-top:12px;background:var(--panel-2);border:1px solid var(--border);border-radius:11px;
 }
-.content #posterQtyWrap .d24-poster-own-panel label {display:block;font-size:1rem;font-weight:750;margin:0 0 9px;}
-.content #posterQtyWrap .d24-poster-own-entry input {display:block;width:min(100%,260px);min-height:48px;font-size:1rem;}
-.content #posterQtyWrap .d24-poster-own-note {min-height:22px;margin-top:10px;font-size:1rem;line-height:1.5;}
-.content #posterQtyWrap .d24-poster-own-note[data-status="error"] {color:var(--danger,#a82b35);}
-.content #posterQtyWrap .d24-poster-own-note[data-status="success"] {color:var(--text);}
-.content #posterQtyWrap .d24-poster-inquiry {display:inline-block;font-weight:800;color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
-@media(max-width:500px){.content #posterQtyWrap .d24-poster-own-toggle {width:100%;}}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-panel label {display:block;font-size:1rem;font-weight:750;margin:0 0 9px;}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-entry input {display:block;width:min(100%,260px);min-height:48px;font-size:1rem;}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-note {min-height:22px;margin-top:10px;font-size:1rem;line-height:1.5;}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-note[data-status="error"] {color:var(--danger,#a82b35);}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-note[data-status="success"] {color:var(--text);}
+.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-inquiry {display:inline-block;font-weight:800;color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
+@media(max-width:500px){.content :is(#posterQtyWrap,#foamQtyWrap) .d24-poster-own-toggle {width:100%;}}

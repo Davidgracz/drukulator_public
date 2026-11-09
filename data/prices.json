@@ -220,32 +220,134 @@
         "A3 (30 × 42 cm)": {
           "szerokosc_cm": 30,
           "wysokosc_cm": 42,
-          "cena_sztuki": 50
+          "progi_ilosciowe": [
+            {
+              "min_szt": 1,
+              "cena_sztuki": 50
+            },
+            {
+              "min_szt": 2,
+              "cena_sztuki": 45
+            },
+            {
+              "min_szt": 5,
+              "cena_sztuki": 40
+            },
+            {
+              "min_szt": 10,
+              "cena_sztuki": 35
+            }
+          ]
         },
         "A2 (42 × 59 cm)": {
           "szerokosc_cm": 42,
           "wysokosc_cm": 59,
-          "cena_sztuki": 55
+          "progi_ilosciowe": [
+            {
+              "min_szt": 1,
+              "cena_sztuki": 55
+            },
+            {
+              "min_szt": 2,
+              "cena_sztuki": 50
+            },
+            {
+              "min_szt": 5,
+              "cena_sztuki": 45
+            },
+            {
+              "min_szt": 10,
+              "cena_sztuki": 40
+            }
+          ]
         },
         "A1 (59 × 84 cm)": {
           "szerokosc_cm": 59,
           "wysokosc_cm": 84,
-          "cena_sztuki": 90
+          "progi_ilosciowe": [
+            {
+              "min_szt": 1,
+              "cena_sztuki": 90
+            },
+            {
+              "min_szt": 2,
+              "cena_sztuki": 85
+            },
+            {
+              "min_szt": 5,
+              "cena_sztuki": 75
+            },
+            {
+              "min_szt": 10,
+              "cena_sztuki": 70
+            }
+          ]
         },
         "B2 (50 × 70 cm)": {
           "szerokosc_cm": 50,
           "wysokosc_cm": 70,
-          "cena_sztuki": 65
+          "progi_ilosciowe": [
+            {
+              "min_szt": 1,
+              "cena_sztuki": 65
+            },
+            {
+              "min_szt": 2,
+              "cena_sztuki": 60
+            },
+            {
+              "min_szt": 5,
+              "cena_sztuki": 55
+            },
+            {
+              "min_szt": 10,
+              "cena_sztuki": 50
+            }
+          ]
         },
         "B1 (70 × 100 cm)": {
           "szerokosc_cm": 70,
           "wysokosc_cm": 100,
-          "cena_sztuki": 120
+          "progi_ilosciowe": [
+            {
+              "min_szt": 1,
+              "cena_sztuki": 120
+            },
+            {
+              "min_szt": 2,
+              "cena_sztuki": 110
+            },
+            {
+              "min_szt": 5,
+              "cena_sztuki": 100
+            },
+            {
+              "min_szt": 10,
+              "cena_sztuki": 90
+            }
+          ]
         },
         "B0 (100 × 140 cm)": {
           "szerokosc_cm": 100,
           "wysokosc_cm": 140,
-          "cena_sztuki": 220
+          "progi_ilosciowe": [
+            {
+              "min_szt": 1,
+              "cena_sztuki": 220
+            },
+            {
+              "min_szt": 2,
+              "cena_sztuki": 200
+            },
+            {
+              "min_szt": 5,
+              "cena_sztuki": 190
+            },
+            {
+              "min_szt": 10,
+              "cena_sztuki": 180
+            }
+          ]
         }
       },
       "inne_wymiary": true

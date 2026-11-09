@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.3v";
+  const VERSION = "0.25.4v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2684,6 +2684,19 @@
 
       const foamBoard = pvcProducts["Plansza pianka 5 mm"];
       if (foamBoard && typeof foamBoard.doliczaj_ciecie_reczne !== "boolean") foamBoard.doliczaj_ciecie_reczne = false;
+      // 0.25.4: pianki mają progi ilościowe (progi_ilosciowe). Zapisane lokalnie lub zaimportowane ceny ze starą pojedynczą
+      // „cena_sztuki” nie psują cennika: gdy brak progów, stara cena staje się jedynym progiem; gdy progi są (z nowego cennika),
+      // nieużywana już „cena_sztuki” znika, żeby nie wprowadzała w błąd w edycji cen.
+      if (foamBoard?.formaty && typeof foamBoard.formaty === "object") {
+        Object.values(foamBoard.formaty).forEach(foamFormat => {
+          if (!foamFormat || typeof foamFormat !== "object") return;
+          const hasTiers = Array.isArray(foamFormat.progi_ilosciowe) && foamFormat.progi_ilosciowe.length > 0;
+          if (!hasTiers && Number.isFinite(Number(foamFormat.cena_sztuki))) {
+            foamFormat.progi_ilosciowe = [{ min_szt: 1, cena_sztuki: Number(foamFormat.cena_sztuki) }];
+          }
+          if (Array.isArray(foamFormat.progi_ilosciowe) && foamFormat.progi_ilosciowe.length) delete foamFormat.cena_sztuki;
+        });
+      }
     }
 
     return pricesToMigrate;
@@ -5598,41 +5611,202 @@
       refreshInfo();
     }
 
+    // 0.25.4: pianki wyglądają jak plakaty wielkoformatowe — kafelki formatów (z ostatnim „Własny wymiar”), kafelki ilości
+    // 1, 3, 5, 10, 20 i „+ Własna ilość”, a pod spodem tabela cen za sztukę według progów 1 / 2–4 / 5–9 / od 10 szt.
     function renderFoamFields(data) {
+      const FOAM_CUSTOM = "Własny wymiar";
+      const FOAM_MAX_QUANTITY = 100;
+      const FOAM_FEATURED_QUANTITIES = "1,3,5,10,20";
       const formatNames = Object.keys(data.formaty);
+      const quantities = Array.from({ length: FOAM_MAX_QUANTITY }, (_, index) => String(index + 1));
+      let ownQuantityMode = false;
+      let ownQuantityChange = false;
+      let lastQuantity = "1";
+      let lastStandardFormat = formatNames[0];
+
       dynamic.innerHTML = `
-        <div class="field half"><label>Sposób wyboru wymiaru</label><select id="foamMode">${options(["Format z cennika", "Inny wymiar"], "Format z cennika")}</select></div>
-        <div class="field half" id="foamFormatField"><label>Format</label><select id="foamFormat">${options(formatNames)}</select></div>
+        <div class="field d24-foam-format-field"><label for="foamFormat">Format</label><select id="foamFormat">${options(formatNames)}<option value="${esc(FOAM_CUSTOM)}">${esc(FOAM_CUSTOM)}</option></select></div>
         <div id="foamCustomFields" class="field" style="display:contents"></div>
-        <div class="field" id="foamQtyField"><label>Ilość sztuk</label><input id="pvcQty" type="number" min="1" step="1" value="1"></div>`;
+        <div class="field" id="foamQtyWrap"><label for="pvcQty" id="foamQtyLabel">Ilość sztuk</label><select id="pvcQty" data-d24-featured-quantities="${FOAM_FEATURED_QUANTITIES}">${options(quantities)}</select>
+          <button class="d24-poster-own-toggle" type="button" id="foamOwnQtyToggle" aria-pressed="false" aria-expanded="false" aria-controls="foamOwnQtyPanel">+ Własna ilość</button>
+          <div class="d24-poster-own-panel" id="foamOwnQtyPanel" hidden>
+            <label for="foamOwnQty">Wpisz liczbę plansz</label>
+            <div class="d24-poster-own-entry"><input id="foamOwnQty" type="number" min="1" max="${FOAM_MAX_QUANTITY}" step="1" inputmode="numeric" placeholder="Np. 17"></div>
+            <div class="d24-poster-own-note" id="foamOwnQtyNote" role="status" aria-live="polite"></div>
+          </div>
+        </div>`;
 
-      // 0.24.3: kafelki formatów pianki — bez rozmiarów w mm, za to z ceną za sztukę z cennika (brutto), na niebiesko.
-      const foamFormatSelect = document.getElementById("foamFormat");
-      foamFormatSelect.dataset.d24NoDetail = "1";
-      for (const option of foamFormatSelect.options) {
-        const unit = Number(data.formaty[option.value]?.cena_sztuki);
-        if (Number.isFinite(unit)) option.dataset.d24FinalPrice = `${money(unit)} zł/szt.`;
-      }
-      content.dispatchEvent(new Event("d24-option-prices"));
-
-      const mode = document.getElementById("foamMode");
-      const formatField = document.getElementById("foamFormatField");
+      const formatSelect = document.getElementById("foamFormat");
       const customFields = document.getElementById("foamCustomFields");
-      const qtyField = document.getElementById("foamQtyField");
-      const rows = Object.entries(data.formaty).map(([name, item]) => `<tr><td>${esc(name)}</td><td>${money(item.cena_sztuki)} zł/szt.</td></tr>`).join("");
-      info.innerHTML = `${alertBox(`Pianki są rozliczane wyłącznie na pełne sztuki. Maksymalny wymiar: 100 × 140 cm, również po obróceniu. Inne wymiary mieszczące się w formatach cennikowych są rozliczane według najmniejszego pasującego formatu; większe wymagają kontaktu. ${cuttingInfo(data, false)} ${LIMIT_CONTACT_TEXT}`, "info")}<details><summary>Cennik plansz z pianki 5 mm</summary><table class="tier-table"><thead><tr><th>Format</th><th>Cena brutto</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+      const qtySelect = document.getElementById("pvcQty");
+      const ownToggle = document.getElementById("foamOwnQtyToggle");
+      const ownPanel = document.getElementById("foamOwnQtyPanel");
+      const ownInput = document.getElementById("foamOwnQty");
+      const ownNote = document.getElementById("foamOwnQtyNote");
+      // Pod nazwą formatu nie pokazujemy rozmiaru w mm (nazwa ma już cm), tylko cenę za sztukę dla wybranej ilości.
+      formatSelect.dataset.d24NoDetail = "1";
+      formatSelect.dataset.d24NoMore = "1";
+      qtySelect.value = "1";
 
-      function refreshMode() {
-        const custom = mode.value === "Inny wymiar";
-        formatField.classList.toggle("hidden", custom);
-        // Custom size: height, width and quantity share one row.
-        qtyField.classList.toggle("third", custom);
-        customFields.innerHTML = custom ? `
-          <div class="field third d24-row-start"><label>Wysokość planszy [cm]</label><input id="pvcHeight" type="number" min="0.1" max="140" step="0.1" value="50"></div>
-          <div class="field third"><label>Szerokość planszy [cm]</label><input id="pvcWidth" type="number" min="0.1" max="140" step="0.1" value="50"></div>` : "";
+      // Progi ilościowe wspólne dla wszystkich formatów: 1, 2, 5, 10 → „1 szt.”, „2–4 szt.”, „5–9 szt.”, „od 10 szt.”.
+      const tierMinimums = Array.from(new Set(Object.values(data.formaty).flatMap(item =>
+        (Array.isArray(item.progi_ilosciowe) ? item.progi_ilosciowe : []).map(tier => Number(tier.min_szt))
+      ).filter(Number.isFinite))).sort((a, b) => a - b);
+      if (!tierMinimums.length) tierMinimums.push(1);
+      const tierLabel = index => {
+        const min = tierMinimums[index];
+        const next = tierMinimums[index + 1];
+        if (next == null) return `od ${min} szt.`;
+        return next - 1 === min ? `${min} szt.` : `${min}–${next - 1} szt.`;
+      };
+      const tierIndexFor = quantity => {
+        let selected = 0;
+        tierMinimums.forEach((min, index) => { if (quantity >= min) selected = index; });
+        return selected;
+      };
+      const shortMoney = amount => Number.isInteger(Number(amount)) ? `${Number(amount).toLocaleString(window.DrukulatorI18n?.getLocale?.() || "pl-PL")} zł` : `${money(amount)} zł`;
+      const safeUnitPrice = (formatName, quantity) => {
+        try { return C.getFoamBoardUnitPrice(data.formaty[formatName], quantity); } catch { return null; }
+      };
+
+      // Nazwa formatu w tabeli: „A3” + w nawiasie rozmiar (na telefonie rozmiar spada do drugiej linii, żeby kolumna nie była wąska).
+      const foamNameCell = name => {
+        const match = String(name).match(/^(\S+)\s*\((.+)\)$/);
+        return match ? `<span class="d24-foam-name">${esc(match[1])}</span> <small>(${esc(match[2])})</small>` : esc(name);
+      };
+      const tierRows = formatNames.map(name => `<tr data-foam-format="${esc(name)}"><td>${foamNameCell(name)}</td>${tierMinimums.map((min, index) => {
+        const unit = safeUnitPrice(name, min);
+        return `<td data-foam-tier="${index}">${unit == null ? "—" : esc(shortMoney(unit))}</td>`;
+      }).join("")}</tr>`).join("");
+      info.innerHTML = `<div id="foamBillingNotice"></div>${alertBox(`Pianki są rozliczane wyłącznie na pełne sztuki, a cena za sztukę zależy od liczby zamówionych plansz (tabela poniżej). Maksymalny wymiar: 100 × 140 cm, również po obróceniu. Własny wymiar jest liczony jak najmniejszy format z cennika, w którym mieści się cała plansza, również po obróceniu; większe wymiary wymagają kontaktu. Własny nakład: od 1 do ${FOAM_MAX_QUANTITY} sztuk. ${cuttingInfo(data, false)} ${LIMIT_CONTACT_TEXT}`, "info")}
+        <div class="d24-foam-tiers"><h3>Ceny brutto za sztukę — plansza z pianki 5 mm</h3><div class="d24-foam-tier-scroll"><table class="tier-table d24-foam-tier-table"><thead><tr><th>Format</th>${tierMinimums.map((min, index) => `<th data-foam-tier="${index}">${esc(tierLabel(index))}</th>`).join("")}</tr></thead><tbody>${tierRows}</tbody></table></div></div>`;
+      const billingNotice = document.getElementById("foamBillingNotice");
+
+      function isCustomFormat() { return formatSelect.value === FOAM_CUSTOM; }
+      function currentQuantity() {
+        const quantity = Number(qtySelect.value);
+        return Number.isSafeInteger(quantity) && quantity >= 1 ? quantity : null;
       }
-      mode.addEventListener("change", refreshMode);
-      refreshMode();
+      function formatDimension(valueToFormat) {
+        const numeric = Number(valueToFormat);
+        return num(numeric, Number.isInteger(numeric) ? 0 : 1);
+      }
+
+      function refreshCustomFields() {
+        if (!isCustomFormat()) { customFields.innerHTML = ""; return; }
+        const fallback = data.formaty[lastStandardFormat] || data.formaty[formatNames[0]] || {};
+        customFields.innerHTML = `
+          <div class="field half"><label for="pvcWidth">Szerokość planszy [cm]</label><input id="pvcWidth" type="number" min="0.1" max="140" step="0.1" value="${esc(fallback.szerokosc_cm ?? 50)}"></div>
+          <div class="field half"><label for="pvcHeight">Wysokość planszy [cm]</label><input id="pvcHeight" type="number" min="0.1" max="140" step="0.1" value="${esc(fallback.wysokosc_cm ?? 50)}"></div>`;
+        document.getElementById("pvcWidth").addEventListener("input", refreshFoam);
+        document.getElementById("pvcHeight").addEventListener("input", refreshFoam);
+      }
+
+      // Cena na kafelkach formatów, wyróżniony wiersz/kolumna tabeli i informacja o formacie rozliczeniowym własnego wymiaru.
+      function refreshFoam() {
+        const quantity = currentQuantity() || 1;
+        for (const option of formatSelect.options) {
+          const unit = data.formaty[option.value] ? safeUnitPrice(option.value, quantity) : null;
+          if (unit == null) delete option.dataset.d24FinalPrice;
+          else option.dataset.d24FinalPrice = `${money(unit)} zł/szt.`;
+        }
+        content.dispatchEvent(new Event("d24-option-prices"));
+
+        let activeFormat = isCustomFormat() ? "" : formatSelect.value;
+        billingNotice.replaceChildren();
+        if (isCustomFormat()) {
+          const widthCm = Number(document.getElementById("pvcWidth")?.value);
+          const heightCm = Number(document.getElementById("pvcHeight")?.value);
+          try {
+            if (Math.min(widthCm, heightCm) > 100 || Math.max(widthCm, heightCm) > 140) throw new Error("Maksymalny wymiar pianki to 100 × 140 cm, również po obróceniu.");
+            const billing = C.findFoamBoardBillingFormat(state.prices, product.value, widthCm, heightCm, quantity);
+            activeFormat = billing.formatName;
+            billingNotice.innerHTML = alertBox(`Własny wymiar ${formatDimension(widthCm)} × ${formatDimension(heightCm)} cm zostanie rozliczony jako pełny format ${billing.formatName}.`, "success");
+          } catch (error) {
+            billingNotice.innerHTML = alertBox(error.message, "error");
+          }
+        }
+        const activeTier = tierIndexFor(quantity);
+        info.querySelectorAll(".d24-foam-tier-table tbody tr").forEach(row => row.classList.toggle("is-selected", row.dataset.foamFormat === activeFormat));
+        info.querySelectorAll(".d24-foam-tier-table [data-foam-tier]").forEach(cell => cell.classList.toggle("is-active-tier", Number(cell.dataset.foamTier) === activeTier));
+      }
+
+      function updateOwnQuantityPanel() {
+        ownPanel.hidden = !ownQuantityMode;
+        ownToggle.setAttribute("aria-pressed", String(ownQuantityMode));
+        ownToggle.setAttribute("aria-expanded", String(ownQuantityMode));
+        ownToggle.textContent = ownQuantityMode ? "✓ Własna ilość" : "+ Własna ilość";
+      }
+
+      function setOwnQuantity() {
+        if (!ownQuantityMode) return;
+        const raw = ownInput.value.trim();
+        const quantity = Number(raw);
+        const valid = raw !== "" && Number.isSafeInteger(quantity) && quantity >= 1 && quantity <= FOAM_MAX_QUANTITY;
+        qtySelect.querySelectorAll("option[data-d24-custom-option]").forEach(option => option.remove());
+        if (valid) {
+          qtySelect.value = String(quantity);
+          lastQuantity = String(quantity);
+          const formatName = isCustomFormat() ? "" : formatSelect.value;
+          const unit = formatName ? safeUnitPrice(formatName, quantity) : null;
+          ownNote.textContent = unit == null
+            ? `Wybrano ${quantity} szt. Cena zostanie obliczona z aktualnego cennika.`
+            : `Wybrano ${quantity} szt. Cena za sztukę: ${shortMoney(unit)} (próg: ${tierLabel(tierIndexFor(quantity))}).`;
+          ownNote.dataset.status = "success";
+        } else {
+          const option = document.createElement("option");
+          option.value = "__foam_custom_invalid__";
+          option.textContent = "Wpisz poprawną ilość";
+          option.dataset.d24CustomOption = "1";
+          qtySelect.append(option);
+          qtySelect.value = option.value;
+          ownNote.textContent = `Wpisz pełną liczbę sztuk od 1 do ${FOAM_MAX_QUANTITY}. ${LIMIT_CONTACT_TEXT}`;
+          ownNote.dataset.status = "error";
+        }
+        document.getElementById("quoteArea").replaceChildren();
+        ownQuantityChange = true;
+        qtySelect.dispatchEvent(new Event("input", { bubbles: true }));
+        qtySelect.dispatchEvent(new Event("change", { bubbles: true }));
+        ownQuantityChange = false;
+      }
+
+      ownToggle.addEventListener("click", () => {
+        ownQuantityMode = !ownQuantityMode;
+        updateOwnQuantityPanel();
+        if (ownQuantityMode) {
+          ownInput.value = currentQuantity() ? String(currentQuantity()) : "";
+          setOwnQuantity();
+          ownInput.focus();
+        } else {
+          qtySelect.querySelectorAll("option[data-d24-custom-option]").forEach(option => option.remove());
+          qtySelect.value = quantities.includes(lastQuantity) ? lastQuantity : "1";
+          ownNote.replaceChildren();
+          qtySelect.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+      ownInput.addEventListener("input", setOwnQuantity);
+      ownInput.addEventListener("change", setOwnQuantity);
+
+      qtySelect.addEventListener("change", () => {
+        if (!ownQuantityChange && ownQuantityMode) {
+          // Wybór gotowego kafelka ilości wyłącza tryb własnej ilości.
+          ownQuantityMode = false;
+          ownNote.replaceChildren();
+          qtySelect.querySelectorAll("option[data-d24-custom-option]").forEach(option => option.remove());
+          updateOwnQuantityPanel();
+        }
+        if (currentQuantity()) lastQuantity = String(currentQuantity());
+        refreshFoam();
+      });
+      formatSelect.addEventListener("change", () => {
+        if (!isCustomFormat()) lastStandardFormat = formatSelect.value;
+        refreshCustomFields();
+        refreshFoam();
+        if (ownQuantityMode) setOwnQuantity();
+      });
+
+      refreshCustomFields();
+      refreshFoam();
     }
 
     function refreshProduct() {
@@ -5656,16 +5830,27 @@
         return;
       }
 
-      const mode = value("foamMode");
-      if (mode === "Format z cennika") {
-        const formatName = value("foamFormat");
+      // 0.25.4: cena za sztukę zależy od progu ilościowego (1 / 2–4 / 5–9 / od 10 szt.); format „Własny wymiar” jest tylko jednym z kafelków.
+      const foamTierLabel = unitQuantity => {
+        const minimums = Array.from(new Set(Object.values(data.formaty).flatMap(item =>
+          (Array.isArray(item.progi_ilosciowe) ? item.progi_ilosciowe : []).map(tier => Number(tier.min_szt))
+        ).filter(Number.isFinite))).sort((a, b) => a - b);
+        if (!minimums.length) return "";
+        let index = 0;
+        minimums.forEach((min, minIndex) => { if (unitQuantity >= min) index = minIndex; });
+        const min = minimums[index];
+        const next = minimums[index + 1];
+        return next == null ? `od ${min} szt.` : (next - 1 === min ? `${min} szt.` : `${min}–${next - 1} szt.`);
+      };
+      const formatName = value("foamFormat");
+      if (formatName !== "Własny wymiar") {
         const result = C.calculateFoamBoardStandard(state.prices, product.value, formatName, quantity);
-        showQuote({ title: "Plansza pianka 5 mm", description: `${formatName}, ${quantity} szt.`, price: result.price, details: [["Grubość", data.grubosc], [result.cuttingEnabled ? "Cena jednostkowa bez cięcia" : "Cena jednostkowa", `${money(result.unitPrice)} zł`], [result.cuttingEnabled ? "Cena bez cięcia" : "Cena materiału", `${money(result.materialPrice)} zł`], ...cuttingQuoteDetails(result)], meta: { productType: "foam", widthCm: Number(data.formaty[formatName].szerokosc_cm), heightCm: Number(data.formaty[formatName].wysokosc_cm), quantity } });
+        showQuote({ title: "Plansza pianka 5 mm", description: `${formatName}, ${quantity} szt.`, price: result.price, details: [["Grubość", data.grubosc], ["Próg ilościowy", foamTierLabel(quantity)], [result.cuttingEnabled ? "Cena jednostkowa bez cięcia" : "Cena jednostkowa", `${money(result.unitPrice)} zł`], [result.cuttingEnabled ? "Cena bez cięcia" : "Cena materiału", `${money(result.materialPrice)} zł`], ...cuttingQuoteDetails(result)].filter(row => row[1] !== ""), meta: { productType: "foam", widthCm: Number(data.formaty[formatName].szerokosc_cm), heightCm: Number(data.formaty[formatName].wysokosc_cm), quantity } });
       } else {
         const width = numberValue("pvcWidth");
         const height = numberValue("pvcHeight");
         const result = C.calculateFoamBoardCustom(state.prices, product.value, width, height, quantity);
-        showQuote({ title: "Plansza pianka 5 mm", description: `${width} × ${height} cm, ${quantity} szt.`, price: result.price, details: [["Grubość", data.grubosc], ["Format rozliczeniowy", result.billing.formatName], ["Sposób rozliczenia", result.billing.billingMethod], [result.cuttingEnabled ? "Cena jednostkowa bez cięcia" : "Cena jednostkowa", `${money(result.unitPrice)} zł`], [result.cuttingEnabled ? "Cena bez cięcia" : "Cena materiału", `${money(result.materialPrice)} zł`], ...cuttingQuoteDetails(result)], meta: { productType: "foam", widthCm: width, heightCm: height, quantity } });
+        showQuote({ title: "Plansza pianka 5 mm", description: `${width} × ${height} cm, ${quantity} szt.`, price: result.price, details: [["Grubość", data.grubosc], ["Format rozliczeniowy", result.billing.formatName], ["Sposób rozliczenia", result.billing.billingMethod], ["Próg ilościowy", foamTierLabel(quantity)], [result.cuttingEnabled ? "Cena jednostkowa bez cięcia" : "Cena jednostkowa", `${money(result.unitPrice)} zł`], [result.cuttingEnabled ? "Cena bez cięcia" : "Cena materiału", `${money(result.materialPrice)} zł`], ...cuttingQuoteDetails(result)].filter(row => row[1] !== ""), meta: { productType: "foam", widthCm: width, heightCm: height, quantity } });
       }
     } catch (e) { setResultError(e); } });
   }

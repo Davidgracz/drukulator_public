@@ -36,14 +36,14 @@ with sync_playwright() as p:
         page.locator('#pvcProduct').select_option(label='Plansza pianka 5 mm'); page.wait_for_timeout(600)
         formats=prices['pvc']['Plansza pianka 5 mm']['formaty']
         tiles=page.locator('#foamFormat + .d24-smart-options button[data-option-index]')
-        assert tiles.count()==len(formats)==6
+        assert tiles.count()==len(formats)+1==7   # 6 formatów + „Własny wymiar” (0.25.4)
         txt=page.locator('#foamFormat + .d24-smart-options').inner_text()
         assert ' mm' not in txt,txt
         assert page.locator('#foamFormat + .d24-smart-options .d24-smart-choice small').count()==0
         for name,item in formats.items():
             tile=page.locator('#foamFormat + .d24-smart-options button[data-option-index]',has_text=name.split(' (')[0]).first
             price=tile.locator('.d24-option-price').inner_text().replace('\u00a0',' ')
-            expected=('%.2f'%item['cena_sztuki']).replace('.',',')+' zł/szt.'
+            expected=('%.2f'%item['progi_ilosciowe'][0]['cena_sztuki']).replace('.',',')+' zł/szt.'   # 0.25.4: ceny progowe, 1 szt. = pierwszy próg
             assert price==expected,(name,price,expected)
         # cena na kafelku jest niebieska (kolor akcentu), nie czarna
         color=page.locator('#foamFormat + .d24-smart-options .d24-option-price').first.evaluate('n=>getComputedStyle(n).color')
@@ -56,8 +56,8 @@ with sync_playwright() as p:
         page.locator('.d24-preview-fold > summary').first.click(); page.wait_for_timeout(300)
         preview=page.locator('.d24-preview-fold').first.inner_text()
         assert '70 × 100 cm' in preview and not re.search(r'\d+ × \d+ mm',preview),preview
-        # inny wymiar — brak kafelków, podgląd w cm
-        page.locator('.d24-smart-options button:has-text("Inny wymiar")').click(); page.wait_for_timeout(300)
+        # własny wymiar (0.25.4: ostatni kafelek formatów) — podgląd w cm
+        page.locator('.d24-smart-options button:has-text("Własny wymiar")').click(); page.wait_for_timeout(300)
         page.locator('#pvcWidth').fill('45'); page.locator('#pvcHeight').fill('60'); page.wait_for_timeout(300)
         assert '45 × 60 cm' in page.locator('.d24-preview-fold').first.inner_text()
         # --- Czapka raperka = Malfini RAP 5P 301
