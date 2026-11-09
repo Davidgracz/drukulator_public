@@ -31,7 +31,7 @@ with sync_playwright() as p:
         page.wait_for_selector('.d24-malfini-title',timeout=5000)
         for gone in ('[data-app-cut]','.d24-malfini-cuts','.d24-malfini-cut-options','.d24-malfini-cut-note','.d24-malfini-cut-fixed'):
             assert page.locator(gone).count()==0,gone
-        assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g · unisex'
+        assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g'
         assert page.locator('.d24-malfini-availability').inner_text().strip()=='Dostępne kroje: męski, damski i dziecięcy'
         page.locator('#appQty').fill('5')
         page.wait_for_timeout(400)

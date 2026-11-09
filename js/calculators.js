@@ -629,6 +629,16 @@
     if (front && front !== NO_PRINT) selected.push({ side: "Przód", size: front });
     if (back && back !== NO_PRINT) selected.push({ side: "Tył", size: back });
     if (!selected.length) throw new Error("Wybierz przynajmniej jeden nadruk.");
+    // Produkty z ograniczonym zestawem nadruków (np. kamizelki): przód i tył mają własne listy dozwolonych rozmiarów.
+    const printLimits = productData.dostepne_nadruki;
+    if (printLimits && typeof printLimits === "object") {
+      for (const { side, size } of selected) {
+        const allowed = side === "Przód" ? printLimits.przod : printLimits.tyl;
+        if (Array.isArray(allowed) && allowed.length && !allowed.includes(size)) {
+          throw new Error(`Ten produkt nie ma nadruku „${size}” ${side === "Przód" ? "z przodu" : "z tyłu"}.`);
+        }
+      }
+    }
 
     const printOnlyPrices = root.produkty["Sam nadruk"]?.["Nadruk na odzieży klienta"]?.ceny || {};
     const isPrintOnly = category === "Sam nadruk";

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.0v";
+  const VERSION = "0.25.1v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2630,6 +2630,33 @@
         const prices = apparelProducts[category]?.[product]?.ceny;
         if (prices && Number(prices["Do 35x40 cm"]) === oldPrice) prices["Do 35x40 cm"] = newPrice;
       });
+
+      // 0.25.1: kamizelki liczone jak koszulki (odzież + nadruki: przód do 10x15 cm, tył do 10x15 / 20x30 cm),
+      // czapki: dziecięca 45 zł, bejsbolówka 50 zł, raperka 55 zł. Starsze cenniki (np. zapisane w przeglądarce) są przy wczytaniu przeliczane.
+      const vestProducts = apparelProducts["Kamizelki odblaskowe"];
+      if (vestProducts) {
+        [["Brixton Flash", 25], ["Malfini Rimeck", 35]].forEach(([vestName, garmentPrice]) => {
+          const vest = vestProducts[vestName];
+          if (!vest) return;
+          if (vest.nadruk_w_cenie) {
+            delete vest.nadruk_w_cenie;
+            delete vest.ceny;
+            vest.cena_odziezy = garmentPrice;
+          }
+          if (!vest.dostepne_nadruki) vest.dostepne_nadruki = { przod: ["Do 10x15 cm"], tyl: ["Do 10x15 cm", "Do 20x30 cm"] };
+        });
+      }
+      const capProducts = apparelProducts["Czapki"];
+      if (capProducts) {
+        if (!capProducts["Czapka dziecięca"]) {
+          capProducts["Czapka dziecięca"] = {
+            opis: "Czapka dziecięca z daszkiem, fason klasyczny (bejsbolówka), Malfini 6P Kids. Szczegóły i kolor uzgodnimy mailowo.",
+            ceny: { "Nadruk standardowy": 45 }, rozmiary: ["Uniwersalny"], nadruk_w_cenie: true
+          };
+        }
+        const baseballCap = capProducts["Czapka bejsbolówka"]?.ceny;
+        if (baseballCap && Number(baseballCap["Nadruk standardowy"]) === 55) baseballCap["Nadruk standardowy"] = 50;
+      }
 
       const apparelSizePresets = {
         "Koszulki bawełniane": ["XS", "S", "M", "L", "XL", "2XL", "3XL", "Dziecięcy — podaj w uwagach", "Inny — podaj w uwagach", "Różne rozmiary — podaj w uwagach"],
@@ -5838,6 +5865,13 @@
       product.innerHTML = options(Object.keys(products[category.value] || {}));
       refreshDetails();
     }
+    // 0.25.1: niektóre produkty (kamizelki) mają ograniczony zestaw nadruków: przód — tylko do 10x15 cm,
+    // tył — do 10x15 lub do 20x30 cm. Zakres zapisany jest w cenniku (dostepne_nadruki); bez niego dostępne są wszystkie nadruki.
+    function printChoicesFor(info, side) {
+      const limited = info?.dostepne_nadruki?.[side];
+      const list = Array.isArray(limited) && limited.length ? printSizes.filter(size => limited.includes(size)) : printSizes;
+      return [...list, C.NO_PRINT];
+    }
     function refreshDetails() {
       const info = products[category.value]?.[product.value];
       const fixed = Boolean(info?.nadruk_w_cenie);
@@ -5848,7 +5882,11 @@
       document.getElementById("appPositionField").classList.toggle("hidden", !fixed || frontOnly);
       if (frontOnly) position.value = "Przód";
       if (!fixed) {
-        front.value = printSizes[0] || C.NO_PRINT;
+        const frontChoices = printChoicesFor(info, 'przod');
+        const backChoices = printChoicesFor(info, 'tyl');
+        front.innerHTML = options(frontChoices);
+        back.innerHTML = options(backChoices);
+        front.value = frontChoices[0] || C.NO_PRINT;
         back.value = C.NO_PRINT;
       }
       const included = fixed ? `W cenie: 1 nadruk${frontOnly ? " z przodu" : ""} (${Object.keys(info.ceny || {})[0] || "standardowy"}).` : "";

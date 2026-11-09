@@ -61,9 +61,15 @@ with sync_playwright() as p:
         wait_model_price("750,00 zł")
         assert "750,00 zł" in model_text("Nadruk na odzieży klienta")
         # fixed included-price categories hide both print-size choice groups
-        page.locator('#appCategory').select_option(label='Kamizelki odblaskowe')
+        page.locator('#appCategory').select_option(label='Czapki')
         assert page.locator('#appFrontField').is_hidden()
         assert page.locator('#appBackField').is_hidden()
+        # 0.25.1: kamizelki mają nadruki jak koszulki, ale z ograniczonym zestawem (przód: do 10x15; tył: do 10x15 i do 20x30)
+        page.locator('#appCategory').select_option(label='Kamizelki odblaskowe')
+        page.wait_for_timeout(400)
+        assert page.locator('#appFrontField').is_visible() and page.locator('#appBackField').is_visible()
+        assert page.locator('#appFront option').all_inner_texts()==['Do 10x15 cm','Brak']
+        assert page.locator('#appBack option').all_inner_texts()==['Do 10x15 cm','Do 20x30 cm','Brak']
         assert not errors,errors
         dims=page.evaluate('({scroll:document.documentElement.scrollWidth,inner:innerWidth})')
         assert dims['scroll'] <= dims['inner']+1, (width,dims)

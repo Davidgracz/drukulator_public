@@ -58,7 +58,7 @@ with sync_playwright() as p:
         page.locator('#appQty').fill('10');check('450,00')
         assert 'Rabat przy tej ilości: 10%' in page.locator('#appQtyHint').inner_text()
         # Hats, vests and backpacks.
-        for cat,model,expected,position_visible in [('Czapki','Czapka bejsbolówka','55,00',False),('Czapki','Czapka raperka','55,00',False),('Kamizelki odblaskowe','Brixton Flash','40,00',True),('Kamizelki odblaskowe','Malfini Rimeck','50,00',True),('Torby i worki','Worko-plecak Easygo','40,00',False)]:
+        for cat,model,expected,position_visible in [('Czapki','Czapka bejsbolówka','50,00',False),('Czapki','Czapka raperka','55,00',False),('Czapki','Czapka dziecięca','45,00',False),('Kamizelki odblaskowe','Brixton Flash','40,00',False),('Kamizelki odblaskowe','Malfini Rimeck','50,00',False),('Torby i worki','Worko-plecak Easygo','40,00',False)]:
             choose('appCategory',cat);choose('appProduct',model)
             page.locator('#appQty').fill('1');check(expected)
             assert page.locator('#appPosition').is_visible()==position_visible,(cat,model)

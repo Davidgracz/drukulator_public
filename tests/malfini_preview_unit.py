@@ -24,7 +24,7 @@ with sync_playwright() as p:
   for gone in ('[data-app-cut]','.d24-malfini-cuts','.d24-malfini-cut-options','.d24-malfini-cut-note','.d24-malfini-cut-fixed'):
    assert page.locator(gone).count()==0,gone
   assert 'Krój' not in page.locator('.d24-malfini-detail').inner_text().replace('Dostępne kroje','')
-  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g · unisex',page.locator('.d24-malfini-subtitle').inner_text()
+  assert page.locator('.d24-malfini-subtitle').inner_text().strip()=='Koszulka bawełniana · 160 g',page.locator('.d24-malfini-subtitle').inner_text()
   assert page.locator('.d24-malfini-availability').inner_text().strip()=='Dostępne kroje: męski, damski i dziecięcy'
   # Krój nie jest wybierany, więc nie trafia do zamówienia (modele z wieloma krojami).
   assert page.evaluate('gallery.selection().cut')=='' and page.evaluate('gallery.selection().cutLabel')==''

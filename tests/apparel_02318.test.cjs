@@ -25,8 +25,7 @@ for(const [size,cost] of [['Do 10x15 cm',15],['Do 20x30 cm',20],['Do 35x40 cm',3
 }
 assert.equal(C.calculateApparel(prices,'Sam nadruk','Nadruk na odzieży klienta','Do 20x30 cm','Do 35x40 cm',10).price,500);
 for(const [cat, items] of Object.entries({
-  'Kamizelki odblaskowe':{'Brixton Flash':40,'Malfini Rimeck':50},
-  'Czapki':{'Czapka bejsbolówka':55,'Czapka raperka':55},
+  'Czapki':{'Czapka dziecięca':45,'Czapka bejsbolówka':50,'Czapka raperka':55},
   'Torby bawełniane':{'Carry':50,'Shopper':40},
   'Worki bawełniane':{'Worko-plecak Easygo':40}
 })) for(const [name,amount] of Object.entries(items)){
@@ -37,4 +36,5 @@ for(const [cat, items] of Object.entries({
 }
 assert.throws(()=>C.calculateApparel(prices,'Koszulki bawełniane','Basic 160 g','Brak','Brak',1),/przynajmniej jeden/);
 assert.throws(()=>C.calculateApparel(prices,'Koszulki bawełniane','Basic 160 g',defaultPrint,'Brak',1.5),/pełnych sztuk/);
+// 0.25.1: kamizelki liczone jak koszulki (odzież 25/35 zł + nadruki) — patrz apparel_print_limits_0251.test.cjs
 console.log('OK: apparel prices, 2-sided prints, standalone-print no discounts, fixed 1-print products');

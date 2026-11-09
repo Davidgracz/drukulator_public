@@ -18,6 +18,19 @@
   const capColors = [["01", "Czarny", "#1b1c21"], ["02", "Granatowy", "#243a61"], ["07", "Czerwony", "#c63643"], ["00", "Biały", "#f5f5f3"]];
   // Czapka raperka = Malfini RAP 5P (kod 301): siedem kolorów z katalogu (nazwy wg sklepu Malfini).
   const rapColors = [["00", "Biały", "#f5f5f3"], ["01", "Czarny", "#1b1c21"], ["02", "Granatowy", "#1f2a3c"], ["05", "Chabrowy", "#1f4f9c"], ["07", "Czerwony", "#b3202b"], ["25", "Siwoszary melanż", "#8a8c90"], ["40", "Czerwień purpurowa", "#d0307a"]];
+  // 0.25.1: kolory poszczególnych modeli wg katalogu Malfini (kod, nazwa, odcień próbki) — tylko kolory, dla których jest zdjęcie.
+  const fantasyColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#18242e"], ["05", "Chabrowy", "#202c56"], ["07", "Czerwony", "#a51815"], ["91", "Neon orange", "#f64500"], ["88", "Neon mandarine", "#f16e36"], ["64", "Fioletowy", "#653371"], ["70", "Snorkel blue", "#056ebf"], ["44", "Turkus", "#007ba1"], ["95", "Miętowy", "#67bca0"], ["16", "Zieleń trawy", "#005c2e"], ["92", "Green apple", "#55b634"], ["69", "Military", "#33371d"], ["09", "Khaki", "#3a422b"], ["04", "Żółty", "#e4a600"], ["90", "Neon yellow", "#c6cb15"]];
+  const chanceColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["M1", "Czarny melanż", "#636363"], ["M3", "Srebrny melanż", "#c1c1c2"], ["M9", "Sunset melanż", "#ef8e76"], ["M2", "Ciemny denim melanż", "#4b6275"]];
+  const pixelColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["91", "Neon orange", "#fd502c"], ["44", "Turkus", "#00a8cc"], ["90", "Neon yellow", "#dfe359"]];
+  const piqueColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#192b38"], ["05", "Chabrowy", "#202e59"], ["07", "Czerwony", "#a01215"], ["12", "Ciemnoszary melanż", "#61605e"], ["94", "Ebony gray", "#202021"], ["20", "Antracytowy melanż", "#252527"], ["67", "Ciemny khaki", "#424741"], ["36", "Stalowy", "#5b595e"], ["03", "Jasnoszary melanż", "#a7a7a7"], ["21", "Migdałowy", "#ded2bb"], ["08", "Piaskowy", "#8e6d4f"], ["27", "Kawowy", "#231513"], ["86", "Garnet", "#5a0a20"], ["11", "Pomarańczowy", "#b73a17"], ["A2", "Mandarynkowy", "#fd8e24"], ["40", "Czerwień purpurowa", "#ab2456"], ["64", "Fioletowy", "#713a86"], ["D1", "Orchid", "#cba6c3"], ["15", "Błękitny", "#739aaa"], ["14", "Lazurowy", "#477aa1"], ["70", "Snorkel blue", "#056ac0"], ["87", "Ciemnoniebieski", "#142e4e"], ["59", "Ciemny turkus", "#034556"], ["44", "Turkus", "#007da1"], ["95", "Miętowy", "#57cba4"], ["A7", "Frost", "#cee7e0"], ["C9", "Sage", "#96b09c"], ["39", "Groszkowy", "#48742e"], ["92", "Green apple", "#509a19"], ["06", "Zieleń butelkowa", "#182819"], ["D3", "Dark green", "#152c21"], ["69", "Military", "#413f2c"], ["09", "Khaki", "#4f533e"], ["04", "Żółty", "#d49805"], ["96", "Cytrynowy", "#e2dc09"]];
+  const cottonColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#1f2736"], ["05", "Chabrowy", "#1c2b6e"], ["07", "Czerwony", "#8f111c"], ["12", "Ciemnoszary melanż", "#676765"], ["03", "Jasnoszary melanż", "#b6b5b8"], ["A2", "Mandarynkowy", "#fd9026"], ["15", "Błękitny", "#7ca6b9"], ["44", "Turkus", "#018baf"], ["39", "Groszkowy", "#93b16e"], ["16", "Zieleń trawy", "#016b34"], ["62", "Limonka", "#bac626"], ["06", "Zieleń butelkowa", "#2e4a2a"], ["D3", "Dark green", "#133423"], ["04", "Żółty", "#dfa405"]];
+  const singlejColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#172530"], ["05", "Chabrowy", "#21356b"], ["07", "Czerwony", "#a01818"], ["12", "Ciemnoszary melanż", "#706f6d"], ["03", "Jasnoszary melanż", "#b5b1b2"], ["86", "Garnet", "#6e1933"], ["13", "Bordowy", "#772d2b"], ["11", "Pomarańczowy", "#c84717"], ["15", "Błękitny", "#86b0c1"], ["14", "Lazurowy", "#578dad"], ["70", "Snorkel blue", "#117dcc"], ["44", "Turkus", "#008eaf"], ["A7", "Frost", "#d9efe9"], ["39", "Groszkowy", "#8eba5c"], ["16", "Zieleń trawy", "#258a51"], ["92", "Green apple", "#54b630"], ["06", "Zieleń butelkowa", "#1f361f"], ["09", "Khaki", "#5d6148"], ["04", "Żółty", "#dda402"], ["96", "Cytrynowy", "#eee723"]];
+  const essentialColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#13191e"], ["05", "Chabrowy", "#1c366a"], ["07", "Czerwony", "#ac1721"], ["12", "Ciemnoszary melanż", "#989898"], ["67", "Ciemny khaki", "#51564f"], ["03", "Jasnoszary melanż", "#a1a1a0"], ["86", "Garnet", "#64152b"], ["11", "Pomarańczowy", "#d5520f"], ["87", "Ciemnoniebieski", "#152d4c"], ["16", "Zieleń trawy", "#0f804b"], ["06", "Zieleń butelkowa", "#1f3821"], ["69", "Military", "#44412e"], ["04", "Żółty", "#e9b10b"]];
+  const trendyColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#162a3a"], ["05", "Chabrowy", "#1a3d7a"], ["07", "Czerwony", "#bd181f"], ["12", "Ciemnoszary melanż", "#868686"], ["67", "Ciemny khaki", "#494f48"], ["36", "Stalowy", "#635e64"], ["03", "Jasnoszary melanż", "#c2c2c8"], ["44", "Turkus", "#0198bc"], ["16", "Zieleń trawy", "#017642"], ["62", "Limonka", "#c2cb14"], ["06", "Zieleń butelkowa", "#164f2b"], ["69", "Military", "#33381e"], ["04", "Żółty", "#efbb12"]];
+  const capeColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#1c2a38"], ["05", "Chabrowy", "#213468"], ["07", "Czerwony", "#aa191f"], ["12", "Ciemnoszary melanż", "#9e9e9e"], ["67", "Ciemny khaki", "#4c4e4c"], ["36", "Stalowy", "#777276"], ["03", "Jasnoszary melanż", "#d2d1d7"], ["51", "Lodowo siwy", "#cdc2b8"], ["21", "Migdałowy", "#efe2d2"], ["86", "Garnet", "#731932"], ["87", "Ciemnoniebieski", "#193559"], ["60", "Denim", "#597791"], ["44", "Turkus", "#01b2d4"], ["C9", "Sage", "#aac0b0"], ["16", "Zieleń trawy", "#018650"], ["06", "Zieleń butelkowa", "#2a623a"], ["69", "Military", "#58563b"], ["28", "Jasny khaki", "#9f9c89"], ["04", "Żółty", "#f8c112"]];
+  const cap6pColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#223c4d"], ["05", "Chabrowy", "#214c99"], ["07", "Czerwony", "#d01f29"], ["L5", "Jasny siwoszary", "#bfbebc"], ["67", "Ciemny khaki", "#5d635c"], ["25", "Siwoszary melanż", "#929292"], ["08", "Piaskowy", "#d1b899"], ["86", "Garnet", "#b73263"], ["11", "Pomarańczowy", "#e35929"], ["A2", "Mandarynkowy", "#fea03e"], ["30", "Różowy", "#f3accc"], ["43", "Fuksjowy", "#a3245c"], ["15", "Błękitny", "#a6c8d8"], ["14", "Lazurowy", "#8fb3ca"], ["70", "Snorkel blue", "#2b92d8"], ["44", "Turkus", "#1eb5cc"], ["39", "Groszkowy", "#9fbe7c"], ["16", "Zieleń trawy", "#039f67"], ["92", "Green apple", "#6ac547"], ["62", "Limonka", "#c6d110"], ["06", "Zieleń butelkowa", "#427142"], ["69", "Military", "#5f6442"], ["09", "Khaki", "#878b74"], ["04", "Żółty", "#f5c501"]];
+  const kidsColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#183346"], ["05", "Chabrowy", "#013c89"], ["07", "Czerwony", "#bb1212"], ["11", "Pomarańczowy", "#dd5c1d"], ["30", "Różowy", "#f3c0cc"], ["15", "Błękitny", "#adc4d1"], ["92", "Green apple", "#6bc547"], ["62", "Limonka", "#c6d110"], ["69", "Military", "#505430"], ["04", "Żółty", "#f4c426"]];
+  const slimColors = [["00", "Biały", "#f7f7f5"], ["01", "Czarny", "#1c1d21"], ["02", "Granatowy", "#10253c"], ["05", "Chabrowy", "#004295"], ["07", "Czerwony", "#c9111c"], ["12", "Ciemnoszary melanż", "#989899"], ["94", "Ebony gray", "#393a3c"], ["60", "Denim", "#5d7b95"], ["44", "Turkus", "#00b1d3"], ["95", "Miętowy", "#61cfaa"], ["16", "Zieleń trawy", "#009b5a"], ["29", "Army", "#7a6d5d"], ["28", "Jasny khaki", "#a39e88"], ["04", "Żółty", "#fdd516"]];
   const vestColors = [["97", "Żółty fluorescencyjny", "#e9ec34"], ["98", "Pomarańczowy fluorescencyjny", "#f58a23"]];
   // Brixton Flash (Polstar): kody kolorów są własne, bo zdjęcia nie pochodzą z katalogu Malfini.
   const brixtonColors = [["yellow", "Żółty fluorescencyjny", "#e6ec33"], ["orange", "Pomarańczowy fluorescencyjny", "#f58a23"]];
@@ -62,23 +75,24 @@
   };
 
   const products = {
-    "Basic 160 g": entry("129", "Basic", "Koszulka bawełniana", "160 g/m²", "100% bawełna*", "XS–5XL", "https://shop.malfini.com/pl/pl/product/basic-129", basicColors, "shirt", { cuts: cutsMKD, photoCut: "Męska", audience: "unisex" }),
+    "Basic 160 g": entry("129", "Basic", "Koszulka bawełniana", "160 g/m²", "100% bawełna*", "XS–5XL", "https://shop.malfini.com/pl/pl/product/basic-129", basicColors, "shirt", { cuts: cutsMKD, photoCut: "Męska" }),
     "Classic New 145 g": entry("132", "Classic New", "Koszulka bawełniana", "145 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/classic-new-132", commonColors, "shirt", { cuts: cutsMKD, photoCut: "Męska" }),
-    "Heavy New 200 g": entry("137", "Heavy New", "Koszulka bawełniana oversize", "200 g/m²", "100% bawełna*", "XS–3XL", "https://shop.malfini.com/pl/pl/product/heavy-new-137", commonColors, "shirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
-    "Slim Fit V-neck 180 g": entry("146", "Slim Fit V-neck", "Koszulka bawełniana, dekolt w serek", "180 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/slim-fit-v-neck-146", commonColors, "shirt", { cuts: cutsMD, photoCut: "Męska" }),
-    "Fantasy 150 g": entry("124", "Fantasy", "Koszulka sportowa", "150 g/m²", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product?category=t-shirts", commonColors, "shirt", { cuts: cutsMKD, photoCut: "Męska" }),
-    "Chance 140 g": entry("810", "Chance", "Koszulka sportowa", "140 g/m²", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product?category=t-shirts", commonColors, "shirt", { cuts: cutsMD, photoCut: "Męska" }),
-    "Pixel 130 g": entry("P81", "Pixel", "Koszulka sportowa", "130 g/m²", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product?category=t-shirts", commonColors, "shirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
-    "Pique Polo 200 g": entry("203", "Pique Polo", "Koszulka polo", "200 g/m²", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product?category=polo-shirts", commonColors, "polo", { cuts: cutsMKD, photoCut: "Męska" }),
-    "Cotton 170 g": entry("212", "Cotton", "Koszulka polo", "170 g/m²", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product?category=polo-shirts", commonColors, "polo", { cuts: cutsMD, photoCut: "Męska" }),
-    "Single Jersey 180 g": entry("202", "Single J.", "Koszulka polo", "180 g/m²", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product?category=polo-shirts", commonColors, "polo", { cuts: cutsMD, photoCut: "Męska" }),
-    "Essential": entry("406", "Essential", "Bluza", "Wg modelu", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product", commonColors, "sweatshirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
-    "Trendy Zipper": entry("410", "Trendy Zipper", "Bluza rozpinana z kapturem", "Wg modelu", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product", commonColors, "hoodiezip"),
-    "Cape": entry("413", "Cape", "Bluza z kapturem", "Wg modelu", "Do potwierdzenia", "Do potwierdzenia", "https://shop.malfini.com/pl/pl/product", commonColors, "hoodie", { cuts: cutsMD, photoCut: "Męska" }),
+    "Heavy New 200 g": entry("137", "Heavy New", "Koszulka bawełniana oversize", "200 g/m²", "100% bawełna*", "XS–5XL", "https://shop.malfini.com/pl/pl/product/heavy-new-137", commonColors, "shirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
+    "Slim Fit V-neck 180 g": entry("146", "Slim Fit V-neck", "Koszulka bawełniana, dekolt w serek", "180 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/slim-fit-v-neck-146", slimColors, "shirt", { cuts: cutsMD, photoCut: "Męska" }),
+    "Fantasy 150 g": entry("124", "Fantasy", "Koszulka sportowa", "150 g/m²", "100% poliester", "S–3XL", "https://shop.malfini.com/pl/pl/product/fantasy-124", fantasyColors, "shirt", { cuts: cutsMKD, photoCut: "Męska" }),
+    "Chance 140 g": entry("810", "Chance", "Koszulka sportowa", "140 g/m²", "100% poliester z recyklingu (GRS)", "S–3XL", "https://shop.malfini.com/pl/pl/product/chance-grs-810", chanceColors, "shirt", { cuts: cutsMD, photoCut: "Męska" }),
+    "Pixel 130 g": entry("P81", "Pixel", "Koszulka sportowa", "130 g/m²", "100% poliester", "S–4XL", "https://shop.malfini.com/pl/pl/product/pixel-p81", pixelColors, "shirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
+    "Pique Polo 200 g": entry("203", "Pique Polo", "Koszulka polo", "200 g/m²", "65% bawełna, 35% poliester*", "S–5XL", "https://shop.malfini.com/pl/pl/product/pique-polo-203", piqueColors, "polo", { cuts: cutsMKD, photoCut: "Męska" }),
+    "Cotton 170 g": entry("212", "Cotton", "Koszulka polo", "170 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/cotton-212", cottonColors, "polo", { cuts: cutsMD, photoCut: "Męska" }),
+    "Single Jersey 180 g": entry("202", "Single J.", "Koszulka polo", "180 g/m²", "100% bawełna*", "S–3XL", "https://shop.malfini.com/pl/pl/product/single-j-202", singlejColors, "polo", { cuts: cutsMD, photoCut: "Męska" }),
+    "Essential": entry("406", "Essential", "Bluza", "300 g/m²", "65% bawełna, 35% poliester", "S–3XL, dziecięce 146–158 cm", "https://shop.malfini.com/pl/pl/product/essential-406", essentialColors, "sweatshirt", { cuts: ["Unisex"], photoCut: "Unisex" }),
+    "Trendy Zipper": entry("410", "Trendy Zipper", "Bluza rozpinana z kapturem", "300 g/m²", "65% bawełna, 35% poliester", "S–3XL", "https://shop.malfini.com/pl/pl/product/trendy-zipper-410", trendyColors, "hoodiezip"),
+    "Cape": entry("413", "Cape", "Bluza z kapturem", "320 g/m²", "65% bawełna, 35% poliester", "S–3XL", "https://shop.malfini.com/pl/pl/product/cape-413", capeColors, "hoodie", { cuts: cutsMD, photoCut: "Męska" }),
     "Brixton Flash": entry("AFK4", "Brixton Flash", "Kamizelka odblaskowa", "120 g/m²", "100% poliester, pasy odblaskowe", "S–3XL", "https://polstar.com.pl/produkt/brixton_flash_kamizelka", brixtonColors, "vest", { supplier: "Polstar", norm: "EN ISO 20471, klasa 2", photoSet: brixtonPhotos, showColorCode: false, linkLabel: "Zobacz produkt w katalogu Polstar" }),
     "Malfini Rimeck": entry("9V3", "Malfini Rimeck HV Bright", "Kamizelka odblaskowa", "120 g/m²", "100% poliester, pasy odblaskowe", "M, 2XL", "https://shop.malfini.com/pl/pl/product/hv-bright-9v3?color=97", vestColors, "vest", { supplier: "Malfini", norm: "EN ISO 20471, klasa 2", cuts: ["Unisex"], photoCut: "Unisex" }),
-    "Czapka bejsbolówka": entry("305", "6P", "Czapka bejsbolówka", "—", "Do potwierdzenia", "Uniwersalny", "https://shop.malfini.com/pl/pl/product", capColors, "cap", { views: frontOnlyViews }),
-    "Czapka raperka": entry("301", "Rap 5P", "Czapka raperka (snapback)", "—", "Twill, 100% bawełna", "Uniwersalny", "https://shop.malfini.com/pl/pl/product/rap-5p-301", rapColors, "cap", { views: frontOnlyViews }),
+    "Czapka dziecięca": entry("303", "6P Kids", "Czapka dziecięca", "340 g/m²", "100% bawełna", "Dziecięcy, regulowany", "https://shop.malfini.com/pl/pl/product/6p-kids-303", kidsColors, "cap", { views: frontOnlyViews }),
+    "Czapka bejsbolówka": entry("305", "6P", "Czapka bejsbolówka", "340 g/m²", "100% bawełna", "Uniwersalny, regulowany", "https://shop.malfini.com/pl/pl/product/6p-305", cap6pColors, "cap", { views: frontOnlyViews }),
+    "Czapka raperka": entry("301", "Rap 5P", "Czapka raperka (snapback)", "340 g/m²", "100% bawełna", "Uniwersalny, regulowany", "https://shop.malfini.com/pl/pl/product/rap-5p-301", rapColors, "cap", { views: frontOnlyViews }),
     "Carry": entry("901", "Carry", "Torba bawełniana", "280 g/m²", "100% bawełna", "43 × 43 × 12 cm", "https://shop.malfini.com/pl/pl/product/carry-901", carryColors, "tote", { views: frontOnlyViews }),
     "Shopper": entry("921", "Shopper", "Torba bawełniana", "195 g/m²", "100% bawełna", "45 × 40 cm", "https://shop.malfini.com/pl/pl/product/shopper-921", shopperColors, "tote", { views: frontOnlyViews }),
     "Worko-plecak Easygo": entry("922", "Easygo", "Worek bawełniany", "180 g/m²", "100% bawełna", "Uniwersalny", "https://shop.malfini.com/pl/pl/product/easygo-922", easygoColors, "drawstring", { views: frontOnlyViews })
@@ -139,6 +153,14 @@
       kind: 'photo',
       note: 'Fotografia katalogowa Malfini'
     }));
+  }
+
+  // 0.25.1: link „Zobacz produkt” prowadzi do strony konkretnego modelu, z otwartym wybranym kolorem (Malfini: ?color=<kod>).
+  function linkFor(model, colorCode) {
+    const url = model?.url || '';
+    if (!url || model?.photoSet) return url;
+    const base = url.split('?')[0];
+    return validSku.test(colorCode || '') ? `${base}?color=${encodeURIComponent(colorCode)}` : base;
   }
 
   function visualAvailable(name) {
@@ -305,6 +327,8 @@
       colorName = chosen?.[1] || 'Do ustalenia';
       const label = node.querySelector('.d24-malfini-color-label');
       if (label) label.textContent = chosen ? (activeModel?.showColorCode === false ? colorName : `${colorName} · kod ${chosen[0]}`) : 'Kolor ustalimy mailowo';
+      const productLink = node.querySelector('.d24-malfini-link');
+      if (productLink && activeModel) productLink.href = linkFor(activeModel, chosen?.[0]);
       node.querySelectorAll('[data-app-color]').forEach(button => {
         const on = button.dataset.appColor === activeColor;
         button.classList.toggle('is-active', on);
@@ -436,7 +460,7 @@
       const viewList = viewsFor();
       if (!viewList.some(v => v.id === activeView)) activeView = 'front';
       const name = activeModel ? `${activeModel.name}${activeModel.code ? ` ${activeModel.code}` : ''}` : current.product;
-      const modelLink = activeModel?.url || '';
+      const modelLink = linkFor(activeModel, activeColor);
       const hasImages = !!activeModel && visualAvailable(current.category);
       const facts = [
         ['Gramatura', activeModel?.gram || 'Do potwierdzenia'],
@@ -469,7 +493,7 @@
           ${colors.length ? `<div class="d24-malfini-colors"><div class="d24-malfini-colors__heading"><strong>Kolor produktu</strong><span class="d24-malfini-color-label"></span></div><div class="d24-malfini-swatches" role="group" aria-label="Wybierz kolor">${colors.map(([code, label, hex]) => `<button type="button" class="d24-malfini-swatch" data-app-color="${escapeHtml(code)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" aria-pressed="false"><span style="--swatch:${escapeHtml(hex)}"></span></button>`).join('')}</div></div>` : ''}
           <div class="d24-malfini-help"><strong>Indywidualne zamówienie</strong><p>Podaj ilość sztuk i ewentualne uwagi. Rozmiary, kolor, dostępność i ostateczną cenę potwierdzimy mailowo.</p></div>
           ${modelLink ? `<a class="d24-malfini-link" href="${escapeHtml(modelLink)}" target="_blank" rel="noopener noreferrer">${escapeHtml(activeModel?.linkLabel || 'Zobacz produkt w katalogu Malfini')} <span aria-hidden="true">↗</span></a>` : ''}
-          <small class="d24-malfini-disclaimer">${hasImages ? 'Podgląd ma charakter poglądowy — część ujęć może pochodzić ze zdjęć katalogowych, a część z wizualizacji.' : ''} Wybrany kolor zapisujemy jako preferencję, bez potwierdzania stanu magazynowego.</small>
+          <small class="d24-malfini-disclaimer">${hasImages ? 'Podgląd ma charakter poglądowy — część ujęć może pochodzić ze zdjęć katalogowych, a część z wizualizacji.' : ''} Wybrany kolor zapisujemy jako preferencję, bez potwierdzania stanu magazynowego.${/\*/.test(activeModel?.material || '') ? ' * Skład może się nieznacznie różnić w wybranych kolorach (np. melanżach).' : ''}</small>
         </div>`;
       node.querySelectorAll('[data-app-view]').forEach(btn => btn.addEventListener('click', () => { activeView = btn.dataset.appView; updateGallery(); }));
       node.querySelectorAll('[data-app-color]').forEach(btn => btn.addEventListener('click', () => { activeColor = btn.dataset.appColor; updateGallery(); }));

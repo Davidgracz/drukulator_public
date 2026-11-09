@@ -604,6 +604,8 @@
     "Czapka typu bejsbolówka lub raperka": "Baseball or trucker cap",
     "Czapka raperka Malfini RAP 5P (snapback, płaski daszek). Szczegóły i kolor uzgodnimy mailowo.": "Malfini RAP 5P rapper-style snapback cap (flat peak). We will confirm details and colour by email.",
     "Czapka raperka (snapback)": "Rapper-style cap (snapback)",
+    "Czapka dziecięca z daszkiem, fason klasyczny (bejsbolówka), Malfini 6P Kids. Szczegóły i kolor uzgodnimy mailowo.": "Children's peaked cap, classic baseball style, Malfini 6P Kids. We will confirm details and colour by email.",
+    "Czapka z daszkiem, fason klasyczny (bejsbolówka). Szczegóły i kolor uzgodnimy mailowo.": "Peaked cap, classic baseball style. We will confirm details and colour by email.",
     "Czerwień purpurowa": "Magenta red",
     "Siwoszary melanż": "Grey marl",
     "Gruba bluza unisex z mieszanki bawełny i poliestru": "Heavy unisex cotton-polyester sweatshirt",

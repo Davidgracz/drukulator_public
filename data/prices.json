@@ -1561,9 +1561,7 @@
       "Kamizelki odblaskowe": {
         "Brixton Flash": {
           "opis": "Kamizelka odblaskowa Brixton Flash (żółta lub pomarańczowa), rozmiary S–3XL.",
-          "ceny": {
-            "Nadruk 20x30 cm": 40
-          },
+          "cena_odziezy": 25,
           "rozmiary": [
             "S",
             "M",
@@ -1574,27 +1572,41 @@
             "Inny — podaj w uwagach",
             "Różne rozmiary — podaj w uwagach"
           ],
-          "nadruk_w_cenie": true
+          "dostepne_nadruki": {
+            "przod": [
+              "Do 10x15 cm"
+            ],
+            "tyl": [
+              "Do 10x15 cm",
+              "Do 20x30 cm"
+            ]
+          }
         },
         "Malfini Rimeck": {
           "opis": "Kamizelka odblaskowa Malfini Rimeck HV Bright (żółta lub pomarańczowa), dostępna tylko w rozmiarach M i 2XL.",
-          "ceny": {
-            "Nadruk 20x30 cm": 50
-          },
+          "cena_odziezy": 35,
           "rozmiary": [
             "M",
             "2XL",
             "Inny — podaj w uwagach",
             "Różne rozmiary — podaj w uwagach"
           ],
-          "nadruk_w_cenie": true
+          "dostepne_nadruki": {
+            "przod": [
+              "Do 10x15 cm"
+            ],
+            "tyl": [
+              "Do 10x15 cm",
+              "Do 20x30 cm"
+            ]
+          }
         }
       },
       "Czapki": {
         "Czapka bejsbolówka": {
           "opis": "Czapka z daszkiem, fason klasyczny (bejsbolówka). Szczegóły i kolor uzgodnimy mailowo.",
           "ceny": {
-            "Nadruk standardowy": 55
+            "Nadruk standardowy": 50
           },
           "rozmiary": [
             "Uniwersalny"
@@ -1605,6 +1617,16 @@
           "opis": "Czapka raperka Malfini RAP 5P (snapback, płaski daszek). Szczegóły i kolor uzgodnimy mailowo.",
           "ceny": {
             "Nadruk standardowy": 55
+          },
+          "rozmiary": [
+            "Uniwersalny"
+          ],
+          "nadruk_w_cenie": true
+        },
+        "Czapka dziecięca": {
+          "opis": "Czapka dziecięca z daszkiem, fason klasyczny (bejsbolówka), Malfini 6P Kids. Szczegóły i kolor uzgodnimy mailowo.",
+          "ceny": {
+            "Nadruk standardowy": 45
           },
           "rozmiary": [
             "Uniwersalny"

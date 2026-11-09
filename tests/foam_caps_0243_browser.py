@@ -70,10 +70,10 @@ with sync_playwright() as p:
         ctext=card.inner_text()
         assert 'Trucker' not in ctext and '311' not in ctext
         assert 'Rap 5P' in ctext and 'PODGLĄD · 301' in ctext,ctext[:1500]
-        assert 'Twill, 100% bawełna' in ctext
+        assert '100% bawełna' in ctext and '340 g/m²' in ctext
         swatches=page.locator('.d24-malfini-swatch')
         assert swatches.count()==7,swatches.count()
-        assert page.locator('.d24-malfini-link').first.get_attribute('href')=='https://shop.malfini.com/pl/pl/product/rap-5p-301'
+        assert page.locator('.d24-malfini-link').first.get_attribute('href').startswith('https://shop.malfini.com/pl/pl/product/rap-5p-301')
         names=[]
         for i in range(7):
             swatches.nth(i).click(); page.wait_for_timeout(250)
