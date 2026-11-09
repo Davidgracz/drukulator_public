@@ -1,4 +1,4 @@
-/* Drukulator 0.23.2v — local, optional product visualizer.
+/* Drukulator 0.23.2v (0.25.2: plik z kalkulatora obrazów w podglądzie) — local, optional product visualizer.
  * No price/order mutations, no outbound requests, no external libraries.
  * Chosen preview file is NOT an order attachment: attach it in the cart.
  */
@@ -36,12 +36,15 @@
   let coverImage = false;
   let lastSignature = '';
   let scheduled = false;
+  // 0.25.2: plik wgrany w kalkulatorze („Dopasuj do zdjęcia”) pokazujemy w podglądzie bez drugiego wgrywania.
+  let externalFile = false;
 
   function cleanupFile() {
     if (fileUrl) URL.revokeObjectURL(fileUrl);
     fileUrl = null;
     currentFile = null;
     filePixels = null;
+    externalFile = false;
   }
   function readable(n, max = 1) {
     return new Intl.NumberFormat(document.documentElement.lang === 'en' ? 'en-US' : 'pl-PL',
@@ -100,6 +103,15 @@
             result.requested = {w,h};
           }
         }
+        return result;
+      }
+    }
+    // 0.25.2: „Dopasuj do zdjęcia” — rozmiar wybranego proponowanego formatu (lub boku z zachowaniem proporcji).
+    if (visibleInput('canvasFile',card)) {
+      const fit = window.Druk24CanvasFit?.();
+      if (fit && fit.widthCm > 0 && fit.heightCm > 0) {
+        const result = {w:fit.widthCm*10,h:fit.heightCm*10,source:'canvasFit'};
+        if (fit.requested) { result.requested = fit.requested; result.proportional = Boolean(fit.proportional); }
         return result;
       }
     }
@@ -188,23 +200,31 @@
     const size = kb < 1024 ? `${readable(kb,0)} KB` : `${readable(kb/1024,1)} MB`;
     let line = `${currentFile.name} · ${size}`;
     if (filePixels) line += ` · ${filePixels.w} × ${filePixels.h} px`;
+    if (externalFile) line += ` — ${tr('wgrany w kalkulatorze powyżej, nie trzeba go wgrywać ponownie','uploaded in the calculator above, no need to upload it again')}`;
     return line;
   }
-  async function onFileSelected(event) {
-    const file = event.target.files?.[0];
+  function onFileSelected(event) {
+    loadFile(event.target.files?.[0], {input:event.target});
+  }
+  // Wspólna ścieżka dla pola „Sprawdź swój projekt” i pliku przekazanego z kalkulatora (opts.external).
+  function loadFile(file, opts = {}) {
     cleanupFile();
-    if (!file) { draw(true); return; }
+    const input = opts.input || null;
+    const external = Boolean(opts.external);
+    if (!file) { draw(true); return false; }
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     const isPdf = ext === 'pdf' && (file.type === 'application/pdf' || !file.type);
     const imageExt = ['jpg','jpeg','png','webp'];
     const isImage = imageExt.includes(ext) && (!file.type || ['image/jpeg','image/png','image/webp'].includes(file.type));
     if ((!isPdf && !isImage) || file.size > MAX_PREVIEW_BYTES || file.size === 0) {
-      event.target.value = '';
+      if (input) input.value = '';
+      if (external) { draw(true); return false; }
       const text = tr('Nieobsługiwany format lub plik większy niż 50 MB. Podgląd nie został wczytany.','Unsupported format or file over 50 MB. Preview not loaded.');
       currentPanel.querySelector('#d24PreviewFileInfo').textContent = text;
-      return;
+      return false;
     }
     currentFile = file;
+    externalFile = external;
     fileUrl = URL.createObjectURL(file);
     if (isImage) {
       const url = fileUrl;
@@ -216,18 +236,40 @@
       };
       image.onerror = () => {
         if (fileUrl !== url) return;
-        cleanupFile(); event.target.value = '';
+        cleanupFile(); if (input) input.value = '';
         draw(true);
-        currentPanel.querySelector('#d24PreviewFileInfo').textContent = tr('Nie można odczytać obrazu.','Unable to read this image.');
+        if (!external) currentPanel.querySelector('#d24PreviewFileInfo').textContent = tr('Nie można odczytać obrazu.','Unable to read this image.');
       };
       image.src = url;
     }
     draw(true);
+    return true;
   }
+  // Publiczne API dla kalkulatora obrazów na płótnie: pokaż wgrany tam plik w podglądzie i otwórz podgląd.
+  window.Druk24Preview = {
+    setFile(file, opts = {}) {
+      if (!currentPanel || !currentPanel.isConnected) decorate();
+      if (!currentPanel || !currentPanel.isConnected) return false;
+      const ok = loadFile(file, {external:opts.external !== false});
+      if (ok) {
+        const fold = currentPanel.querySelector('details.d24-preview-fold');
+        if (fold) fold.open = true;
+      }
+      return ok;
+    },
+    clearFile(opts = {}) {
+      if (!currentPanel || !currentPanel.isConnected) return;
+      if (opts.externalOnly && !externalFile) return;
+      cleanupFile();
+      const input = currentPanel.querySelector('#d24PreviewFile');
+      if (input) input.value = '';
+      draw(true);
+    }
+  };
   function draw(force = false) {
     if (!currentPanel || !currentPanel.isConnected || !currentCard) return;
     const dimensions = dimensionsFor(currentCard);
-    const signature = JSON.stringify([dimensions,rotated,showBleed,coverImage,fileUrl,filePixels,document.documentElement.lang]);
+    const signature = JSON.stringify([dimensions,rotated,showBleed,coverImage,fileUrl,filePixels,externalFile,document.documentElement.lang]);
     if (!force && signature === lastSignature) return;
     lastSignature = signature;
     const bleedPossible = bleedEligible(currentCard,dimensions);
@@ -295,7 +337,11 @@
     currentPanel.querySelector('#d24PreviewCoverRow').hidden=!fileUrl || /\.pdf$/i.test(currentFile?.name || '');
     currentPanel.querySelector('#d24PreviewCover').checked=coverImage;
     currentPanel.querySelector('#d24PreviewFileInfo').textContent=infoForFile();
-    currentPanel.querySelector('#d24PreviewClear').hidden=!fileUrl;
+    currentPanel.querySelector('#d24PreviewClear').hidden=!fileUrl || externalFile;
+    const upload = currentPanel.querySelector('.d24-preview-upload');
+    upload.classList.toggle('is-external',externalFile);
+    upload.querySelector('label strong').textContent = externalFile ? tr('Twój wgrany plik','Your uploaded file') : tr('Sprawdź swój projekt','Preview your artwork');
+    upload.querySelector('label small').textContent = externalFile ? tr('Ten sam plik, który wgrano w kalkulatorze','The file you uploaded in the calculator') : 'JPG, PNG, WebP, PDF — max. 50 MB';
     const footer=currentPanel.querySelector('#d24PreviewFooter');
     if (!net) footer.textContent=tr('W tym produkcie nie ma jednoznacznego formatu. Podgląd obrazu nie określa wielkości zamówienia.','This product has no unambiguous dimensions. Artwork preview does not define the order size.');
     else if (activeBleed) footer.textContent=tr('Linia przerywana = cięcie do netto. Spad 1,5 mm z każdej strony jest powiększony dla czytelności.','Dashed line = final trim. 1.5 mm bleed on each side is enlarged for visibility.');
@@ -304,7 +350,9 @@
       const sameSize = Math.abs(dimensions.requested.w * 10 - dimensions.w) < 0.5 && Math.abs(dimensions.requested.h * 10 - dimensions.h) < 0.5;
       if (!sameSize) {
         const note = document.createElement('p'); note.className = 'd24-preview-resolution';
-        note.textContent = tr(`Wpisany wymiar ${readable(dimensions.requested.w)} × ${readable(dimensions.requested.h)} cm jest rozliczany jako najbliższy większy format z cennika.`,`The entered size ${readable(dimensions.requested.w)} × ${readable(dimensions.requested.h)} cm is priced as the nearest larger format in the price list.`);
+        note.textContent = dimensions.proportional
+          ? tr(`Wymiar z zachowaniem proporcji ${readable(dimensions.requested.w)} × ${readable(dimensions.requested.h)} cm jest rozliczany jako najbliższy większy format z cennika.`,`The proportional size ${readable(dimensions.requested.w)} × ${readable(dimensions.requested.h)} cm is priced as the nearest larger format in the price list.`)
+          : tr(`Wpisany wymiar ${readable(dimensions.requested.w)} × ${readable(dimensions.requested.h)} cm jest rozliczany jako najbliższy większy format z cennika.`,`The entered size ${readable(dimensions.requested.w)} × ${readable(dimensions.requested.h)} cm is priced as the nearest larger format in the price list.`);
         dims.append(note);
       }
     }

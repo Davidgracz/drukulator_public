@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.1v";
+  const VERSION = "0.25.2v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -5978,8 +5978,8 @@
   function renderCanvas() {
     const root = state.prices.obrazy_na_plotnie;
     content.innerHTML = `${header("Obrazy na płótnie", `${root.material || "Płótno"}; zakres boków: ${root.minimalny_bok_cm || 30}–${root.maksymalny_bok_cm || 150} cm`)}<div class="card"><div class="form-grid">
-      <div class="field half"><label>Sposób wyboru rozmiaru</label><select id="canvasMode">${options(["Wybierz format z cennika", "Wpisz własny wymiar", "Dopasuj do zdjęcia"])}</select></div>
-      <div class="field half"><label>Ilość obrazów</label><input id="canvasQty" type="number" min="1" max="10" step="1" value="1"></div>
+      <div class="field d24-canvas-mode-field" id="canvasModeField"><label>Sposób wyboru rozmiaru</label><select id="canvasMode">${options(["Wybierz format z cennika", "Wpisz własny wymiar", "Dopasuj do zdjęcia"])}</select></div>
+      <div class="field d24-canvas-qty-field" id="canvasQtyField"><label>Ilość obrazów</label><input id="canvasQty" type="number" min="1" max="10" step="1" value="1"></div>
       <div id="canvasDynamic" class="field" style="display:contents"></div>
     </div><div id="canvasMessage"></div>${alertBox(`Maksymalnie 10 jednakowych obrazów w jednym zamówieniu. ${LIMIT_CONTACT_TEXT}`, "info")}<div class="actions"><button class="button" id="calculateCanvas">Oblicz cenę</button></div></div><div id="quoteArea"></div>`;
 
@@ -5995,6 +5995,8 @@
 
     // „Dopasuj do zdjęcia → Podaj jeden bok”: wartość zmienia się co 10 cm, a wpisana ręcznie jest zaokrąglana w górę.
     const KNOWN_SIDE_STEP = 10;
+    // „Wpisz własny wymiar”: przyciski − / + zmieniają wymiar co 10 cm (wpisać można dowolną wartość).
+    const CUSTOM_SIDE_STEP = 10;
     const knownSideMin = Math.ceil(Number(root.minimalny_bok_cm || 30) / KNOWN_SIDE_STEP) * KNOWN_SIDE_STEP;
     const knownSideMax = Math.floor(Number(root.maksymalny_bok_cm || 150) / KNOWN_SIDE_STEP) * KNOWN_SIDE_STEP;
     function roundKnownSide(rawValue) {
@@ -6003,47 +6005,99 @@
       return Math.min(knownSideMax, Math.max(knownSideMin, Math.ceil(n / KNOWN_SIDE_STEP - 1e-9) * KNOWN_SIDE_STEP));
     }
 
-    // The most frequently chosen sizes are shown first; the rest stay under "Pokaż wszystkie opcje".
+    // The most frequently chosen sizes are shown first; the rest stay under "Pokaż wszystkie formaty i ceny".
     const POPULAR_CANVAS_FORMATS = ["30x40", "40x60", "50x70", "60x90", "70x100", "80x120", "100x140"];
     function orderedCanvasFormats() {
       const all = Object.keys(root.formaty);
       const popular = POPULAR_CANVAS_FORMATS.filter(key => all.includes(key));
       return [...popular, ...all.filter(key => !popular.includes(key))];
     }
-    function standardFormatOptions() {
-      return orderedCanvasFormats().map(formatKey => `<option value="${esc(formatKey)}">${esc(formatKey.replace("x", " × "))} cm</option>`).join("");
+    // 0.25.2: cennik zna formaty „krótszy x dłuższy” (30x40). Obraz poziomy (40x30) kosztuje tyle samo,
+    // więc do wyboru są oba kierunki: pierwsze są formaty z cennika, potem ich odwrócone odpowiedniki.
+    function swappedCanvasKey(formatKey) {
+      const [a, b] = String(formatKey).split("x");
+      return a === b ? null : `${b}x${a}`;
     }
-    // Full price list of all canvas formats (plain table, no pictograms). A row picks the format.
+    function selectableCanvasFormats() {
+      const base = orderedCanvasFormats();
+      const known = new Set(base);
+      const swapped = [];
+      for (const key of base) {
+        const other = swappedCanvasKey(key);
+        if (other && !known.has(other)) { known.add(other); swapped.push(other); }
+      }
+      return [...base, ...swapped];
+    }
+    const canvasFormatLabel = formatKey => `${String(formatKey).replace("x", " × ")} cm`;
+    function standardFormatOptions() {
+      return selectableCanvasFormats().map(formatKey => `<option value="${esc(formatKey)}">${esc(canvasFormatLabel(formatKey))}</option>`).join("");
+    }
+    // Wszystkie formaty i ceny jako kafelki (jak gotowe rozmiary): jedna szerokość = dwa rzędy (7 + 6 wysokości).
     function renderCanvasPriceList() {
       const body = document.getElementById("canvasPriceListBody");
       const select = document.getElementById("canvasFormat");
       if (!body || !select) return;
-      const quantity = numberValue("canvasQty");
-      const showTotal = Number.isSafeInteger(quantity) && quantity > 1 && quantity <= 10;
-      const rows = orderedCanvasFormats().map(formatKey => {
-        const unit = Number(root.formaty[formatKey]);
-        const selected = select.value === formatKey;
-        return `<tr${selected ? ' class="is-selected"' : ""}><td><button type="button" class="d24-canvas-pick" data-canvas-format="${esc(formatKey)}" aria-pressed="${selected}">${esc(formatKey.replace("x", " × "))} cm</button></td><td>${money(unit)} zł</td>${showTotal ? `<td>${money(unit * quantity)} zł</td>` : ""}</tr>`;
+      const available = new Map(Array.from(select.options).map(option => [option.value, option]));
+      const sides = Array.from(new Set(Object.keys(root.formaty).flatMap(key => key.split("x").map(Number)))).sort((a, b) => a - b);
+      body.innerHTML = sides.map(width => {
+        const tiles = sides.map(height => {
+          const key = `${width}x${height}`;
+          const option = available.get(key);
+          if (!option) return "";
+          const selected = select.value === key;
+          return `<button type="button" class="d24-smart-choice d24-canvas-tile" data-canvas-format="${esc(key)}" aria-pressed="${selected}"><strong>${esc(canvasFormatLabel(key))}</strong><span class="d24-option-price">${esc(option.dataset.d24FinalPrice || "")}</span></button>`;
+        }).join("");
+        return tiles ? `<div class="d24-canvas-matrix__group"><h4 class="d24-canvas-matrix__heading">Szerokość ${width} cm</h4><div class="d24-canvas-matrix__tiles">${tiles}</div></div>` : "";
       }).join("");
-      body.innerHTML = `<table class="tier-table d24-canvas-prices"><thead><tr><th>Format</th><th>Cena brutto za sztukę</th>${showTotal ? `<th>Razem (${quantity} szt.)</th>` : ""}</tr></thead><tbody>${rows}</tbody></table>`;
     }
     // Price under each format button: total gross price for the chosen quantity, e.g. "75,00 zł".
     function refreshCanvasFormatPrices() {
-      const select = document.getElementById("canvasFormat");
-      if (!select) return;
       const quantity = numberValue("canvasQty");
       let changed = false;
-      for (const option of select.options) {
+      const setPrice = (option, formatKey) => {
         let priceText = "";
-        try { priceText = `${money(C.calculateCanvasStandard(state.prices, option.value, quantity).price)} zł`; }
+        try { priceText = `${money(C.calculateCanvasStandard(state.prices, formatKey, quantity).price)} zł`; }
         catch (_) { /* Invalid quantity: no price instead of a misleading one. */ }
         if (option.dataset.d24FinalPrice !== priceText) {
           option.dataset.d24FinalPrice = priceText;
           changed = true;
         }
+      };
+      const select = document.getElementById("canvasFormat");
+      if (select) for (const option of select.options) setPrice(option, option.value);
+      // „Dopasuj do zdjęcia”: proponowane formaty pokazują tę samą cenę (za wybraną ilość) co gotowe rozmiary.
+      const suggestionSelect = document.getElementById("canvasSuggestion");
+      if (suggestionSelect && imageInfo?.suggestions) {
+        for (const option of suggestionSelect.options) {
+          const item = imageInfo.suggestions[Number(option.value)];
+          if (item) setPrice(option, item.formatKey);
+        }
       }
       if (changed) content.dispatchEvent(new Event("d24-option-prices"));
     }
+
+    // Podgląd produktu: plik wgrany w kalkulatorze jest pokazywany w podglądzie (bez drugiego wgrywania).
+    function showFileInPreview(file) {
+      try { window.Druk24Preview?.setFile?.(file, { external: true }); } catch (_) { /* Podgląd jest dodatkiem. */ }
+    }
+    function clearFileInPreview() {
+      try { window.Druk24Preview?.clearFile?.({ externalOnly: true }); } catch (_) { /* Podgląd jest dodatkiem. */ }
+    }
+    // Rozmiar, który podgląd ma narysować w trybie „Dopasuj do zdjęcia” (wybrany proponowany format albo bok z zachowaniem proporcji).
+    window.Druk24CanvasFit = () => {
+      try {
+        if (mode.value !== "Dopasuj do zdjęcia" || !imageInfo) return null;
+        if (value("canvasImageSizeMode") === "Proponowane formaty") {
+          const item = imageInfo.suggestions?.[Number(value("canvasSuggestion"))];
+          return item ? { widthCm: item.displayWidthCm, heightCm: item.displayHeightCm } : null;
+        }
+        const known = roundKnownSide(document.getElementById("canvasKnownValue")?.value);
+        if (known === null) return null;
+        const proportional = C.calculateProportionalCanvasSize(state.prices, imageInfo.width, imageInfo.height, value("canvasKnownSide"), known);
+        const billing = C.calculateCanvasCustom(state.prices, proportional.widthCm, proportional.heightCm, 1).billing;
+        return { widthCm: billing.displayWidthCm, heightCm: billing.displayHeightCm, requested: { w: proportional.widthCm, h: proportional.heightCm }, proportional: true };
+      } catch (_) { return null; }
+    };
 
     function isPdfFile(file) {
       return String(file?.type || "").toLowerCase() === "application/pdf" || /\.pdf$/i.test(String(file?.name || ""));
@@ -6102,10 +6156,12 @@
       if (sizeMode === "Proponowane formaty") {
         const suggestions = C.getCanvasSuggestions(state.prices, imageInfo.width, imageInfo.height);
         imageInfo.suggestions = suggestions;
-        holder.innerHTML = `<div class="field"><label>Proponowany format</label><select id="canvasSuggestion">${suggestions.map((item, index) => `<option value="${index}">${item.displayWidthCm} × ${item.displayHeightCm} cm — ${money(item.price)} zł/szt. — różnica proporcji ${num(item.ratioErrorPercent, 2)}%</option>`).join("")}</select></div>`;
+        // 0.25.2: proponowane formaty jako kafelki (7 w rzędzie, jak gotowe rozmiary); pod rozmiarem różnica proporcji, pod nią cena.
+        holder.innerHTML = `<div class="field d24-canvas-suggestion-field" id="canvasSuggestionField"><label>Proponowany format</label><select id="canvasSuggestion" data-d24-initial-choices="${Math.max(7, suggestions.length)}" data-d24-no-more="1">${suggestions.map((item, index) => `<option value="${index}" data-d24-detail="różnica proporcji ${num(item.ratioErrorPercent, 2)}%">${item.displayWidthCm} × ${item.displayHeightCm} cm</option>`).join("")}</select></div>`;
+        refreshCanvasFormatPrices();
         message.innerHTML = "";
       } else {
-        holder.innerHTML = `<div class="field half"><label>Który bok podajesz?</label><select id="canvasKnownSide">${options(["Szerokość", "Wysokość"])}</select></div><div class="field half"><label for="canvasKnownValue">Wartość boku [cm]</label><input id="canvasKnownValue" type="number" min="${knownSideMin}" max="${knownSideMax}" step="${KNOWN_SIDE_STEP}" value="60" aria-describedby="canvasKnownHint"><small id="canvasKnownHint" class="d24-canvas-known-hint">Wartość zmienia się co ${KNOWN_SIDE_STEP} cm. Wpisaną liczbę zaokrąglamy w górę do pełnych ${KNOWN_SIDE_STEP} cm.</small></div>`;
+        holder.innerHTML = `<div class="form-grid"><div class="field half"><label>Który bok podajesz?</label><select id="canvasKnownSide">${options(["Szerokość", "Wysokość"])}</select></div><div class="field half"><label for="canvasKnownValue">Wartość boku [cm]</label><input id="canvasKnownValue" type="number" min="${knownSideMin}" max="${knownSideMax}" step="${KNOWN_SIDE_STEP}" value="60" aria-describedby="canvasKnownHint"><small id="canvasKnownHint" class="d24-canvas-known-hint">Wartość zmienia się co ${KNOWN_SIDE_STEP} cm. Wpisaną liczbę zaokrąglamy w górę do pełnych ${KNOWN_SIDE_STEP} cm.</small></div></div>`;
         const updateProportionalSize = () => {
           try {
             const rounded = roundKnownSide(document.getElementById("canvasKnownValue").value);
@@ -6130,7 +6186,7 @@
     function renderCanvasFileWorkspace(info, previewHtml, noteHtml = "") {
       imageInfo = info;
       const workspace = document.getElementById("canvasImageWorkspace");
-      workspace.innerHTML = `${previewHtml}${noteHtml}<div class="field"><label>Dopasowanie rozmiaru</label><select id="canvasImageSizeMode">${options(["Proponowane formaty", "Podaj jeden bok"])}</select></div><div id="canvasImageOptions" class="form-grid"></div>`;
+      workspace.innerHTML = `<div class="d24-canvas-file-row">${previewHtml}<div class="d24-canvas-file-row__note">${noteHtml}</div></div><div class="field"><label>Dopasowanie rozmiaru</label><select id="canvasImageSizeMode">${options(["Proponowane formaty", "Podaj jeden bok"])}</select></div><div id="canvasImageOptions" class="d24-canvas-image-options"></div>`;
       document.getElementById("canvasImageSizeMode").addEventListener("change", renderImageSizeOptions);
       renderImageSizeOptions();
       window.DrukulatorI18n?.refresh?.();
@@ -6152,7 +6208,7 @@
         ${alertBox("Nie udało się automatycznie odczytać rozmiaru strony PDF. Podaj rozmiar pierwszej strony — domyślnie ustawiono A4.", "warning")}
         <div class="form-grid"><div class="field half"><label>Szerokość strony PDF [mm]</label><input id="canvasPdfWidth" type="number" min="1" step="0.1" value="210"></div><div class="field half"><label>Wysokość strony PDF [mm]</label><input id="canvasPdfHeight" type="number" min="1" step="0.1" value="297"></div></div>
         <p class="muted">PDF zostanie automatycznie dodany do załączników po dodaniu produktu do koszyka.</p>
-        <div class="field"><label>Dopasowanie rozmiaru</label><select id="canvasImageSizeMode">${options(["Proponowane formaty", "Podaj jeden bok"])}</select></div><div id="canvasImageOptions" class="form-grid"></div>`;
+        <div class="field"><label>Dopasowanie rozmiaru</label><select id="canvasImageSizeMode">${options(["Proponowane formaty", "Podaj jeden bok"])}</select></div><div id="canvasImageOptions" class="d24-canvas-image-options"></div>`;
 
       const updatePdfSize = () => {
         const width = Number(document.getElementById("canvasPdfWidth")?.value);
@@ -6176,6 +6232,7 @@
       revokeCanvasObjectUrl();
       imageInfo = null;
       message.innerHTML = "";
+      clearFileInPreview();
       const workspace = document.getElementById("canvasImageWorkspace");
       if (!file) {
         workspace.innerHTML = alertBox("Wybierz zdjęcie lub plik PDF, aby dopasować format.", "info");
@@ -6188,6 +6245,7 @@
           const pageSize = await readPdfPageSize(file);
           if (!pageSize) {
             renderPdfManualSize(file);
+            showFileInPreview(file);
             return;
           }
           renderCanvasFileWorkspace(
@@ -6203,6 +6261,7 @@
             `<div class="canvas-pdf-preview"><span class="canvas-pdf-preview__badge">PDF</span><div><strong>${esc(file.name)}</strong><small>${formatFileSize(file.size)}</small></div></div>`,
             `<p class="muted">Rozmiar pierwszej strony: ${num(pageSize.widthMm, 1)} × ${num(pageSize.heightMm, 1)} mm. PDF zostanie automatycznie dodany do załączników po dodaniu produktu do koszyka.</p>`
           );
+          showFileInPreview(file);
         } catch (error) {
           workspace.innerHTML = alertBox(error.message || String(error), "error");
         }
@@ -6220,9 +6279,10 @@
       image.onload = () => {
         renderCanvasFileWorkspace(
           { file, kind: "image", url, width: image.naturalWidth, height: image.naturalHeight, suggestions: [] },
-          `<img class="image-preview" src="${url}" alt="Podgląd"><p class="muted">${esc(file.name)} — ${image.naturalWidth} × ${image.naturalHeight} px</p>`,
-          `<p class="muted">Plik zostanie automatycznie dodany do załączników po dodaniu produktu do koszyka.</p>`
+          `<img class="image-preview" src="${url}" alt="Podgląd">`,
+          `<p class="muted"><strong>${esc(file.name)}</strong> — ${image.naturalWidth} × ${image.naturalHeight} px</p><p class="muted">Plik zostanie automatycznie dodany do załączników po dodaniu produktu do koszyka. Pokazujemy go też w podglądzie produktu poniżej — nie trzeba go wgrywać drugi raz.</p>`
         );
+        showFileInPreview(file);
       };
       image.onerror = () => {
         URL.revokeObjectURL(url);
@@ -6235,9 +6295,10 @@
       revokeCanvasObjectUrl();
       imageInfo = null;
       message.innerHTML = "";
+      clearFileInPreview();
       if (mode.value === "Wybierz format z cennika") {
-        dynamic.innerHTML = `<div class="field"><label>Format obrazu</label><select id="canvasFormat" data-d24-initial-choices="${POPULAR_CANVAS_FORMATS.length}" data-d24-no-more="1">${standardFormatOptions()}</select></div>
-          <div class="field"><details class="d24-canvas-pricelist" id="canvasPriceList"><summary>Pokaż wszystkie formaty i ceny (${orderedCanvasFormats().length})</summary><div id="canvasPriceListBody"></div></details></div>`;
+        dynamic.innerHTML = `<div class="field d24-canvas-format-field" id="canvasFormatField"><label>Format obrazu</label><select id="canvasFormat" data-d24-initial-choices="${POPULAR_CANVAS_FORMATS.length}" data-d24-no-more="1">${standardFormatOptions()}</select></div>
+          <div class="field"><details class="d24-canvas-pricelist" id="canvasPriceList"><summary>Pokaż wszystkie formaty i ceny (${selectableCanvasFormats().length})</summary><div id="canvasPriceListBody" class="d24-canvas-matrix"></div></details></div>`;
         refreshCanvasFormatPrices();
         renderCanvasPriceList();
         document.getElementById("canvasPriceList").addEventListener("click", event => {
@@ -6252,8 +6313,8 @@
         });
         document.getElementById("canvasFormat").addEventListener("change", renderCanvasPriceList);
       } else if (mode.value === "Wpisz własny wymiar") {
-        dynamic.innerHTML = `<div class="field half"><label>Szerokość [cm]</label><input id="canvasWidth" type="number" min="${root.minimalny_bok_cm || 30}" max="${root.maksymalny_bok_cm || 150}" step="0.1" value="60"></div><div class="field half"><label>Wysokość [cm]</label><input id="canvasHeight" type="number" min="${root.minimalny_bok_cm || 30}" max="${root.maksymalny_bok_cm || 150}" step="0.1" value="90"></div>`;
-        message.innerHTML = alertBox("Własny wymiar jest rozliczany według najbliższego większego formatu z cennika.", "info");
+        dynamic.innerHTML = `<div class="field half"><label>Szerokość [cm]</label><input id="canvasWidth" type="number" min="${root.minimalny_bok_cm || 30}" max="${root.maksymalny_bok_cm || 150}" step="${CUSTOM_SIDE_STEP}" value="60"></div><div class="field half"><label>Wysokość [cm]</label><input id="canvasHeight" type="number" min="${root.minimalny_bok_cm || 30}" max="${root.maksymalny_bok_cm || 150}" step="${CUSTOM_SIDE_STEP}" value="90"></div>`;
+        message.innerHTML = alertBox(`Własny wymiar jest rozliczany według najbliższego większego formatu z cennika. Przyciski − i + zmieniają wymiar co ${CUSTOM_SIDE_STEP} cm, a w polu możesz wpisać dowolną wartość.`, "info");
       } else {
         dynamic.innerHTML = `<div class="field"><label>Wybierz plik PDF / JPG / PNG / WebP</label><input id="canvasFile" type="file" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/tiff"></div><div id="canvasImageWorkspace" class="field">${alertBox("Wybierz zdjęcie lub plik PDF, aby dopasować format.", "info")}</div>`;
         document.getElementById("canvasFile").addEventListener("change", handleCanvasFile);
@@ -6273,7 +6334,8 @@
           const formatKey = value("canvasFormat");
           const result = C.calculateCanvasStandard(state.prices, formatKey, quantity);
           const [width, height] = formatKey.split("x");
-          showQuote({ title: "Obrazy na płótnie", description: `${width} × ${height} cm, ${quantity} szt.`, price: result.price, details: [["Format cennikowy", formatKey], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]], meta: { productType: "canvas", quantity } });
+          const listKey = Object.prototype.hasOwnProperty.call(root.formaty, formatKey) ? formatKey : formatKey.split("x").reverse().join("x");
+          showQuote({ title: "Obrazy na płótnie", description: `${width} × ${height} cm, ${quantity} szt.`, price: result.price, details: [["Format cennikowy", listKey], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]], meta: { productType: "canvas", quantity } });
           return;
         }
         if (mode.value === "Wpisz własny wymiar") {

@@ -51,7 +51,10 @@ with sync_playwright() as p:
         assert page.locator('.field:has(#canvasFormat) button[data-d24-show-more]').count()==0
         assert page.locator('.field:has(#canvasFormat) button[data-option-index]:visible').count()==7
         page.locator('#canvasPriceList > summary').click(); page.wait_for_timeout(200)
-        assert page.locator('#canvasPriceListBody tbody tr').count()==len(prices['obrazy_na_plotnie']['formaty'])
+        # 0.25.2: pełny cennik to kafelki; każdy rozmiar występuje w obu orientacjach (30x40 i 40x30)
+        listed=prices['obrazy_na_plotnie']['formaty']
+        expected_tiles=sum(1 if k.split('x')[0]==k.split('x')[1] else 2 for k in listed)
+        assert page.locator('#canvasPriceListBody [data-canvas-format]').count()==expected_tiles
         assert '75,00 zł' in page.locator('#canvasPriceListBody').inner_text()
         page.locator('#canvasPriceListBody [data-canvas-format="40x80"]').click(); page.wait_for_timeout(300)
         assert page.locator('#canvasFormat').input_value()=='40x80'

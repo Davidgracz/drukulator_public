@@ -1,5 +1,5 @@
-/* Drukulator 0.25.1v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
-   obrazy na płótnie: pełny cennik, pola plików). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
+/* Drukulator 0.25.2v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+   obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
 
@@ -11,18 +11,48 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
 .content input[type="file"],
 .content input[type="file"]::file-selector-button { cursor: pointer; }
 .d24-canvas-pricelist > summary { cursor: pointer; font-weight: 800; color: var(--ux-link, #0369a1); min-height: 44px; display: flex; align-items: center; }
-#canvasPriceListBody { max-height: 420px; overflow: auto; border: 1px solid var(--line, #d6e1e9); border-radius: 12px; margin-top: 6px; -webkit-overflow-scrolling: touch; }
-#canvasPriceListBody .tier-table { margin: 0; width: 100%; }
-#canvasPriceListBody thead th { position: sticky; top: 0; background: var(--panel, #fff); z-index: 1; }
-#canvasPriceListBody tr.is-selected td { background: #eaf6fc; font-weight: 800; }
-[data-theme="dark"] #canvasPriceListBody tr.is-selected td { background: #173d54; }
-.d24-canvas-pick { min-height: 44px; padding: 4px 8px; border: 0; background: none; color: var(--ux-link, #0369a1); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
 /* „Dopasuj do zdjęcia”: po dodaniu pliku strona nie może się rozszerzać w poziomie (telefon). */
+#canvasImageWorkspace { display: block; min-width: 0; }
+#canvasImageWorkspace > * { max-width: 100%; min-width: 0; }
+#canvasImageWorkspace > .field { margin-top: 14px; }
+#canvasImageWorkspace .muted { overflow-wrap: anywhere; margin: 4px 0; }
+.d24-canvas-file-row { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+.d24-canvas-file-row__note { flex: 1 1 260px; min-width: 0; }
+.d24-canvas-image-options { margin-top: 14px; }
 @media (max-width: 760px) {
-  #canvasImageWorkspace { display: block; min-width: 0; }
-  #canvasImageWorkspace > * { max-width: 100%; min-width: 0; }
-  #canvasImageWorkspace > .field { margin-top: 12px; }
   #canvasImageWorkspace .image-preview { display: block; margin-bottom: 8px; }
-  #canvasImageWorkspace .muted { overflow-wrap: anywhere; margin: 4px 0; }
 }
 .d24-canvas-known-hint { display: block; margin-top: 6px; font-size: .875rem; line-height: 1.45; color: var(--muted, #526c7b); }
+
+/* ---------- 0.25.2v: Obrazy na płótnie — układ, siatka formatów, proponowane formaty ---------- */
+/* „Sposób wyboru rozmiaru”: trzy przyciski w jednym rzędzie, „Ilość obrazów” tuż pod nimi (lewa krawędź ta sama we wszystkich trybach). */
+.content #canvasModeField .d24-smart-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.content #canvasQtyField .refresh-number { justify-self: start; width: min(100%, 200px); }
+@media (max-width: 760px) {
+  .content #canvasModeField .d24-smart-options { grid-template-columns: minmax(0, 1fr); }
+}
+/* Kafelki formatów: 7 w rzędzie (gdy jest miejsce), mniej na węższym ekranie. */
+#canvasFormatField, #canvasSuggestionField, #canvasPriceList { container-type: inline-size; }
+.content #canvasFormatField .d24-smart-options,
+.content #canvasSuggestionField .d24-smart-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.d24-canvas-matrix__tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+@container (min-width: 440px) {
+  .content #canvasFormatField .d24-smart-options,
+  .content #canvasSuggestionField .d24-smart-options,
+  .d24-canvas-matrix__tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@container (min-width: 640px) {
+  .content #canvasFormatField .d24-smart-options,
+  .content #canvasSuggestionField .d24-smart-options,
+  .d24-canvas-matrix__tiles { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+.d24-canvas-pricelist[open] > summary { margin-bottom: 8px; }
+.d24-canvas-matrix__group + .d24-canvas-matrix__group { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border, #d6e1e9); }
+.d24-canvas-matrix__heading { margin: 0 0 7px; font-size: .78rem; font-weight: 800; letter-spacing: .02em; color: var(--muted, #526c7b); }
+.d24-canvas-tile { cursor: pointer; }
+.d24-canvas-tile .d24-option-price { padding-top: 4px; }
+/* Plik wgrany w „Dopasuj do zdjęcia” jest pokazany w podglądzie produktu — tutaj tylko miniatura. */
+#canvasImageWorkspace .image-preview { max-width: 160px; max-height: 110px; margin: 0; }
+/* Podgląd produktu z plikiem z kalkulatora: bez drugiego pola wgrywania. */
+.d24-preview-upload.is-external > input[type="file"] { display: none; }
+.d24-preview-upload.is-external > label { pointer-events: none; }

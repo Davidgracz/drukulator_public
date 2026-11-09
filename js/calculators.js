@@ -781,10 +781,24 @@
     return { ...candidates[0], billingMethod: "Najbliższy dostępny format z cennika" };
   }
 
+  // 0.25.2: cennik zawiera formaty zapisane jako „krótszy x dłuższy” (np. 30x40). Format odwrócony
+  // (40x30 – obraz poziomy) ma tę samą cenę co 30x40, więc szukamy go w obu orientacjach.
+  function findCanvasListPrice(prices, formatKey) {
+    const formats = prices.obrazy_na_plotnie.formaty || {};
+    if (Object.prototype.hasOwnProperty.call(formats, formatKey)) return Number(formats[formatKey]);
+    const match = String(formatKey).match(/^\s*(\d+)\s*[x×]\s*(\d+)\s*$/);
+    if (match) {
+      const swapped = `${Number(match[2])}x${Number(match[1])}`;
+      if (Object.prototype.hasOwnProperty.call(formats, swapped)) return Number(formats[swapped]);
+    }
+    return NaN;
+  }
+
   function calculateCanvasStandard(prices, formatKey, quantity) {
     assertWholeQuantity(quantity);
     if (Number(quantity) > 10) throwLimit("Maksymalna liczba jednakowych obrazów w jednym zamówieniu to 10 sztuk.");
-    const unitPrice = Number(prices.obrazy_na_plotnie.formaty[formatKey]);
+    const unitPrice = findCanvasListPrice(prices, formatKey);
+    if (!Number.isFinite(unitPrice)) throw new Error(`Brak formatu ${formatKey} w cenniku obrazów na płótnie.`);
     return { price: round2(unitPrice * Number(quantity)), unitPrice };
   }
 

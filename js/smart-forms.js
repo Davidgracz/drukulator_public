@@ -1,4 +1,4 @@
-/* Drukulator 0.23.1 — progressive form enhancements. Business logic stays in app.js. */
+/* Drukulator 0.23.1 (0.25.2: data-d24-detail) — progressive form enhancements. Business logic stays in app.js. */
 (() => {
   'use strict';
   const content = document.getElementById('content');
@@ -49,7 +49,7 @@
     if (kind === 'paper') { const weight = text.match(/\b\d{2,3}\s*g(?:\/m²|\/m2)?\b/i); return weight ? weight[0] : ''; }
     return '';
   };
-  const signatureFor = (select) => Array.from(select.options).map(o => `${o.value}\u0002${o.label}\u0002${o.disabled?'1':'0'}\u0002${o.dataset.d24FinalPrice||''}\u0002${o.dataset.d24FinalTotal||''}`).join('\u0001');
+  const signatureFor = (select) => Array.from(select.options).map(o => `${o.value}\u0002${o.label}\u0002${o.disabled?'1':'0'}\u0002${o.dataset.d24FinalPrice||''}\u0002${o.dataset.d24FinalTotal||''}\u0002${o.dataset.d24Detail||''}`).join('\u0001');
   let scheduled = false;
   // A single visual control for every available select option. The native select
   // remains the authoritative value for all existing validators and calculators.
@@ -109,7 +109,8 @@
         const title = document.createElement('strong'); title.textContent = option.label.trim();
         button.append(title);
         // 0.24.3: pianki — pod nazwą formatu nie pokazujemy rozmiaru w mm (data-d24-no-detail="1"), tylko cenę.
-        const detail = select.dataset.d24NoDetail === '1' ? '' : smallDetail(kind, option.label);
+        // 0.25.2: dowolny wybór może podać własny opis pod nazwą (data-d24-detail), np. różnicę proporcji przy proponowanych formatach.
+        const detail = option.dataset.d24Detail || (select.dataset.d24NoDetail === '1' ? '' : smallDetail(kind, option.label));
         if (detail && detail !== option.label.trim()) {
           const small = document.createElement('small'); small.textContent = detail; button.append(small);
         }
