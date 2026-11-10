@@ -1,4 +1,4 @@
-/* Drukulator 0.23.1 (0.25.2: data-d24-detail, 0.25.4: pianki jak plakaty) — progressive form enhancements. Business logic stays in app.js. */
+/* Drukulator 0.23.1 (0.25.2: data-d24-detail, 0.25.4: pianki jak plakaty, 0.25.6: ponowne ozdobienie kafelków) — progressive form enhancements. Business logic stays in app.js. */
 (() => {
   'use strict';
   const content = document.getElementById('content');
@@ -132,6 +132,9 @@
         more.type = 'button'; more.className = 'd24-smart-more';
         more.dataset.d24ShowMore = '1'; host.append(more);
       }
+      // 0.25.6: kafelki zostały zbudowane od nowa — nakładka konfiguratora (miniatura formatu, kwota) musi je ozdobić ponownie,
+      // inaczej po zmianie ceny (np. kliknięciu ilości przy piankach) kafelki formatów tracą grafikę.
+      host.dispatchEvent(new CustomEvent('d24-smart-options-rebuilt', {bubbles:true}));
     }
     if (select.dataset.d24OldTabindex === undefined) select.dataset.d24OldTabindex = select.getAttribute('tabindex') || '';
     select.classList.add('d24-native-covered');

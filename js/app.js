@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.5v";
+  const VERSION = "0.25.6v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -5294,6 +5294,15 @@
         ...formatNames.map(formatName => `<option value="${esc(formatName)}">${esc(formatLabel(formatName))}</option>`),
         `<option value="${esc(CUSTOM_FORMAT)}">${esc(CUSTOM_FORMAT)}</option>`
       ].join("");
+      // 0.25.6: pod nazwą formatu nie pokazujemy rozmiaru w mm — zostaje wymiar główny w cm (w druku wielkoformatowym jest już w nazwie,
+      // w cyfrze i offsecie dopisujemy go pod nazwą).
+      format.dataset.d24NoDetail = "1";
+      for (const option of format.options) {
+        delete option.dataset.d24Detail;
+        if (print.value === "Wielkoformatowy 24h" || option.value === CUSTOM_FORMAT) continue;
+        const size = C.getPosterFormatDimensions(option.value);
+        if (size && Number(size.widthCm) > 0 && Number(size.heightCm) > 0) option.dataset.d24Detail = `${formatDimension(size.widthCm)} × ${formatDimension(size.heightCm)} cm`;
+      }
       refreshCustomFields();
       refreshQty();
     }
@@ -5717,17 +5726,9 @@
         try { return C.getFoamBoardUnitPrice(data.formaty[formatName], quantity); } catch { return null; }
       };
 
-      // Nazwa formatu w tabeli: „A3” + w nawiasie rozmiar (na telefonie rozmiar spada do drugiej linii, żeby kolumna nie była wąska).
-      const foamNameCell = name => {
-        const match = String(name).match(/^(\S+)\s*\((.+)\)$/);
-        return match ? `<span class="d24-foam-name">${esc(match[1])}</span> <small>(${esc(match[2])})</small>` : esc(name);
-      };
-      const tierRows = formatNames.map(name => `<tr data-foam-format="${esc(name)}"><td>${foamNameCell(name)}</td>${tierMinimums.map((min, index) => {
-        const unit = safeUnitPrice(name, min);
-        return `<td data-foam-tier="${index}">${unit == null ? "—" : esc(shortMoney(unit))}</td>`;
-      }).join("")}</tr>`).join("");
-      info.innerHTML = `<div id="foamBillingNotice"></div>${alertBox(`Pianki są rozliczane wyłącznie na pełne sztuki, a cena za sztukę zależy od liczby zamówionych plansz (tabela poniżej). Maksymalny wymiar: 100 × 140 cm, również po obróceniu. Własny wymiar jest liczony jak najmniejszy format z cennika, w którym mieści się cała plansza, również po obróceniu; większe wymiary wymagają kontaktu. Własny nakład: od 1 do ${FOAM_MAX_QUANTITY} sztuk. ${cuttingInfo(data, false)} ${LIMIT_CONTACT_TEXT}`, "info")}
-        <div class="d24-foam-tiers"><h3>Ceny brutto za sztukę — plansza z pianki 5 mm</h3><div class="d24-foam-tier-scroll"><table class="tier-table d24-foam-tier-table"><thead><tr><th>Format</th>${tierMinimums.map((min, index) => `<th data-foam-tier="${index}">${esc(tierLabel(index))}</th>`).join("")}</tr></thead><tbody>${tierRows}</tbody></table></div></div>`;
+      // 0.25.6: cennik pod niebieską ramką jak w plakatach wielkoformatowych — zwijany „Cennik: <format>” z progami ilościowymi
+      // wybranego formatu (przy własnym wymiarze: formatu rozliczeniowego).
+      info.innerHTML = `<div id="foamBillingNotice"></div>${alertBox(`Pianki są rozliczane wyłącznie na pełne sztuki, a cena za sztukę zależy od liczby zamówionych plansz (cennik poniżej). Maksymalny wymiar: 100 × 140 cm, również po obróceniu. Własny wymiar jest liczony jak najmniejszy format z cennika, w którym mieści się cała plansza, również po obróceniu; większe wymiary wymagają kontaktu. Własny nakład: od 1 do ${FOAM_MAX_QUANTITY} sztuk. ${cuttingInfo(data, false)} ${LIMIT_CONTACT_TEXT}`, "info")}<details id="foamPriceList" class="d24-foam-price-list"><summary id="foamPriceListTitle">Cennik</summary><table class="tier-table"><thead><tr><th>Nakład</th><th>Cena jednostkowa</th></tr></thead><tbody id="foamPriceListRows"></tbody></table></details>`;
       const billingNotice = document.getElementById("foamBillingNotice");
 
       function isCustomFormat() { return formatSelect.value === FOAM_CUSTOM; }
@@ -5750,13 +5751,17 @@
         document.getElementById("pvcHeight").addEventListener("input", refreshFoam);
       }
 
-      // Cena na kafelkach formatów, wyróżniony wiersz/kolumna tabeli i informacja o formacie rozliczeniowym własnego wymiaru.
+      // Kwota na kafelkach formatów to wartość całej partii dla wybranej ilości (jak w plakatach), cennik pod ramką pokazuje progi
+      // wybranego formatu, a informacja o formacie rozliczeniowym własnego wymiaru zostaje nad ramką.
       function refreshFoam() {
         const quantity = currentQuantity() || 1;
         for (const option of formatSelect.options) {
-          const unit = data.formaty[option.value] ? safeUnitPrice(option.value, quantity) : null;
-          if (unit == null) delete option.dataset.d24FinalPrice;
-          else option.dataset.d24FinalPrice = `${money(unit)} zł/szt.`;
+          let total = null;
+          if (data.formaty[option.value]) {
+            try { total = C.calculateFoamBoardStandard(state.prices, product.value, option.value, quantity).price; } catch { total = null; }
+          }
+          if (!Number.isFinite(total)) delete option.dataset.d24FinalPrice;
+          else option.dataset.d24FinalPrice = `${money(total)} zł`;
         }
         content.dispatchEvent(new Event("d24-option-prices"));
 
@@ -5774,9 +5779,18 @@
             billingNotice.innerHTML = alertBox(error.message, "error");
           }
         }
-        const activeTier = tierIndexFor(quantity);
-        info.querySelectorAll(".d24-foam-tier-table tbody tr").forEach(row => row.classList.toggle("is-selected", row.dataset.foamFormat === activeFormat));
-        info.querySelectorAll(".d24-foam-tier-table [data-foam-tier]").forEach(cell => cell.classList.toggle("is-active-tier", Number(cell.dataset.foamTier) === activeTier));
+        const priceList = document.getElementById("foamPriceList");
+        if (priceList) {
+          priceList.hidden = !data.formaty[activeFormat];
+          if (data.formaty[activeFormat]) {
+            const activeTier = tierIndexFor(quantity);
+            document.getElementById("foamPriceListTitle").textContent = `Cennik: ${activeFormat}`;
+            document.getElementById("foamPriceListRows").innerHTML = tierMinimums.map((min, index) => {
+              const unit = safeUnitPrice(activeFormat, min);
+              return `<tr${index === activeTier ? ' class="is-active-tier"' : ""} data-foam-tier="${index}"><td>${esc(tierLabel(index))}</td><td>${unit == null ? "—" : `${money(unit)} zł/szt.`}</td></tr>`;
+            }).join("");
+          }
+        }
       }
 
       function updateOwnQuantityPanel() {

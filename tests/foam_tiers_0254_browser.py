@@ -1,5 +1,5 @@
-"""0.25.4: pianki wyglądają jak plakaty wielkoformatowe — kafelki formatów (+ „Własny wymiar”), kafelki ilości 1, 3, 5, 10, 20,
-„+ Własna ilość”, tabela cen za sztukę według progów 1 / 2–4 / 5–9 / od 10 szt.; migracja starych zapisanych cen."""
+"""0.25.4 (zaktualizowane w 0.25.6): pianki wyglądają jak plakaty wielkoformatowe — kafelki formatów (+ „Własny wymiar”) z kwotą dla wybranej
+ilości, kafelki ilości 1, 3, 5, 10, 20, „+ Własna ilość”, zwijany „Cennik: format” z progami 1 / 2–4 / 5–9 / od 10 szt.; migracja starych zapisanych cen."""
 import json,re,subprocess,shutil,tempfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -48,6 +48,10 @@ def boot(browser,width,saved=None,lang=None):
     page.wait_for_selector('#pvcProduct'); page.wait_for_timeout(300)
     page.locator('#pvcProduct').select_option(label=P); page.wait_for_timeout(600)
     return page,errors
+def price_rows(page):
+    page.evaluate("document.getElementById('foamPriceList').open=true")
+    return [[c.replace('\u00a0',' ').strip() for c in r.locator('td').all_inner_texts()] for r in page.locator('#foamPriceListRows tr').all()]
+def active_tier(page): return page.locator('#foamPriceListRows tr.is-active-tier td').first.inner_text().strip()
 FMT='#foamFormat + .d24-smart-options'
 QTY='#foamQtyWrap .d24-smart-options'
 with sync_playwright() as p:
@@ -62,49 +66,54 @@ with sync_playwright() as p:
         assert page.locator('#foamFormat').input_value()=='A3 (30 × 42 cm)'
         for name in formats:
             tile=page.locator(FMT+' button[data-option-index]',has_text=name.split(' (')[0]).first
-            assert tile.locator('.d24-option-price').inner_text().replace(' ',' ')==zl(tier(name,1))+' zł/szt.',name
+            assert tile.locator('.d24-option-price').inner_text().replace('\u00a0',' ')==zl(tier(name,1))+' zł',name
         assert page.locator(FMT+' .d24-smart-choice small').count()==0   # bez rozmiaru w mm
         # --- ilości: dokładnie 1, 3, 5, 10, 20 (jak w plakatach), bez cen na kafelkach
         qt=page.locator(QTY+' button[data-option-index]')
         assert [qt.nth(i).inner_text().strip() for i in range(qt.count())]==['1','3','5','10','20'],qt.count()
         assert page.locator('#pvcQty').input_value()=='1'
-        # --- tabela progów: nagłówki 1 / 2–4 / 5–9 / od 10 szt., ceny jak w cenniku
-        heads=[h.strip() for h in page.locator('.d24-foam-tier-table thead th').all_inner_texts()]
-        assert heads==['Format','1 szt.','2–4 szt.','5–9 szt.','od 10 szt.'],heads
-        rows=page.locator('.d24-foam-tier-table tbody tr')
-        assert rows.count()==6
-        for i,name in enumerate(formats):
-            cells=[c.replace(' ',' ').strip() for c in rows.nth(i).locator('td').all_inner_texts()]
-            assert cells[1:]==[f'{tier(name,q)} zł' for q in (1,2,5,10)],(name,cells)
-        assert page.locator('.d24-foam-tier-table tbody tr.is-selected').get_attribute('data-foam-format')=='A3 (30 × 42 cm)'
-        assert page.locator('.d24-foam-tier-table thead th.is-active-tier').inner_text().strip()=='1 szt.'
-        # --- klik w ilość 5 zmienia cenę na kafelkach i wyróżnioną kolumnę
-        page.locator(QTY+' button',has_text='5').first.click(); page.wait_for_timeout(300)
+        # --- cennik pod niebieską ramką jak w plakatach: zwinięty „Cennik: <format>”, progi 1 / 2–4 / 5–9 / od 10 szt.
+        assert page.locator('#foamPriceList').evaluate('d=>d.open')==False
+        assert page.locator('#foamPriceListTitle').inner_text().strip()=='Cennik: A3 (30 × 42 cm)'
+        assert page.locator('.d24-foam-tiers, .d24-foam-tier-table').count()==0     # dawna duża tabela wszystkich formatów zniknęła
+        rows=price_rows(page)
+        assert [r[0] for r in rows]==['1 szt.','2–4 szt.','5–9 szt.','od 10 szt.'],rows
+        assert [r[1] for r in rows]==[f'{zl(tier("A3 (30 × 42 cm)",q))} zł/szt.' for q in (1,2,5,10)],rows
+        assert [h.strip() for h in page.locator('#foamPriceList thead th').all_inner_texts()]==['Nakład','Cena jednostkowa']
+        assert active_tier(page)=='1 szt.'
+        # cennik leży zaraz pod niebieską ramką, przed ramką z aktualną ceną
+        order=page.evaluate("""()=>{const q=s=>document.querySelector(s).getBoundingClientRect().top;return [q('.content .alert.info'),q('#foamPriceList'),q('.d24-price-at-a-glance')]}""")
+        assert order[0]<order[1]<order[2],order
+        # --- klik w ilość 5: kafelki wszystkich formatów pokazują sumę (cena za sztukę z progu × 5), grafika formatu zostaje
+        page.locator(QTY+' button',has_text='5').first.click(); page.wait_for_timeout(500)
         assert page.locator('#pvcQty').input_value()=='5'
-        a3=page.locator(FMT+' button',has_text='A3').first.locator('.d24-option-price').inner_text().replace(' ',' ')
-        assert a3==zl(40)+' zł/szt.',a3
-        assert page.locator('.d24-foam-tier-table thead th.is-active-tier').inner_text().strip()=='5–9 szt.'
+        for name in formats:
+            tile=page.locator(FMT+' button[data-option-index]',has_text=name.split(' (')[0]).first
+            assert tile.locator('.d24-option-price').inner_text().replace('"""+NB+"""',' ')==zl(tier(name,5)*5)+' zł',name
+            assert tile.locator('.d24-choice-visual--sheet').count()==1,name       # miniatura formatu nie znika po zmianie ilości
+        assert active_tier(page)=='5–9 szt.'
         # --- wybór formatu B1 przy 5 szt. = 100 zł × 5
         page.locator(FMT+' button',has_text='B1').first.click(); page.wait_for_timeout(500)
         assert '500,00' in page.locator('#calculate').inner_text(),page.locator('#calculate').inner_text()
         # --- ilość 10 → próg „od 10 szt.” (90 zł × 10)
         page.locator(QTY+' button',has_text='10').first.click(); page.wait_for_timeout(500)
         assert '900,00' in page.locator('#calculate').inner_text()
-        assert page.locator('.d24-foam-tier-table thead th.is-active-tier').inner_text().strip()=='od 10 szt.'
+        assert active_tier(page)=='od 10 szt.'
+        assert page.locator('#foamPriceListTitle').inner_text().strip()=='Cennik: B1 (70 × 100 cm)'
         # --- „Własna ilość”: 4 szt. → próg 2–4; błędne wartości odrzucone
         page.locator('#foamOwnQtyToggle').click(); page.wait_for_timeout(200)
         assert page.locator('#foamOwnQtyPanel').is_visible()
         page.locator('#foamOwnQty').fill('4'); page.wait_for_timeout(500)
         assert page.locator('#pvcQty').input_value()=='4'
         assert '440,00' in page.locator('#calculate').inner_text()           # B1: 110 zł × 4
-        assert page.locator('.d24-foam-tier-table thead th.is-active-tier').inner_text().strip()=='2–4 szt.'
+        assert active_tier(page)=='2–4 szt.'
         page.locator('#foamOwnQty').fill('101'); page.wait_for_timeout(300)
         assert page.locator('#foamOwnQtyNote').get_attribute('data-status')=='error'
         page.locator('#foamOwnQty').fill('0'); page.wait_for_timeout(300)
         assert page.locator('#foamOwnQtyNote').get_attribute('data-status')=='error'
         page.locator('#foamOwnQty').fill('100'); page.wait_for_timeout(400)
         assert page.locator('#foamOwnQtyNote').get_attribute('data-status')=='success'
-        assert '9000,00' in page.locator('#calculate').inner_text().replace(' ','').replace(' ','') or '9 000,00' in page.locator('#calculate').inner_text().replace(' ',' ')
+        assert '9000,00' in page.locator('#calculate').inner_text().replace('\u00a0','').replace(' ','') or '9 000,00' in page.locator('#calculate').inner_text().replace('\u00a0',' ')
         # kafelek ilości wyłącza własną ilość
         page.locator(QTY+' button',has_text='3').first.click(); page.wait_for_timeout(300)
         assert page.locator('#foamOwnQtyToggle').get_attribute('aria-pressed')=='false'
@@ -114,12 +123,15 @@ with sync_playwright() as p:
         page.locator('#pvcWidth').fill('45'); page.locator('#pvcHeight').fill('60'); page.wait_for_timeout(400)
         notice=page.locator('#foamBillingNotice').inner_text()
         assert '45 × 60 cm' in notice and 'B2 (50 × 70 cm)' in notice,notice
-        assert page.locator('.d24-foam-tier-table tbody tr.is-selected').get_attribute('data-foam-format')=='B2 (50 × 70 cm)'
+        assert page.locator('#foamPriceListTitle').inner_text().strip()=='Cennik: B2 (50 × 70 cm)'
+        assert [r[1] for r in price_rows(page)]==[f'{zl(tier("B2 (50 × 70 cm)",q))} zł/szt.' for q in (1,2,5,10)]
+        assert active_tier(page)=='2–4 szt.'
         assert '180,00' in page.locator('#calculate').inner_text()           # B2 przy 3 szt.: 60 zł × 3
         page.locator(QTY+' button',has_text='20').first.click(); page.wait_for_timeout(400)
-        assert '1000,00' in page.locator('#calculate').inner_text().replace(' ','').replace(' ','') or '1 000,00' in page.locator('#calculate').inner_text().replace(' ',' ')
+        assert '1000,00' in page.locator('#calculate').inner_text().replace('\u00a0','').replace(' ','') or '1 000,00' in page.locator('#calculate').inner_text().replace('\u00a0',' ')
         page.locator('#pvcWidth').fill('120'); page.locator('#pvcHeight').fill('120'); page.wait_for_timeout(400)
         assert 'alert error' in page.locator('#foamBillingNotice').inner_html()
+        assert page.locator('#foamPriceList').is_hidden()                      # za duży wymiar — bez cennika
         page.locator('#pvcWidth').fill('45'); page.locator('#pvcHeight').fill('60'); page.wait_for_timeout(300)
         page.locator(QTY+' button',has_text='1').first.click(); page.wait_for_timeout(300)   # 1 szt.
         # --- koszyk: pozycja foam z wymiarami i ilością, serwer ją przyjmuje
@@ -145,23 +157,23 @@ with sync_playwright() as p:
         # --- EN
         page.locator('button',has_text='EN').first.click(); page.wait_for_timeout(700)
         page.locator(FMT+' button',has_text='A3').first.click(); page.wait_for_timeout(300)
+        page.evaluate("document.getElementById('foamPriceList').open=true")
         text=page.locator('#content').inner_text()
-        assert 'Gross price per piece' in text and 'from 10 pcs' in text and '2–4 pcs' in text,text[:2500]
+        assert 'Price list:' in text and 'from 10 pcs' in text and '2–4 pcs' in text and 'price per piece' in text,text[:2500]
         assert 'zostanie' not in text and 'Własna ilość' not in text
         assert not errors,errors
         dims=page.evaluate('({scroll:document.documentElement.scrollWidth,inner:innerWidth})')
         assert dims['scroll']<=dims['inner']+1,(width,dims)
-        # tabela nie wychodzi poza kartę (przewija się wewnątrz na bardzo wąskim ekranie)
-        print('PASS foam tiers 0.25.4 width',width,flush=True)
+        print('PASS foam tiers 0.25.6 width',width,flush=True)
         page.close()
     # --- migracja: zapisane lokalnie stare ceny (pojedyncza „cena_sztuki”) nie psują cennika; nowe progi z pliku wygrywają
     old=json.loads(json.dumps(prices))
     for f in old['pvc'][P]['formaty'].values():
         f['cena_sztuki']=f['progi_ilosciowe'][0]['cena_sztuki']+1; del f['progi_ilosciowe']
     page,errors=boot(browser,1300,saved=old)
-    assert [h.strip() for h in page.locator('.d24-foam-tier-table thead th').all_inner_texts()]==['Format','1 szt.','2–4 szt.','5–9 szt.','od 10 szt.']
-    cells=[c.replace(' ',' ').strip() for c in page.locator('.d24-foam-tier-table tbody tr').first.locator('td').all_inner_texts()]
-    assert cells[1:]==['50 zł','45 zł','40 zł','35 zł'],cells
+    rows=price_rows(page)
+    assert [r[0] for r in rows]==['1 szt.','2–4 szt.','5–9 szt.','od 10 szt.'],rows
+    assert [r[1] for r in rows]==['50,00 zł/szt.','45,00 zł/szt.','40,00 zł/szt.','35,00 zł/szt.'],rows
     assert not errors,errors
     page.close()
     # zaimportowany/zapisany plik bez progów: jedna cena dla każdej ilości (stara cena zostaje jedynym progiem)
@@ -178,7 +190,7 @@ with sync_playwright() as p:
     page.wait_for_selector('#homeProductSearch',timeout=15000)
     page.locator('button.nav-button[data-page="PCV i pianki"]').first.evaluate('(n)=>n.click()'); page.wait_for_selector('#pvcProduct')
     page.locator('#pvcProduct').select_option(label=P); page.wait_for_timeout(600)
-    assert [h.strip() for h in page.locator('.d24-foam-tier-table thead th').all_inner_texts()]==['Format','od 1 szt.'],'jeden próg'
+    assert [r[0] for r in price_rows(page)]==['od 1 szt.'],'jeden próg'
     page.locator(QTY+' button',has_text='10').first.click(); page.wait_for_timeout(400)
     assert '500,00' in page.locator('#calculate').inner_text()        # A3: 50 zł × 10 — jedna cena dla każdej ilości
     assert not errors,errors

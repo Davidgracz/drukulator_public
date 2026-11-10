@@ -43,7 +43,7 @@ with sync_playwright() as p:
         for name,item in formats.items():
             tile=page.locator('#foamFormat + .d24-smart-options button[data-option-index]',has_text=name.split(' (')[0]).first
             price=tile.locator('.d24-option-price').inner_text().replace('\u00a0',' ')
-            expected=('%.2f'%item['progi_ilosciowe'][0]['cena_sztuki']).replace('.',',')+' zł/szt.'   # 0.25.4: ceny progowe, 1 szt. = pierwszy próg
+            expected=('%.2f'%item['progi_ilosciowe'][0]['cena_sztuki']).replace('.',',')+' zł'   # 0.25.6: kwota dla wybranej ilości (1 szt. = pierwszy próg), bez „/szt.”
             assert price==expected,(name,price,expected)
         # cena na kafelku jest niebieska (kolor akcentu), nie czarna
         color=page.locator('#foamFormat + .d24-smart-options .d24-option-price').first.evaluate('n=>getComputedStyle(n).color')

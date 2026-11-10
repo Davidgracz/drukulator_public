@@ -4,7 +4,7 @@ Kalkulator cen druku online dla Druk24 Szczecin: wizytówki, ulotki, plakaty, ba
 obrazy na płótnie, odzież z nadrukiem i inne. Aplikacja działa w przeglądarce (czysty HTML/CSS/JS, bez kroku budowania)
 i jest osadzona w WordPressie pod adresem `/drukulator/`; zamówienia, wgrywanie plików i panel pracowników obsługują pliki PHP.
 
-**Bieżąca wersja: 0.25.5v** — zobacz `CHANGELOG_0.25.5v.md` (każde wydanie ma własny plik `CHANGELOG_*.md`).
+**Bieżąca wersja: 0.25.6v** — zobacz `CHANGELOG_0.25.6v.md` (każde wydanie ma własny plik `CHANGELOG_*.md`).
 
 ## Struktura
 

@@ -94,7 +94,7 @@
         const price = pricing.preview(select.id, o.value, values);
         if (price !== null) prices.set(o.value, price);
       });
-      const signature = JSON.stringify([document.documentElement.lang, select.id, kind, select.value, available, Array.from(prices.entries())]);
+      const signature = JSON.stringify([document.documentElement.lang, select.id, kind, select.value, available, Array.from(prices.entries()), chipRow.dataset.signature || '']);
       if (chipRow.dataset.configuratorSignature === signature) return;
       chipRow.dataset.configuratorSignature = signature;
       chipRow.querySelectorAll('button[data-option-index]').forEach(button => {
@@ -245,5 +245,7 @@
   }, true);
   content.addEventListener('change',schedule,true);
   content.addEventListener('input',schedule,true);
+  // 0.25.6: kafelki odbudowane przez smart-forms.js (np. po zmianie kwot przy piankach) dostają miniatury i kwoty ponownie.
+  content.addEventListener('d24-smart-options-rebuilt',schedule);
   schedule();
 })();
