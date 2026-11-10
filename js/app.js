@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.6v";
+  const VERSION = "0.25.7v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -4599,6 +4599,14 @@
     page: () => state.page,
     preview(fieldId, candidate, values) {
       if (!state.prices || !values || typeof values !== "object") return null;
+      // 0.25.7: strony katalogowe (notesy, materiały firmowe, kalendarze, restauracje, śluby).
+      const catalog = catalogModels[state.page];
+      if (catalog) {
+        try {
+          const price = catalogPreviewPrice(catalog, fieldId, String(candidate), values);
+          return Number.isFinite(price) && price > 0 && price <= MAX_ORDER_TOTAL ? Math.round(price * 100) / 100 : null;
+        } catch { return null; }
+      }
       const allowed = {
         "Wizytówki 24h": ["bcFinish", "bcSides", "bcQuantity"],
         "Ulotki 24h": ["flyFormat", "flyVariant", "flyQuantity"],
@@ -4828,74 +4836,50 @@
     } catch (e) { setResultError(e); } });
   }
 
-  function renderNotepads() {
-    const root = state.prices.notesy_i_bloczki;
-    const productTypes = Object.keys(root);
-    content.innerHTML = `${header("Notesy i bloczki", "Notesy klejone, spiralowane oraz bloczki samokopiujące")}
-      <div class="card"><div class="form-grid">
-        <div class="field half"><label>Rodzaj produktu</label><select id="noteType">${options(productTypes)}</select></div>
-        <div class="field half"><label>Wariant</label><select id="noteVariant"></select></div>
-        <div class="field half"><label>Format</label><select id="noteFormat"></select></div>
-        <div class="field half"><label>Nakład</label><select id="noteQty"></select></div>
-      </div>
-      <div id="noteInfo"></div>
-      <details open><summary>Cennik wybranego wariantu</summary><div id="notePriceTable"></div></details>
-      <div class="actions"><button class="button" id="calculate">Oblicz cenę</button></div></div>
-      <div id="quoteArea"></div>`;
+  // 0.25.7: strony katalogowe (notesy, materiały firmowe, kalendarze, restauracje, śluby) działają jak ulotki:
+  // kafelki wariantu i formatu pokazują cenę dla bieżącego nakładu, „Porównaj warianty” porównuje nakłady / formaty / warianty,
+  // a dolny cennik zniknął. Model strony (listy wariantów, formatów, nakładów i cena) jest wspólny dla formularza
+  // i dla podglądu cen na kafelkach (window.Druk24ConfiguratorPricing.preview).
+  const catalogModels = {};
 
-    const type = document.getElementById("noteType");
-    const variant = document.getElementById("noteVariant");
-    const format = document.getElementById("noteFormat");
-    const quantity = document.getElementById("noteQty");
-    const info = document.getElementById("noteInfo");
-    const table = document.getElementById("notePriceTable");
-
-    function currentVariantData() {
-      return root[type.value].warianty[variant.value];
-    }
-
-    function refreshTable() {
-      const data = currentVariantData();
-      const quantities = Array.from(new Set(Object.values(data.formaty).flatMap(formatPrices => Object.keys(formatPrices))));
-      const rows = Object.entries(data.formaty).map(([formatName, formatPrices]) => `<tr><th>${esc(formatName)}</th>${quantities.map(qty => `<td>${formatPrices[qty] == null ? "—" : `${money(formatPrices[qty])} zł`}</td>`).join("")}</tr>`).join("");
-      table.innerHTML = `<table class="tier-table"><thead><tr><th>Format</th>${quantities.map(qty => `<th>${esc(qty)} szt.</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
-      info.innerHTML = alertBox(data.opis, "info");
-    }
-
-    function refreshQuantities() {
-      const formatPrices = currentVariantData().formaty[format.value];
-      quantity.innerHTML = options(Object.keys(formatPrices));
-      refreshTable();
-    }
-
-    function refreshFormats() {
-      format.innerHTML = options(Object.keys(currentVariantData().formaty));
-      refreshQuantities();
-    }
-
-    function refreshVariants() {
-      variant.innerHTML = options(Object.keys(root[type.value].warianty));
-      refreshFormats();
-    }
-
-    type.addEventListener("change", refreshVariants);
-    variant.addEventListener("change", refreshFormats);
-    format.addEventListener("change", refreshQuantities);
-    refreshVariants();
-
-    document.getElementById("calculate").addEventListener("click", () => { try {
-      const result = C.calculateNotepads(state.prices, type.value, variant.value, format.value, Number(quantity.value));
-      const quantityLabel = type.value === "Bloczki samokopiujące" ? "Liczba bloczków" : "Nakład notesów";
-      showQuote({
-        title: type.value,
-        description: `${variant.value}, format ${format.value}, ${quantity.value} szt.`,
-        price: result.price,
-        details: [["Specyfikacja", result.description], ["Format", format.value], [quantityLabel, `${quantity.value} szt.`], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]],
-        meta: { productType: "notepad", category: type.value, variant: variant.value, format: format.value, quantity: Number(quantity.value) }
-      });
-    } catch (e) { setResultError(e); } });
+  function catalogModel(ids, access) {
+    return { ids, ...access };
   }
 
+  // Podgląd ceny po kliknięciu kafelka: dokładnie ten stan, do którego formularz przejdzie po wyborze —
+  // zmiana wariantu zachowuje format i nakład (jeśli są dostępne), zmiana formatu zachowuje nakład.
+  function catalogPreviewPrice(model, fieldId, candidate, values) {
+    const ids = model.ids;
+    if (![ids.variant, ids.format, ids.qty, ids.qtyInput].includes(fieldId)) return null;
+    const type = values[ids.type];
+    const variants = model.variantsOf(type);
+    let variant = values[ids.variant];
+    if (fieldId === ids.variant) variant = candidate;
+    if (!variants.includes(variant)) return null;
+    const formats = model.formatsOf(type, variant);
+    let format = values[ids.format];
+    if (fieldId === ids.format) format = candidate;
+    else if (!formats.includes(format)) format = formats[0];
+    if (!formats.includes(format)) return null;
+    const quantities = model.quantitiesOf(type, variant, format);
+    let quantity;
+    if (quantities) {
+      if (fieldId === ids.qtyInput) return null;
+      quantity = fieldId === ids.qty ? String(candidate) : String(values[ids.qty]);
+      if (fieldId !== ids.qty && !quantities.includes(quantity)) quantity = quantities[0];
+      if (!quantities.includes(quantity)) return null;
+    } else {
+      if (fieldId === ids.qty) return null;
+      quantity = fieldId === ids.qtyInput ? candidate : values[ids.qtyInput];
+    }
+    const count = Number(quantity);
+    if (!Number.isSafeInteger(count) || count < 1) return null;
+    return model.price(type, variant, format, count);
+  }
+
+  function setSelectOptions(select, values, preferred) {
+    select.innerHTML = options(values, preferred !== undefined && values.map(String).includes(String(preferred)) ? preferred : undefined);
+  }
 
   function renderCatalogPage(root, config) {
     const productTypes = Object.keys(root || {});
@@ -4905,70 +4889,91 @@
     }
 
     const prefix = config.prefix;
+    const ids = { type: `${prefix}Type`, variant: `${prefix}Variant`, format: `${prefix}Format`, qty: `${prefix}Qty` };
     content.innerHTML = `${header(config.title, config.subtitle)}
       <div class="card"><div class="form-grid">
-        <div class="field half"><label>Rodzaj produktu</label><select id="${prefix}Type">${options(productTypes)}</select></div>
-        <div class="field half"><label>Wariant</label><select id="${prefix}Variant"></select></div>
-        <div class="field half"><label>Format</label><select id="${prefix}Format"></select></div>
-        <div class="field half"><label>Nakład</label><select id="${prefix}Qty"></select></div>
+        <div class="field half"><label>Rodzaj produktu</label><select id="${ids.type}">${options(productTypes)}</select></div>
+        <div class="field half"><label>Wariant</label><select id="${ids.variant}"></select></div>
+        <div class="field half"><label>Format</label><select id="${ids.format}"></select></div>
+        <div class="field half"><label>Nakład</label><select id="${ids.qty}"></select></div>
       </div>
       <div id="${prefix}Info"></div>
-      <details open><summary>Cennik wybranego wariantu</summary><div id="${prefix}PriceTable"></div></details>
       <div class="actions"><button class="button" id="calculate">Oblicz cenę</button></div></div>
       <div id="quoteArea"></div>`;
 
-    const type = document.getElementById(`${prefix}Type`);
-    const variant = document.getElementById(`${prefix}Variant`);
-    const format = document.getElementById(`${prefix}Format`);
-    const quantity = document.getElementById(`${prefix}Qty`);
+    const type = document.getElementById(ids.type);
+    const variant = document.getElementById(ids.variant);
+    const format = document.getElementById(ids.format);
+    const quantity = document.getElementById(ids.qty);
     const info = document.getElementById(`${prefix}Info`);
-    const table = document.getElementById(`${prefix}PriceTable`);
+    const calculate = (typeName, variantName, formatName, count) => config.calculate
+      ? config.calculate(typeName, variantName, formatName, count)
+      : C.calculateCatalogProduct(root, typeName, variantName, formatName, count);
+
+    catalogModels[config.page] = catalogModel(ids, {
+      variantsOf: typeName => Object.keys(root[typeName]?.warianty || {}),
+      formatsOf: (typeName, variantName) => Object.keys(root[typeName]?.warianty?.[variantName]?.formaty || {}),
+      quantitiesOf: (typeName, variantName, formatName) => Object.keys(root[typeName]?.warianty?.[variantName]?.formaty?.[formatName] || {}).sort((a, b) => Number(a) - Number(b)),
+      price: (typeName, variantName, formatName, count) => calculate(typeName, variantName, formatName, count).price
+    });
 
     function currentVariantData() {
       return root[type.value].warianty[variant.value];
     }
 
-    function refreshTable() {
-      const data = currentVariantData();
-      const quantities = Array.from(new Set(Object.values(data.formaty).flatMap(formatPrices => Object.keys(formatPrices))))
-        .sort((a, b) => Number(a) - Number(b));
-      const rows = Object.entries(data.formaty).map(([formatName, formatPrices]) => `<tr><th>${esc(formatName)}</th>${quantities.map(qty => `<td>${formatPrices[qty] == null ? "—" : `${money(formatPrices[qty])} zł`}</td>`).join("")}</tr>`).join("");
-      table.innerHTML = `<table class="tier-table"><thead><tr><th>Format</th>${quantities.map(qty => `<th>${esc(qty)} szt.</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
-      info.innerHTML = data.opis ? alertBox(data.opis, "info") : "";
+    function refreshQuantities(previousQuantity) {
+      const quantities = Object.keys(currentVariantData().formaty[format.value]).sort((a, b) => Number(a) - Number(b));
+      setSelectOptions(quantity, quantities, previousQuantity);
     }
 
-    function refreshQuantities() {
-      const formatPrices = currentVariantData().formaty[format.value];
-      quantity.innerHTML = options(Object.keys(formatPrices).sort((a, b) => Number(a) - Number(b)));
-      refreshTable();
-    }
-
-    function refreshFormats() {
-      format.innerHTML = options(Object.keys(currentVariantData().formaty));
-      refreshQuantities();
+    function refreshFormats(previousFormat, previousQuantity) {
+      setSelectOptions(format, Object.keys(currentVariantData().formaty), previousFormat);
+      // Własny opis pod nazwą formatu (np. rozmiar koperty) — patrz smart-forms.js (data-d24-detail).
+      Array.from(format.options).forEach(option => {
+        const detail = config.formatDetail ? config.formatDetail(type.value, option.value) : "";
+        if (detail) option.dataset.d24Detail = detail;
+      });
+      info.innerHTML = currentVariantData().opis ? alertBox(currentVariantData().opis, "info") : "";
+      refreshQuantities(previousQuantity);
     }
 
     function refreshVariants() {
-      variant.innerHTML = options(Object.keys(root[type.value].warianty));
+      setSelectOptions(variant, Object.keys(root[type.value].warianty));
       refreshFormats();
     }
 
     type.addEventListener("change", refreshVariants);
-    variant.addEventListener("change", refreshFormats);
-    format.addEventListener("change", refreshQuantities);
+    variant.addEventListener("change", () => refreshFormats(format.value, quantity.value));
+    format.addEventListener("change", () => refreshQuantities(quantity.value));
     refreshVariants();
 
     document.getElementById("calculate").addEventListener("click", () => { try {
-      const result = C.calculateCatalogProduct(root, type.value, variant.value, format.value, Number(quantity.value));
+      const result = calculate(type.value, variant.value, format.value, Number(quantity.value));
       showQuote({
         title: type.value,
-        description: `${variant.value}, ${format.value}, ${quantity.value} szt.`,
+        description: config.describe ? config.describe(variant.value, format.value, quantity.value) : `${variant.value}, ${format.value}, ${quantity.value} szt.`,
         price: result.price,
-        details: [["Specyfikacja", result.description], ["Format", format.value], ["Nakład", `${quantity.value} szt.`], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]],
+        details: [["Specyfikacja", result.description], ["Format", format.value], [config.quantityLabel ? config.quantityLabel(type.value) : "Nakład", `${quantity.value} szt.`], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]],
         meta: { productType: config.productType, category: type.value, variant: variant.value, format: format.value, quantity: Number(quantity.value) }
       });
     } catch (e) { setResultError(e); } });
   }
+
+  function renderNotepads() {
+    renderCatalogPage(deepClone(state.prices.notesy_i_bloczki || {}), {
+      page: "Notesy i bloczki",
+      title: "Notesy i bloczki",
+      subtitle: "Notesy klejone, spiralowane oraz bloczki samokopiujące",
+      prefix: "note",
+      productType: "notepad",
+      calculate: (typeName, variantName, formatName, count) => C.calculateNotepads(state.prices, typeName, variantName, formatName, count),
+      describe: (variantName, formatName, count) => `${variantName}, format ${formatName}, ${count} szt.`,
+      quantityLabel: typeName => typeName === "Bloczki samokopiujące" ? "Liczba bloczków" : "Nakład notesów"
+    });
+  }
+
+  // 0.25.7: koperty mają inne wymiary niż ulotki o tych samych nazwach (np. DL: koperta 110 × 220 mm, ulotka 99 × 210 mm).
+  const ENVELOPE_SIZES_MM = { DL: "110 × 220 mm", C5: "162 × 229 mm", C6: "114 × 162 mm" };
 
   function buildCompanyMaterialsCatalog() {
     const root = deepClone(state.prices.materialy_firmowe || {});
@@ -4988,15 +4993,19 @@
 
   function renderCompanyMaterials() {
     renderCatalogPage(buildCompanyMaterialsCatalog(), {
+      page: "Koperty, teczki i papier firmowy",
       title: "Koperty, teczki i papier firmowy",
       subtitle: "Materiały firmowe, korespondencja i prezentacja ofert",
       prefix: "companyMaterials",
-      productType: "company_materials"
+      productType: "company_materials",
+      // Koperty DL / C5 / C6: własne wymiary, inne niż ulotek (patrz ENVELOPE_SIZES_MM).
+      formatDetail: (typeName, formatName) => typeName === "Koperty z nadrukiem" ? (ENVELOPE_SIZES_MM[formatName] || "") : ""
     });
   }
 
   function renderCalendars() {
     renderCatalogPage(deepClone(state.prices.kalendarze || {}), {
+      page: "Kalendarze",
       title: "Kalendarze",
       subtitle: "Kalendarze ścienne, listwowane, biuwary i piramidki",
       prefix: "calendar",
@@ -5047,71 +5056,15 @@
   }
 
   function renderHospitality() {
-    const root = buildHospitalityCatalog();
-    const productTypes = Object.keys(root);
-    content.innerHTML = `${header("Restauracje, hotele", "Druki i materiały dla gastronomii oraz hoteli")}
-      <div class="card"><div class="form-grid">
-        <div class="field half"><label>Rodzaj produktu</label><select id="hospitalityType">${options(productTypes)}</select></div>
-        <div class="field half"><label>Wariant</label><select id="hospitalityVariant"></select></div>
-        <div class="field half"><label>Format</label><select id="hospitalityFormat"></select></div>
-        <div class="field half"><label>Nakład</label><select id="hospitalityQty"></select></div>
-      </div>
-      <div id="hospitalityInfo"></div>
-      <details open><summary>Cennik wybranego wariantu</summary><div id="hospitalityPriceTable"></div></details>
-      <div class="actions"><button class="button" id="calculate">Oblicz cenę</button></div></div>
-      <div id="quoteArea"></div>`;
-
-    const type = document.getElementById("hospitalityType");
-    const variant = document.getElementById("hospitalityVariant");
-    const format = document.getElementById("hospitalityFormat");
-    const quantity = document.getElementById("hospitalityQty");
-    const info = document.getElementById("hospitalityInfo");
-    const table = document.getElementById("hospitalityPriceTable");
-
-    function currentVariantData() {
-      return root[type.value].warianty[variant.value];
-    }
-
-    function refreshTable() {
-      const data = currentVariantData();
-      const quantities = Array.from(new Set(Object.values(data.formaty).flatMap(formatPrices => Object.keys(formatPrices))));
-      const rows = Object.entries(data.formaty).map(([formatName, formatPrices]) => `<tr><th>${esc(formatName)}</th>${quantities.map(qty => `<td>${formatPrices[qty] == null ? "—" : `${money(formatPrices[qty])} zł`}</td>`).join("")}</tr>`).join("");
-      table.innerHTML = `<table class="tier-table"><thead><tr><th>Format</th>${quantities.map(qty => `<th>${esc(qty)} szt.</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
-      info.innerHTML = alertBox(data.opis, "info");
-    }
-
-    function refreshQuantities() {
-      const formatPrices = currentVariantData().formaty[format.value];
-      quantity.innerHTML = options(Object.keys(formatPrices));
-      refreshTable();
-    }
-
-    function refreshFormats() {
-      format.innerHTML = options(Object.keys(currentVariantData().formaty));
-      refreshQuantities();
-    }
-
-    function refreshVariants() {
-      variant.innerHTML = options(Object.keys(root[type.value].warianty));
-      refreshFormats();
-    }
-
-    type.addEventListener("change", refreshVariants);
-    variant.addEventListener("change", refreshFormats);
-    format.addEventListener("change", refreshQuantities);
-    refreshVariants();
-
-    document.getElementById("calculate").addEventListener("click", () => { try {
-      const result = C.calculateCatalogProduct(root, type.value, variant.value, format.value, Number(quantity.value));
-      const quantityLabel = type.value === "Bloczki samokopiujące" ? "Liczba bloczków" : "Nakład";
-      showQuote({
-        title: type.value,
-        description: `${variant.value}, format ${format.value}, ${quantity.value} szt.`,
-        price: result.price,
-        details: [["Specyfikacja", result.description], ["Format", format.value], [quantityLabel, `${quantity.value} szt.`], ["Cena jednostkowa", `${money(result.unitPrice)} zł`]],
-        meta: { productType: "hospitality", category: type.value, variant: variant.value, format: format.value, quantity: Number(quantity.value) }
-      });
-    } catch (e) { setResultError(e); } });
+    renderCatalogPage(buildHospitalityCatalog(), {
+      page: "Restauracje, hotele",
+      title: "Restauracje, hotele",
+      subtitle: "Druki i materiały dla gastronomii oraz hoteli",
+      prefix: "hospitality",
+      productType: "hospitality",
+      describe: (variantName, formatName, count) => `${variantName}, format ${formatName}, ${count} szt.`,
+      quantityLabel: typeName => typeName === "Bloczki samokopiujące" ? "Liczba bloczków" : "Nakład"
+    });
   }
 
   function renderPosters() {
@@ -5569,33 +5522,55 @@
     function productData() { return root[product.value]; }
     function variantData() { return productData().warianty[variant.value]; }
 
-    function refreshQuantity() {
+    // 0.25.7: ceny na kafelkach i „Porównaj warianty” — ten sam model co w pozostałych stronach katalogowych.
+    // Pakiety mają listę nakładów (weddingQty), plany stołów i dekoracje — wpisywaną ilość (weddingQtyInput, cena za sztukę).
+    catalogModels["Śluby, wesela i imprezy"] = catalogModel(
+      { type: "weddingProduct", variant: "weddingVariant", format: "weddingFormat", qty: "weddingQty", qtyInput: "weddingQtyInput" },
+      {
+        variantsOf: typeName => Object.keys(root[typeName]?.warianty || {}),
+        formatsOf: (typeName, variantName) => Object.keys(root[typeName]?.warianty?.[variantName] || {}),
+        quantitiesOf: (typeName, variantName, formatName) => root[typeName]?.tryb === "pakiet"
+          ? Object.keys(root[typeName].warianty?.[variantName]?.[formatName] || {}).sort((a, b) => Number(a) - Number(b))
+          : null,
+        price: (typeName, variantName, formatName, count) => C.calculateWedding(state.prices, typeName, variantName, formatName, count).price
+      }
+    );
+    // Zaproszenia składane: rozmiar w nazwie formatu dotyczy złożonej sztuki, więc pod nazwą pokazujemy rozmiar po rozłożeniu.
+    const WEDDING_FORMAT_DETAILS = { "A5 do A6": "148 × 210 mm po rozłożeniu", "2×DL do DL": "198 × 210 mm po rozłożeniu" };
+
+    function refreshQuantity(previousQuantity) {
       const data = productData();
       const formatData = variantData()[format.value];
       const isPackage = data.tryb === "pakiet";
       qtySelect.classList.toggle("hidden", !isPackage);
       qtyInput.classList.toggle("hidden", isPackage);
       qtyLabel.textContent = isPackage ? "Nakład" : "Ilość sztuk";
-      if (isPackage) qtySelect.innerHTML = options(Object.keys(formatData));
+      // Plan stołów i dekoracje liczą się za sztukę (wpisywana ilość) — lista nakładów pakietów jest wtedy pusta,
+      // żeby nie zostały po niej kafelki 20 / 50 / 100 (0.25.7).
+      if (isPackage) setSelectOptions(qtySelect, Object.keys(formatData).sort((a, b) => Number(a) - Number(b)), previousQuantity);
+      else qtySelect.innerHTML = "";
       const pricingInfo = isPackage
         ? alertBox("Cena dotyczy całego wybranego nakładu.", "info")
         : alertBox("Cena z cennika dotyczy 1 sztuki i jest mnożona przez podaną ilość.", "info");
       info.innerHTML = pricingInfo + alertBox("Dekoracja stołów: standy, winietki, etykiety na wódkę i wino oraz zawieszki na alkohol są wyceniane indywidualnie.", "info");
     }
 
-    function refreshFormats() {
-      format.innerHTML = options(Object.keys(variantData()));
-      refreshQuantity();
+    function refreshFormats(previousFormat, previousQuantity) {
+      setSelectOptions(format, Object.keys(variantData()), previousFormat);
+      Array.from(format.options).forEach(option => {
+        if (WEDDING_FORMAT_DETAILS[option.value]) option.dataset.d24Detail = WEDDING_FORMAT_DETAILS[option.value];
+      });
+      refreshQuantity(previousQuantity);
     }
 
     function refreshVariants() {
-      variant.innerHTML = options(Object.keys(productData().warianty));
+      setSelectOptions(variant, Object.keys(productData().warianty));
       refreshFormats();
     }
 
     product.addEventListener("change", refreshVariants);
-    variant.addEventListener("change", refreshFormats);
-    format.addEventListener("change", refreshQuantity);
+    variant.addEventListener("change", () => refreshFormats(format.value, qtySelect.value));
+    format.addEventListener("change", () => refreshQuantity(qtySelect.value));
     refreshVariants();
 
     document.getElementById("calculate").addEventListener("click", () => { try {

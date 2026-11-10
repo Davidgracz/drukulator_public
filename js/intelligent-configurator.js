@@ -17,7 +17,13 @@
     'Druk cyfrowy i ksero 24h': ['digPaper', 'digSide', 'digFormat'],
     'Folie i banery 24h': ['bannerMaterial'],
     'Naklejki, etykiety i magnesy': ['stickProduct'],
-    'Roll-upy i X-banery': ['rollSize']
+    'Roll-upy i X-banery': ['rollSize'],
+    // 0.25.7: ceny na kafelkach wariantu i formatu (przy bieżącym nakładzie) także w stronach katalogowych.
+    'Notesy i bloczki': ['noteVariant', 'noteFormat'],
+    'Koperty, teczki i papier firmowy': ['companyMaterialsVariant', 'companyMaterialsFormat'],
+    'Kalendarze': ['calendarVariant', 'calendarFormat'],
+    'Restauracje, hotele': ['hospitalityVariant', 'hospitalityFormat'],
+    'Śluby, wesela i imprezy': ['weddingVariant', 'weddingFormat']
   };
   const papers = [
     [/80\s*g/i, ['Lekki papier', 'Lightweight']],
@@ -59,7 +65,8 @@
           info.style.setProperty('--d24-sheet-ratio',String(ratio));
         }
       }
-      if (!dimensions && /\b(?:A[0-6]|B[0-2]|DL)\b/i.test(text)) info.classList.add('d24-choice-visual--sheet');
+      // 0.25.7: koperty C5 / C6 wyglądają jak DL; teczki (jedno- i dwubigowe) też dostają miniaturę arkusza.
+      if (!dimensions && (/\b(?:A[0-6]|B[0-2]|C[4-6]|DL)\b/i.test(text) || /(?:jedno|dwu)bigow/i.test(text))) info.classList.add('d24-choice-visual--sheet');
     } else if (type === 'print' && /dwu|double|2.stron/i.test(text)) {
       info.textContent = '◫';
     } else if (type === 'print' && /jedno|single|1.stron/i.test(text)) {

@@ -41,6 +41,8 @@
     return '';
   };
   const formatDetail = (label) => {
+    // 0.25.7: nazwa, która już podaje rozmiar z jednostką („A2 (42×59 cm)”, „40 × 30 cm”), nie dostaje drugiego opisu.
+    if (/\b\d{1,4}(?:[.,]\d+)?\s*[x×]\s*\d{1,4}(?:[.,]\d+)?\s*(?:mm|cm)\b/i.test(label)) return '';
     const match = label.match(/\b(A[0-6]|B[012]|DL)\b/i);
     if (match) return commonFormats[match[1].toUpperCase()] || '';
     const dim = label.match(/\b\d{2,4}\s*[x×]\s*\d{2,4}\s*(?:mm|cm)?/i);

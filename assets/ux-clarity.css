@@ -1,4 +1,4 @@
-/* Drukulator 0.25.6v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.25.7v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }

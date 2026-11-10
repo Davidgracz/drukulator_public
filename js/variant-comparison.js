@@ -13,7 +13,13 @@
     'Druk cyfrowy i ksero 24h': { digQty: 'Ilość', digPaper: 'Papier', digFormat: 'Format', digSide: 'Zadruk' },
     'Folie i banery 24h': { bannerQty: 'Nakład', bannerMaterial: 'Materiał' },
     'Naklejki, etykiety i magnesy': { stickQty: 'Nakład', stickProduct: 'Materiał' },
-    'Roll-upy i X-banery': { rollQty: 'Nakład', rollSize: 'Rozmiar' }
+    'Roll-upy i X-banery': { rollQty: 'Nakład', rollSize: 'Rozmiar' },
+    // 0.25.7: strony katalogowe porównują nakład, format i wariant jak ulotki.
+    'Notesy i bloczki': { noteQty: 'Nakład', noteFormat: 'Format', noteVariant: 'Wariant' },
+    'Koperty, teczki i papier firmowy': { companyMaterialsQty: 'Nakład', companyMaterialsFormat: 'Format', companyMaterialsVariant: 'Wariant' },
+    'Kalendarze': { calendarQty: 'Nakład', calendarFormat: 'Format', calendarVariant: 'Wariant' },
+    'Restauracje, hotele': { hospitalityQty: 'Nakład', hospitalityFormat: 'Format', hospitalityVariant: 'Wariant' },
+    'Śluby, wesela i imprezy': { weddingQty: 'Nakład', weddingQtyInput: 'Ilość', weddingFormat: 'Format', weddingVariant: 'Wariant' }
   };
   const selectedFieldByPage = new Map();
   const nf = () => new Intl.NumberFormat(document.documentElement.lang === 'en' ? 'en-GB' : 'pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -75,7 +81,7 @@
   }
   function quantityId(page, form) {
     const fields = fieldMap[page] || {};
-    const id = Object.keys(fields).find(key=>/Quantity|Qty$/.test(key) && isUsable(form.querySelector(`[id="${key}"]`)));
+    const id = Object.keys(fields).find(key=>/Quantity|Qty(?:Input)?$/.test(key) && isUsable(form.querySelector(`[id="${key}"]`)));
     return id || null;
   }
   function buildData(page, form, fieldId) {
