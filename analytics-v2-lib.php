@@ -1,9 +1,10 @@
 <?php
-/** Druk24 0.22.8 - aggregate analytics; no IP addresses, names or email addresses. */
+/** Druk24 0.22.8 (0.25.5: krok „cena po konfiguracji”, wartość koszyków, błędy wysyłki) - aggregate analytics; no IP addresses, names or email addresses. */
 declare(strict_types=1);
 if (!defined('ABSPATH')) { exit; }
 
-const D24_ANALYTICS_DB_VERSION = '2.0';
+// 0.25.5: wersja 2.1 dodaje do tabeli sesji kolumnę price_seen (dbDelta uzupełnia ją w istniejącej tabeli).
+const D24_ANALYTICS_DB_VERSION = '2.1';
 const D24_ANALYTICS_SESSION_RETENTION_DAYS = 45;
 const D24_ANALYTICS_TOTAL_RETENTION_DAYS = 180;
 
@@ -32,6 +33,7 @@ function d24_analytics_install(): bool {
         started_at datetime NOT NULL,
         last_seen datetime NOT NULL,
         source varchar(16) NOT NULL DEFAULT 'direct',
+        price_seen tinyint(1) NOT NULL DEFAULT 0,
         quote_seen tinyint(1) NOT NULL DEFAULT 0,
         cart_seen tinyint(1) NOT NULL DEFAULT 0,
         checkout_seen tinyint(1) NOT NULL DEFAULT 0,
@@ -95,6 +97,11 @@ function d24_analytics_product_bucket($input): string {
     }
     return 'Inne produkty';
 }
+/** 0.25.5: przyczyny nieudanej wysyłki zamówienia — stały zestaw, żadnego tekstu wpisanego przez klienta. */
+function d24_analytics_order_error_reason($reason): string {
+    $reason = (string) $reason;
+    return in_array($reason, array('stale_item', 'limit', 'validation', 'files', 'network', 'server'), true) ? $reason : 'server';
+}
 function d24_analytics_source($source): string {
     $source = (string) $source;
     return in_array($source, array('direct','search','social','referral'), true) ? $source : 'direct';
@@ -130,7 +137,7 @@ function d24_analytics_touch($token, $source = 'direct'): string {
 }
 /** First occurrence of funnel stage per visit. Atomic database update prevents double counting. */
 function d24_analytics_stage(string $hash, string $stage): void {
-    $fields = array('quote' => 'quote_seen', 'cart' => 'cart_seen', 'checkout' => 'checkout_seen', 'order' => 'order_seen');
+    $fields = array('price' => 'price_seen', 'quote' => 'quote_seen', 'cart' => 'cart_seen', 'checkout' => 'checkout_seen', 'order' => 'order_seen');
     if ($hash === '' || !isset($fields[$stage])) return;
     global $wpdb;
     $table = d24_analytics_session_table();
@@ -146,10 +153,23 @@ function d24_analytics_browser_event(string $event, array $data, $session): void
         $hash = d24_analytics_touch($session, $data['source'] ?? 'direct');
         if ($hash === '') return;
         if ($event === 'quote_view') d24_analytics_stage($hash, 'quote');
+        // 0.25.5: klient zmienił parametry i zobaczył cenę (sama cena domyślna po wejściu na stronę się nie liczy).
+        if ($event === 'price_seen') {
+            d24_analytics_stage($hash, 'price');
+            d24_analytics_add('product_price', d24_analytics_product_bucket($data['page'] ?? ''));
+        }
+        if ($event === 'order_error') d24_analytics_add('order_error', d24_analytics_order_error_reason($data['reason'] ?? ''));
         if ($event === 'add_to_cart') {
             d24_analytics_stage($hash, 'cart');
             $product = d24_analytics_product_bucket($data['product'] ?? '');
             d24_analytics_add('product_cart', $product);
+            // 0.25.5: wartość pozycji dodanej do koszyka (tylko poprawne kwoty do limitu zamówienia 5000 zł).
+            $cartValue = (float) ($data['value'] ?? 0);
+            if (is_finite($cartValue) && $cartValue > 0 && $cartValue <= 5000) {
+                d24_analytics_add('cart_items');
+                $cartCents = (int) round($cartValue * 100);
+                if ($cartCents > 0) d24_analytics_add('cart_value_cents', '', $cartCents);
+            }
         }
         if ($event === 'checkout_view') d24_analytics_stage($hash, 'checkout');
         if ($event === 'page_view') {
@@ -201,7 +221,8 @@ function d24_analytics_prune(): void {
 function d24_analytics_dashboard(int $days = 7): array {
     $days = in_array($days, array(1,7,30), true) ? $days : 7;
     $base = array('period_days' => $days, 'ready' => false, 'totals' => array(), 'series' => array(),
-        'sources' => array(), 'pages' => array(), 'cart_products' => array(), 'ordered_products' => array(),
+        'sources' => array(), 'pages' => array(), 'price_products' => array(), 'cart_products' => array(), 'ordered_products' => array(),
+        'order_errors' => array(),
         'abandoned' => 0, 'abandoned_definition' => 'Sesje z koszykiem, bez potwierdzonego zapytania, nieaktywne przez minimum 24 godziny.',
         'data_start' => wp_date('Y-m-d'), 'data_end' => wp_date('Y-m-d'),
         'note' => 'Dane dostępne od wdrożenia 0.22.8v; nie są płatnościami ani sprzedażą zrealizowaną.');
@@ -214,15 +235,16 @@ function d24_analytics_dashboard(int $days = 7): array {
     $rows = $wpdb->get_results($wpdb->prepare(
         "SELECT day,metric,dimension,total FROM {$table} WHERE day >= %s AND day <= %s", $start, $end
     ), ARRAY_A);
-    $totals = array_fill_keys(array('sessions','stage_quote','stage_cart','stage_checkout','stage_order',
-        'orders_verified','orders_value_cents','search','search_miss'), 0);
+    $totals = array_fill_keys(array('sessions','stage_price','stage_quote','stage_cart','stage_checkout','stage_order',
+        'orders_verified','orders_value_cents','search','search_miss','cart_items','cart_value_cents','order_error'), 0);
     $series = array();
     for ($i = $days - 1; $i >= 0; $i--) {
         $date = $today->modify('-' . $i . ' days')->format('Y-m-d');
-        $series[$date] = array('day' => $date, 'sessions' => 0, 'quotes' => 0,
-            'carts' => 0, 'orders' => 0, 'value_cents' => 0);
+        $series[$date] = array('day' => $date, 'sessions' => 0, 'prices' => 0, 'quotes' => 0,
+            'carts' => 0, 'checkouts' => 0, 'orders' => 0, 'value_cents' => 0,
+            'cart_items' => 0, 'cart_value_cents' => 0, 'order_errors' => 0);
     }
-    $grouped = array('source'=>array(), 'page'=>array(), 'product_cart'=>array(), 'product_order'=>array());
+    $grouped = array('source'=>array(), 'page'=>array(), 'product_price'=>array(), 'product_cart'=>array(), 'product_order'=>array(), 'order_error'=>array());
     foreach ((array) $rows as $r) {
         $metric = (string) $r['metric'];
         $dimension = (string) $r['dimension'];
@@ -231,12 +253,14 @@ function d24_analytics_dashboard(int $days = 7): array {
         if (array_key_exists($metric, $totals)) $totals[$metric] += $value;
         if (isset($grouped[$metric])) $grouped[$metric][$dimension] = ($grouped[$metric][$dimension] ?? 0) + $value;
         if (isset($series[$day])) {
-            $map = array('sessions'=>'sessions','stage_quote'=>'quotes','stage_cart'=>'carts',
-                'orders_verified'=>'orders','orders_value_cents'=>'value_cents');
+            $map = array('sessions'=>'sessions','stage_price'=>'prices','stage_quote'=>'quotes','stage_cart'=>'carts',
+                'stage_checkout'=>'checkouts','orders_verified'=>'orders','orders_value_cents'=>'value_cents',
+                'cart_items'=>'cart_items','cart_value_cents'=>'cart_value_cents','order_error'=>'order_errors');
             if (isset($map[$metric])) $series[$day][$map[$metric]] += $value;
         }
     }
-    foreach ($grouped as &$values) { arsort($values, SORT_NUMERIC); $values = array_slice($values, 0, 12, true); }
+    // 0.25.5: kategorie produktów to stały, krótki zestaw — do eksportu potrzebna jest pełna lista, nie tylko 12 pierwszych.
+    foreach ($grouped as &$values) { arsort($values, SORT_NUMERIC); $values = array_slice($values, 0, 40, true); }
     unset($values);
     // Abandonment is calculated over sessions, not by subtracting unrelated counters.
     // Excludes sessions active in the last 24 hours, and sessions with a server-verified order.
@@ -250,6 +274,7 @@ function d24_analytics_dashboard(int $days = 7): array {
     ));
     return array_merge($base, array('ready'=>true,'totals'=>$totals,'series'=>array_values($series),
         'sources'=>$grouped['source'], 'pages'=>$grouped['page'],
+        'price_products'=>$grouped['product_price'], 'order_errors'=>$grouped['order_error'],
         'cart_products'=>$grouped['product_cart'], 'ordered_products'=>$grouped['product_order'],
         'abandoned'=>$abandoned, 'data_start'=>$start,'data_end'=>$end));
 }

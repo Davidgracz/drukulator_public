@@ -1,4 +1,4 @@
-/* Drukulator 0.25.4v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.25.5v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
@@ -73,4 +73,15 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
   .d24-foam-tier-table th, .d24-foam-tier-table td { padding: 8px 6px; }
   .d24-foam-tier-table td:first-child { white-space: normal; }
   .d24-foam-tier-table td:first-child small { display: block; font-size: .78rem; opacity: .85; }
+}
+
+/* 0.25.5v — pozycje koszyka ze starszej wersji kalkulatora: ostrzeżenie, oznaczenie karty i przycisk „Oblicz ponownie”. */
+.d24-stale-cart-alert { margin-bottom: 12px; }
+.cart-card.is-stale { border-color: var(--alert-warning-border, #fcd34d); box-shadow: inset 4px 0 0 var(--alert-warning-border, #fcd34d); }
+.d24-stale-note { margin: 6px 0 0; font-size: .9rem; font-weight: 700; color: var(--alert-warning-text, #92400e); }
+.cart-card-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.d24-recalc-hint { margin-bottom: 14px; }
+@media (max-width: 520px) {
+  .cart-card.is-stale .cart-card-footer { align-items: flex-start; flex-direction: column; }
+  .cart-card.is-stale .cart-card-actions { justify-content: flex-start; }
 }

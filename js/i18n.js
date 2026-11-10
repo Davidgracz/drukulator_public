@@ -425,6 +425,14 @@
     "Koszyk": "Cart",
     "Koszyk jest pusty.": "Your cart is empty.",
     "Usuń": "Remove",
+    "Oblicz ponownie": "Recalculate",
+    "Pozycja ze starszej wersji kalkulatora — wymaga ponownego obliczenia.": "Item from an older version of the calculator — it needs to be recalculated.",
+    "Jedna pozycja pochodzi ze starszej wersji kalkulatora.": "One item comes from an older version of the calculator.",
+    "Część pozycji pochodzi ze starszej wersji kalkulatora.": "Some items come from an older version of the calculator.",
+    "Takiej pozycji nie da się wysłać w zamówieniu. Kliknij „Oblicz ponownie” przy oznaczonej pozycji — usuniemy ją z koszyka i otworzymy produkt, żeby wycenić go jeszcze raz.": "An item like this cannot be sent with the order. Click “Recalculate” next to the marked item — we will remove it from the cart and open the product so you can price it again.",
+    "Nie można wysłać zamówienia: w koszyku jest pozycja ze starszej wersji kalkulatora. Przy oznaczonej pozycji kliknij „Oblicz ponownie”.": "The order cannot be sent: the cart contains an item from an older version of the calculator. Click “Recalculate” next to the marked item.",
+    "Przelicz ponownie pozycję:": "Please recalculate the item:",
+    "Usunięto starą pozycję — dodaj produkt ponownie": "Old item removed — please add the product again",
     "Razem brutto": "Gross total",
     "Pobierz koszyk CSV": "Download cart CSV",
     "Wyczyść koszyk": "Clear cart",
@@ -643,6 +651,7 @@
   }));
 
   const phrases = [
+    ["Ustaw parametry jeszcze raz i dodaj produkt do koszyka.", "Set the parameters again and add the product to the cart."],
     ["Pokaż wszystkie formaty i ceny", "Show all formats and prices"],
     ["Wpisz sumę wszystkich zamawianych sztuk (razem: rozmiary, kolory i kroje tego modelu).", "Enter the total number of all pieces you are ordering (all sizes, colours and cuts of this model together)."],
     ["Rabat naliczymy automatycznie.", "We apply the discount automatically."],

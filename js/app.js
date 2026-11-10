@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.4v";
+  const VERSION = "0.25.5v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2719,6 +2719,22 @@
       return type ? { ...item, meta: { ...(item.meta && typeof item.meta === "object" ? item.meta : {}), productType: type } } : item;
     });
   }
+  // 0.25.5: pozycje z koszyka zapisanego w starszej wersji (bez typu produktu) serwer odrzuca. Wykrywamy je tym samym warunkiem co send-order.php,
+  // pokazujemy ostrzeżenie i pozwalamy obliczyć produkt od nowa (stare pozycje nie mają zapisanych wymiarów, więc nie da się ich przeliczyć automatycznie).
+  const STALE_CART_TITLE_PATTERN = /plakat|baner|folia|naklejk|etykiet|pcv|piank|płótn|plotn/;
+  function isStaleCartItem(item) {
+    if (!item || typeof item !== "object" || item.meta?.productType) return false;
+    return STALE_CART_TITLE_PATTERN.test(String(item.title || "").toLowerCase());
+  }
+  function staleCartItemPage(item) {
+    const title = String(item?.title || "").toLowerCase();
+    if (/plakat/.test(title)) return "Plakaty 24h";
+    if (/pcv|piank/.test(title)) return "PCV i pianki";
+    if (/płótn|plotn/.test(title)) return "Obrazy na płótnie";
+    if (/naklejk|etykiet/.test(title)) return "Naklejki, etykiety i magnesy";
+    if (/baner|folia/.test(title)) return "Folie i banery 24h";
+    return "";
+  }
   function loadJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
   }
@@ -2899,6 +2915,30 @@
     }).catch(() => {});
   }
 
+  // 0.25.5: krok lejka „cena po konfiguracji” — liczymy go dopiero po prawdziwej (zaufanej) zmianie parametrów albo kliknięciu „Dodaj do koszyka”.
+  // Cena domyślna jest widoczna już po wejściu na stronę, więc samo jej wyświetlenie niczego nie mówi o zaangażowaniu klienta.
+  // Zdarzenie wysyłamy raz na kategorię w danej sesji przeglądarki.
+  const PRICE_SEEN_STORAGE_KEY = "drukulator_price_seen_0255";
+  const priceSeenPages = new Set();
+  let priceSeenLoaded = false;
+  let lastTrustedFormInteraction = 0;
+  function analyticsPriceSeen() {
+    const page = state.page;
+    if (!page || page === "Start" || ADMIN_PAGE_NAMES.has(page)) return;
+    if (!priceSeenLoaded) {
+      priceSeenLoaded = true;
+      try { JSON.parse(sessionStorage.getItem(PRICE_SEEN_STORAGE_KEY) || "[]").forEach(name => priceSeenPages.add(String(name))); } catch {}
+    }
+    if (priceSeenPages.has(page)) return;
+    priceSeenPages.add(page);
+    try { sessionStorage.setItem(PRICE_SEEN_STORAGE_KEY, JSON.stringify([...priceSeenPages].slice(-40))); } catch {}
+    analyticsTrack("price_seen", { page });
+  }
+  function noteTrustedFormInteraction(event) {
+    if (!event.isTrusted || !event.target?.closest) return;
+    if (!event.target.closest(".card") || event.target.closest("#calculate, #calculateCanvas") || event.target.matches?.('input[type="file"]')) return;
+    lastTrustedFormInteraction = Date.now();
+  }
   function analyticsStartSession() {
     let shouldCount = true;
     try {
@@ -3045,11 +3085,17 @@
     button.textContent = draft?.meta?.requiresManualPrice ? "Dodaj do koszyka · cena do ustalenia" : draft ? `Dodaj do koszyka · ${money(draft.price)} zł` : "Dodaj do koszyka · sprawdź parametry";
     const headline = document.getElementById("d24LivePriceValue");
     if (headline) headline.textContent = draft?.meta?.requiresManualPrice ? "Cena do potwierdzenia mailowo" : draft ? `${money(draft.price)} zł brutto` : "Uzupełnij parametry";
+    // Cena policzona po zmianie wykonanej przez klienta (nie po automatycznym uzupełnieniu formularza).
+    if (draft && lastTrustedFormInteraction && Date.now() - lastTrustedFormInteraction < 3000) {
+      lastTrustedFormInteraction = 0;
+      analyticsPriceSeen();
+    }
   }
 
   function setupQuickAddForCurrentPage() {
     clearTimeout(livePriceTimer);
     ++currentPriceRequest;
+    lastTrustedFormInteraction = 0;
     setupPrintChoices();
     const button = content.querySelector("#calculate, #calculateCanvas");
     if (!button) return;
@@ -3062,6 +3108,7 @@
     livePriceTimer = setTimeout(() => refreshQuickAddPrice(button), 180);
   }
 
+  ["click", "input", "change", "keydown"].forEach(type => content.addEventListener(type, noteTrustedFormInteraction, true));
   content.addEventListener("input", event => {
     if (!event.target.closest(".card") || event.target.matches('input[type="file"]')) return;
     clearTimeout(livePriceTimer);
@@ -3095,6 +3142,7 @@
     clearTimeout(livePriceTimer);
     const draft = captureCurrentFormQuote(button);
     if (!draft) { button.click(); refreshQuickAddPrice(button); return; }
+    analyticsPriceSeen();
     showQuote(draft);
     document.getElementById("addToCart")?.click();
     refreshQuickAddPrice(button);
@@ -6690,6 +6738,7 @@
       return;
     }
     const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
+    const staleItems = state.cart.filter(isStaleCartItem);
     cartPanel.innerHTML = `<div class="card cart-shell">
       <div class="cart-heading cart-heading--wide">
         <div><span class="cart-kicker">PODSUMOWANIE ZAMÓWIENIA</span><h2>Twoje zamówienie</h2><p>Sprawdź produkty i prześlij zamówienie do drukarni. Realizacja wymaga jej potwierdzenia wraz z terminem.</p></div>
@@ -6698,12 +6747,14 @@
       <div class="cart-review-layout">
         <section class="cart-review-products" aria-label="Produkty w zamówieniu">
           <h3>Wybrane produkty</h3>
-          <div class="cart-list">${state.cart.map((item, index) => `<article class="cart-card">
+          ${staleItems.length ? `<div class="alert warning d24-stale-cart-alert" role="alert"><strong>${staleItems.length === 1 ? "Jedna pozycja pochodzi" : "Część pozycji pochodzi"} ze starszej wersji kalkulatora.</strong> Takiej pozycji nie da się wysłać w zamówieniu. Kliknij „Oblicz ponownie” przy oznaczonej pozycji — usuniemy ją z koszyka i otworzymy produkt, żeby wycenić go jeszcze raz.</div>` : ""}
+          <div class="cart-list">${state.cart.map((item, index) => `<article class="cart-card${isStaleCartItem(item) ? " is-stale" : ""}">
             <div class="d24-cart-row"><span class="d24-cart-number">${index + 1}</span><div class="d24-cart-data">
               <h4>${esc(item.title)}</h4><p>${esc(item.description)}</p>
+              ${isStaleCartItem(item) ? `<p class="d24-stale-note">Pozycja ze starszej wersji kalkulatora — wymaga ponownego obliczenia.</p>` : ""}
               ${Array.isArray(item.details) && item.details.length ? `<details class="d24-cart-details"><summary>Zobacz konfigurację</summary><dl>${item.details.slice(0, 25).filter(entry => Array.isArray(entry)).map(([key, val]) => `<dt>${esc(key)}</dt><dd>${esc(val)}</dd>`).join("")}</dl></details>` : ""}
             </div></div>
-            <div class="cart-card-footer"><strong>${item.meta?.requiresManualPrice ? "Do ustalenia" : `${money(item.price)} zł`}</strong><button class="button danger" data-remove="${esc(item.id)}" type="button">Usuń</button></div>
+            <div class="cart-card-footer"><strong>${item.meta?.requiresManualPrice ? "Do ustalenia" : `${money(item.price)} zł`}</strong><span class="cart-card-actions">${isStaleCartItem(item) && staleCartItemPage(item) ? `<button class="button" data-recalc="${esc(item.id)}" type="button">Oblicz ponownie</button>` : ""}<button class="button danger" data-remove="${esc(item.id)}" type="button">Usuń</button></span></div>
           </article>`).join("")}</div>
         </section>
         <section class="cart-review-summary" aria-label="Podsumowanie kosztów">
@@ -6729,6 +6780,7 @@
       </div>
     </div>`;
     cartPanel.querySelectorAll("[data-remove]").forEach(button => button.addEventListener("click", () => { state.cart = state.cart.filter(item => String(item.id) !== button.dataset.remove); if (!state.cart.length) { orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); } saveState(); renderCart(); }));
+    cartPanel.querySelectorAll("[data-recalc]").forEach(button => button.addEventListener("click", () => recalculateStaleCartItem(button.dataset.recalc)));
     document.getElementById("clearCart").addEventListener("click", () => { state.cart = []; orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); saveState(); renderCart(); });
     document.getElementById("downloadCsv").addEventListener("click", downloadCsv);
     document.getElementById("saveQuoteLink").addEventListener("click", saveShareableQuote);
@@ -6749,6 +6801,21 @@
     renderOrderFileList();
     updateOrderText();
     updateMobileCartBar();
+  }
+
+  // 0.25.5: „Oblicz ponownie” — usuwa starą pozycję i otwiera właściwy produkt, a opis starej pozycji zostaje na górze strony jako podpowiedź.
+  function recalculateStaleCartItem(itemId) {
+    const item = state.cart.find(entry => String(entry.id) === String(itemId));
+    const pageName = item ? staleCartItemPage(item) : "";
+    if (!item || !pageName) return;
+    state.cart = state.cart.filter(entry => entry !== item);
+    if (!state.cart.length) { orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); }
+    saveState();
+    renderCart();
+    navigateToPage(pageName);
+    content.insertAdjacentHTML("afterbegin", `<div class="alert info d24-recalc-hint" role="status"><strong>Przelicz ponownie pozycję:</strong> ${esc(item.title)}${item.description ? ` — ${esc(item.description)}` : ""}. Ustaw parametry jeszcze raz i dodaj produkt do koszyka.</div>`);
+    showToast("Usunięto starą pozycję — dodaj produkt ponownie");
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { window.scrollTo(0, 0); }
   }
 
   function cartForSharing() {
@@ -6979,9 +7046,25 @@
       throw new Error(`${context}: serwer zwrócił nieprawidłową odpowiedź (HTTP ${response.status}).`);
     }
     if (!response.ok || !data?.success) {
-      throw new Error(data?.message || `${context}: błąd HTTP ${response.status}.`);
+      const failure = new Error(data?.message || `${context}: błąd HTTP ${response.status}.`);
+      failure.httpStatus = response.status;
+      throw failure;
     }
     return data;
+  }
+
+  // 0.25.5: przyczyna nieudanej wysyłki do statystyk (tylko ogólna kategoria, bez treści zamówienia i bez danych klienta).
+  function classifyOrderError(error) {
+    if (error?.orderErrorReason) return error.orderErrorReason;
+    const message = String(error?.message || error || "");
+    if (error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(message)) return "network";
+    if (/starszej wersji kalkulatora/i.test(message)) return "stale_item";
+    if (/maksymalna wartość|maksymalny nakład|maksymalna ilość|nie mieści się w żadnym formacie|limit/i.test(message) && error?.httpStatus === 422) return "limit";
+    if (error?.httpStatus === 400 || error?.httpStatus === 422) return "validation";
+    return "server";
+  }
+  function trackOrderError(reason) {
+    analyticsTrack("order_error", { reason });
   }
 
   async function uploadOrderFilesInChunks(files, status) {
@@ -7134,10 +7217,18 @@
       status.innerHTML = alertBox("Koszyk jest pusty.", "error");
       return;
     }
+    // 0.25.5: serwer odrzuciłby taką pozycję, więc mówimy o tym od razu i wskazujemy, co zrobić.
+    if (state.cart.some(isStaleCartItem)) {
+      status.innerHTML = alertBox("Nie można wysłać zamówienia: w koszyku jest pozycja ze starszej wersji kalkulatora. Przy oznaczonej pozycji kliknij „Oblicz ponownie”.", "warning");
+      trackOrderError("stale_item");
+      document.querySelector(".cart-card.is-stale")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      return;
+    }
     const orderTotal = state.cart.reduce((sum, item) => sum + Number(item.price), 0) + orderDeliveryFee(state.cart.reduce((sum, item) => sum + Number(item.price), 0));
     if (orderTotal > MAX_ORDER_TOTAL) {
       window.alert(`Maksymalna wartość zamówienia przez kalkulator to ${money(MAX_ORDER_TOTAL)} zł brutto. ${LIMIT_CONTACT_TEXT}`);
       status.innerHTML = alertBox(`Maksymalna wartość zamówienia przez kalkulator to ${money(MAX_ORDER_TOTAL)} zł brutto. ${LIMIT_CONTACT_TEXT}`, "warning");
+      trackOrderError("limit");
       return;
     }
     if (!state.order.name.trim()) {
@@ -7165,6 +7256,7 @@
       validateOrderFiles(orderFiles);
     } catch (error) {
       status.innerHTML = alertBox(error.message || String(error), "error");
+      trackOrderError("files");
       return;
     }
 
@@ -7195,7 +7287,12 @@
         analyticsSession: analyticsSession()
       };
       if (orderFiles.length) {
-        payload.uploadToken = await uploadOrderFilesInChunks(orderFiles, status);
+        try {
+          payload.uploadToken = await uploadOrderFilesInChunks(orderFiles, status);
+        } catch (uploadError) {
+          if (uploadError && typeof uploadError === "object") uploadError.orderErrorReason = "files";
+          throw uploadError;
+        }
         status.innerHTML = alertBox("Pliki przesłane. Trwa wysyłanie e-maila z załącznikami do drukarni…", "info");
       }
       const response = await fetch("send-order.php", {
@@ -7217,6 +7314,7 @@
         ? "Nie udało się połączyć z serwerem podczas wysyłki. Możliwy jest limit hostingu, blokada zabezpieczeń lub przerwane połączenie. Sprawdź pocztę przed ponowną próbą — zgłoszenie mogło już dotrzeć."
         : (error.message || String(error));
       status.innerHTML = alertBox(`${message} Możesz także skopiować tekst zapytania poniżej i przesłać go na ${CONTACT_EMAIL}.`, "error");
+      trackOrderError(classifyOrderError(error));
     } finally {
       button.disabled = false;
       button.textContent = originalText;

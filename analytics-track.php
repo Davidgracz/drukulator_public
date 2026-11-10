@@ -122,7 +122,8 @@ if (!is_array($payload)) {
 }
 
 $event = drukulator_analytics_text($payload['event'] ?? '', 40);
-$allowedEvents = array('session_start', 'page_view', 'search', 'add_to_cart', 'quote_view', 'checkout_view');
+// 0.25.5: price_seen (cena po konfiguracji) i order_error (przyczyna nieudanej wysyłki) trafiają tylko do nowego modułu v2.
+$allowedEvents = array('session_start', 'page_view', 'search', 'add_to_cart', 'quote_view', 'checkout_view', 'price_seen', 'order_error');
 if (!in_array($event, $allowedEvents, true)) {
     drukulator_analytics_response(false, 'Nieobsługiwane zdarzenie.', 400);
 }
@@ -147,7 +148,7 @@ if ($ip !== '') {
 require_once __DIR__ . '/analytics-v2-lib.php';
 d24_analytics_browser_event($event, $data, $analyticsSession);
 // Stage-only events do not belong in the older v1 counters.
-if ($event === 'quote_view' || $event === 'checkout_view') {
+if (in_array($event, array('quote_view', 'checkout_view', 'price_seen', 'order_error'), true)) {
     drukulator_analytics_response(true, 'OK');
 }
 
