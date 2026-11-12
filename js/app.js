@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.0v";
+  const VERSION = "0.26.1v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -271,7 +271,9 @@
       "papier 250g", "papier 300g", "sra4", "sra3", "arkuszowanie", "impozycja", "uzytki na arkuszu",
       "winietki", "winietka", "winietek", "zaproszenia", "zaproszenie", "bilety", "bilet", "vouchery",
       "voucher", "kupony", "kupon", "karteczki", "karty menu", "menu restauracyjne", "certyfikaty",
-      "dyplomy", "identyfikatory papierowe", "papier firmowy", "preprint", "druk malego formatu"
+      "dyplomy", "identyfikatory papierowe", "papier firmowy", "preprint", "druk malego formatu",
+      "cyfra", "cyfrowy", "cyfrowa", "cyfrowe", "cyfrowo", "cyfrowych", "digital", "wydruk cyfrowy",
+      "druki cyfrowe", "druk z foliowaniem", "wydruk z bindowaniem", "liczba stron"
     ],
     "Koszulki i odzież": [
       "koszulki", "koszulka", "koszulek", "odziez", "odziezy", "ubrania z nadrukiem", "nadruk na koszulce",
@@ -655,7 +657,7 @@
     if (service === "Druk cyfrowy 24h") { steps.push(["digSide", side]); steps.push(["digPaper", paper]); }
     if (service === "Ksero i druk") steps.push(["digPaper", paper]);
     steps.push(["digQty", String(quantity)]);
-    return { pageName: "Druk cyfrowy i ksero 24h", summary: `${quantity} ${service === "Ksero książki" || service === "Skanowanie" ? "str." : "szt."} • ${formatName} • ${color.toLowerCase()}${service === "Druk cyfrowy 24h" ? ` • ${side.toLowerCase()}` : ""}`, steps };
+    return { pageName: "Druk cyfrowy i ksero 24h", summary: `${quantity} ${service === "Ksero książki" || service === "Skanowanie" || service === "Druk cyfrowy 24h" ? "str." : "szt."} • ${formatName} • ${color.toLowerCase()}${service === "Druk cyfrowy 24h" ? ` • ${side.toLowerCase()}` : ""}`, steps };
   }
 
   function buildTaxiSmartQuote(query, quantity) {
@@ -993,7 +995,7 @@
       ["Plakaty 24h", ["plakat", "plakaty", "poster", "postery", "afisz"]],
       ["Naklejki, etykiety i magnesy", ["naklejka", "naklejki", "etykieta", "etykiety", "wlepka", "wlepki", "sticker", "stickers", "magnes", "magnesy", "taxi", "taksi"]],
       ["Folie i banery 24h", ["baner", "banery", "banner", "bannery", "folia", "folie", "frontlit", "owv", "owh"]],
-      ["Druk cyfrowy i ksero 24h", ["druk", "wydruk", "wydruki", "ksero", "skan", "skanowanie", "kopie", "kopii", "strony", "stron"]],
+      ["Druk cyfrowy i ksero 24h", ["druk", "wydruk", "wydruki", "ksero", "skan", "skanowanie", "kopie", "kopii", "strony", "stron", "cyfra", "cyfrowy", "cyfrowa", "cyfrowe", "cyfrowo", "digital"]],
       ["Notesy i bloczki", ["notes", "notesy", "notatnik", "bloczek", "bloczki", "samokopiuj", "ncr"]],
       ["Koperty, teczki i papier firmowy", ["koperta", "koperty", "teczka", "teczki", "papier firmowy", "preprint"]],
       ["Kalendarze", ["kalendarz", "kalendarze", "biuwar", "biuwary", "piramidka"]],
@@ -1038,6 +1040,10 @@
       "Śluby, wesela i imprezy": [25, 50, 100, 150]
     };
     const values = presets[pageName] || [1, 10, 50, 100];
+    // 0.26.1v: druk cyfrowy liczymy od liczby stron.
+    if (pageName === "Druk cyfrowy i ksero 24h") {
+      return quoteAssistantQuestion("Ile stron potrzebujesz?", values.map(value => [String(value), `${value} str.`]), "Np. 40 str.");
+    }
     return quoteAssistantQuestion(
       "Ile sztuk potrzebujesz?",
       values.map(value => [String(value), `${value} szt.`]),
@@ -2574,6 +2580,23 @@
       Object.entries(paperPriceUpdates).forEach(([paperName, [oldPrice, newPrice]]) => {
         if (Number(paperPrices[paperName]) === oldPrice) paperPrices[paperName] = newPrice;
       });
+      // 0.26.1v: papier kolorowy i etykietowy zostały wycofane z druku cyfrowego.
+      delete paperPrices["Papier kolorowy"];
+      delete paperPrices["Papier etykietowy"];
+    }
+    // 0.26.1v: foliowanie wydruków (zł za arkusz A4, A3 = 2 × A4). Domyślne ceny dopisywane do starszych cenników.
+    const digitalRoot = pricesToMigrate.druk_cyfrowy_i_ksero;
+    if (digitalRoot) {
+      const defaultFoil = { "Jednostronne": { "Satyna": 2, "Błysk": 1.5 }, "Dwustronne": { "Satyna": 2.5, "Błysk": 2 } };
+      if (!digitalRoot.foliowanie || typeof digitalRoot.foliowanie !== "object") digitalRoot.foliowanie = {};
+      for (const [sideName, types] of Object.entries(defaultFoil)) {
+        if (!digitalRoot.foliowanie[sideName] || typeof digitalRoot.foliowanie[sideName] !== "object") digitalRoot.foliowanie[sideName] = {};
+        for (const [typeName, amount] of Object.entries(types)) {
+          if (!(Number(digitalRoot.foliowanie[sideName][typeName]) >= 0) || digitalRoot.foliowanie[sideName][typeName] === null || digitalRoot.foliowanie[sideName][typeName] === "") {
+            digitalRoot.foliowanie[sideName][typeName] = amount;
+          }
+        }
+      }
     }
 
     const standardStickers = pricesToMigrate.naklejki?.powierzchniowe?.["Naklejki, etykiety"];
@@ -3300,13 +3323,27 @@
     }
   }
 
+  // 0.26.1v: „Druk cyfrowy 24h” — komplet opcji z formularza dla C.calculateDigitalPrint.
+  function digitalPrintOptionsFromForm(overrides = {}) {
+    const foilSide = value("digFoilSide");
+    const bindType = value("digBindType");
+    return {
+      colorMode: value("digColor"), pages: numberValue("digQty"), formatName: value("digFormat"),
+      paperType: value("digPaper"), sideMode: value("digSide"),
+      foilSide, foilType: foilSide === "Brak" ? "" : value("digFoilType"),
+      bindingType: bindType, bindingVariant: bindType === "Brak" ? "" : value("digBindVariant"),
+      bindingCopies: bindType === "Brak" ? 1 : numberValue("digBindCopies"),
+      ...overrides
+    };
+  }
+
   function quantityUnitLabel() {
     if (state.page === "Oprawa prac") return "egz.";
     if (state.page === "Druk cyfrowy i ksero 24h") {
       const service = document.getElementById("digService")?.value || "";
       if (service === "Ksero książki" || service === "Skanowanie") return "str.";
       if (service === "Ksero i druk" || service === "Dla studentów 24h") return "kopii";
-      if (service === "Druk cyfrowy 24h") return "ark.";
+      if (service === "Druk cyfrowy 24h") return "str.";
     }
     return "szt.";
   }
@@ -3415,15 +3452,11 @@
 
       if (state.page === "Druk cyfrowy i ksero 24h" && value("digService") === "Druk cyfrowy 24h") {
         const paperControl = document.getElementById("digPaper");
-        const color = value("digColor");
-        const quantity = numberValue("digQty");
-        const format = value("digFormat");
-        const side = value("digSide");
         const currentIndex = paperControl.selectedIndex;
 
         Array.from(paperControl.options).slice(currentIndex + 1, currentIndex + 3).forEach(option => {
           const nextPaper = option.value;
-          const price = C.calculateDigital(state.prices, "Druk cyfrowy", color, quantity, format, nextPaper, side).price;
+          const price = C.calculateDigitalPrint(state.prices, digitalPrintOptionsFromForm({ paperType: nextPaper })).price;
           candidates.push({
             label: nextPaper,
             note: "grubszy / inny papier",
@@ -4226,6 +4259,7 @@
       cena_za_m2: "Cena za m²",
       cena_m2_obrazu: "Cena za m² obrazu",
       doplaty_do_papieru: "Dopłaty do papieru",
+      foliowanie: "Foliowanie wydruków [zł za arkusz A4, A3 = 2 × A4]",
       mnozniki_formatu: "Mnożniki formatu",
       mnozniki_zadruku: "Mnożniki zadruku",
       progi_cenowe: "Progi cenowe",
@@ -4633,8 +4667,17 @@
           result = C.calculatePosters(state.prices, v.posterPrint, v.posterFormat, n("posterQty"));
         } else if (state.page === "Druk cyfrowy i ksero 24h" && ["digPaper", "digSide", "digFormat", "digColor", "digQty"].includes(fieldId)) {
           if (v.digService === "Arkuszowanie 24h") return null;
-          const svc = v.digService === "Druk cyfrowy 24h" ? "Druk cyfrowy" : v.digService === "Dla studentów 24h" ? "Dla studentów" : v.digService;
-          result = C.calculateDigital(state.prices, svc, v.digColor, n("digQty"), v.digFormat || "A4", v.digPaper || "Standardowy 80 g", v.digSide || "Jednostronny");
+          if (v.digService === "Druk cyfrowy 24h") {
+            const foilOn = v.digFoilSide && v.digFoilSide !== "Brak", bindOn = v.digBindType && v.digBindType !== "Brak";
+            result = C.calculateDigitalPrint(state.prices, {
+              colorMode: v.digColor, pages: n("digQty"), formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
+              foilSide: foilOn ? v.digFoilSide : "Brak", foilType: foilOn ? v.digFoilType : "",
+              bindingType: bindOn ? v.digBindType : "Brak", bindingVariant: bindOn ? v.digBindVariant : "", bindingCopies: bindOn ? n("digBindCopies") : 1
+            });
+          } else {
+            const svc = v.digService === "Dla studentów 24h" ? "Dla studentów" : v.digService;
+            result = C.calculateDigital(state.prices, svc, v.digColor, n("digQty"), v.digFormat || "A4", v.digPaper || "Standardowy 80 g", v.digSide || "Jednostronny");
+          }
         } else if (state.page === "Folie i banery 24h" && ["bannerMaterial", "bannerQty"].includes(fieldId)) {
           result = C.calculateBanner(state.prices, n("bannerWidth"), n("bannerHeight"), n("bannerQty"), v.bannerMaterial);
         } else if (state.page === "Naklejki, etykiety i magnesy" && ["stickProduct", "stickQty"].includes(fieldId)) {
@@ -5905,7 +5948,10 @@
     </div><div id="digitalInfo"></div><div class="actions"><button class="button" id="calculate">Oblicz cenę</button></div></div><div id="quoteArea"></div>`;
     const service = document.getElementById("digService"), dynamic = document.getElementById("digitalDynamic");
     const standardPapers = ["Standardowy 80 g", "Papier kredowy 130 g", "Papier kredowy 170 g", "Papier kredowy 250 g", "Papier kredowy 300 g", "Papier kredowy 350 g"];
-    const blackPapers = ["Standardowy 80 g", "Papier kolorowy", "Papier etykietowy", ...standardPapers.slice(1)];
+    // 0.26.1v: papier kolorowy i etykietowy wycofane — czarno-biały i kolor mają tę samą listę papierów.
+    const blackPapers = standardPapers;
+    const foilSides = Object.keys(root.foliowanie || {});
+    const bindingTypes = C.getDigitalBindingTypes(state.prices);
     const impositionPapers = imposition.papiery || standardPapers.filter(name => ["130 g", "170 g", "250 g", "300 g"].some(weight => name.includes(weight)));
 
     function refresh() {
@@ -5923,8 +5969,13 @@
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field"><label>Liczba kartek</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
-        note = "Druk dwustronny: cena druku × 2. Koszt papieru jest doliczany tylko raz.";
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
+          <div class="field half"><label for="digFoilSide">Foliowanie</label><select id="digFoilSide">${options(["Brak", ...foilSides])}</select></div>
+          <div class="field half" id="digFoilTypeField" hidden><label for="digFoilType">Rodzaj folii</label><select id="digFoilType"></select></div>
+          <div class="field half"><label for="digBindType">Bindowanie i oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select></div>
+          <div class="field half" id="digBindVariantField" hidden><label for="digBindVariant">Rozmiar oprawy / spirali</label><select id="digBindVariant"></select></div>
+          <div class="field half" id="digBindCopiesField" hidden><label for="digBindCopies">Liczba opraw</label><input id="digBindCopies" type="number" min="1" step="1" value="1"></div>`;
+        note = "Cena druku liczona jest od liczby stron. Druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, oprawa od liczby opraw. Format A3 kosztuje 2 razy więcej niż A4.";
       } else if (service.value === "Ksero i druk") {
         html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.ksero_i_druk))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field"><label>Rodzaj papieru</label><select id="digPaper">${options(standardPapers)}</select></div><div class="field"><label>Liczba kopii</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
         note = "Format A3 kosztuje 2 razy więcej niż format A4.";
@@ -5944,12 +5995,47 @@
         const color = document.getElementById("digColor"), paper = document.getElementById("digPaper");
         function setPaper() { paper.innerHTML = options(color.value === "Czarno-biały" ? blackPapers : standardPapers); }
         color.addEventListener("change", setPaper); setPaper();
+        wireDigitalExtras();
       }
       if (service.value === "Dla studentów 24h") {
         const color = document.getElementById("digColor"), format = document.getElementById("digFormat");
         function setFormats() { format.innerHTML = options(Object.keys(root.dla_studentow[color.value])); }
         color.addEventListener("change", setFormats); setFormats();
       }
+    }
+
+    // 0.26.1v: liczba arkuszy, foliowanie oraz bindowanie i oprawy w „Druku cyfrowym 24h”.
+    function wireDigitalExtras() {
+      const qty = document.getElementById("digQty"), side = document.getElementById("digSide"), format = document.getElementById("digFormat");
+      const hint = document.getElementById("digSheetsHint");
+      const foilSide = document.getElementById("digFoilSide"), foilType = document.getElementById("digFoilType"), foilField = document.getElementById("digFoilTypeField");
+      const bindType = document.getElementById("digBindType"), bindVariant = document.getElementById("digBindVariant");
+      const bindVariantField = document.getElementById("digBindVariantField"), bindCopiesField = document.getElementById("digBindCopiesField");
+      function sheetsText() {
+        const pages = Math.floor(Number(qty.value));
+        if (!(pages > 0)) { hint.textContent = ""; return; }
+        const sideMultiplier = Number(root.mnozniki_zadruku[side.value]) || 1;
+        const sheets = Math.ceil(pages / sideMultiplier);
+        hint.textContent = `Potrzebne arkusze ${format.value}: ${sheets}`;
+      }
+      function setFoilTypes() {
+        const known = foilSide.value !== "Brak" && root.foliowanie?.[foilSide.value];
+        foilField.hidden = !known;
+        const previous = foilType.value;
+        foilType.innerHTML = known ? options(Object.keys(root.foliowanie[foilSide.value]), previous) : "";
+      }
+      function setBinding() {
+        const known = bindType.value !== "Brak" && state.prices.oprawa_prac.rodzaje_opraw[bindType.value];
+        bindVariantField.hidden = !known;
+        bindCopiesField.hidden = !known;
+        const previous = bindVariant.value;
+        bindVariant.innerHTML = known ? options(Object.keys(state.prices.oprawa_prac.rodzaje_opraw[bindType.value]), previous) : "";
+      }
+      [qty, side, format].forEach(control => control.addEventListener("input", sheetsText));
+      [side, format].forEach(control => control.addEventListener("change", sheetsText));
+      foilSide.addEventListener("change", setFoilTypes);
+      bindType.addEventListener("change", setBinding);
+      setFoilTypes(); setBinding(); sheetsText();
     }
 
     service.addEventListener("change", refresh); refresh();
@@ -5993,6 +6079,31 @@
             ["Cena za zamówioną sztukę", `${money(result.pricePerOrderedPiece)} zł`]
           ]
         });
+        return;
+      }
+
+      if (s === "Druk cyfrowy 24h") {
+        const opts = digitalPrintOptionsFromForm();
+        const result = C.calculateDigitalPrint(state.prices, opts);
+        const details = [
+          ["Rodzaj usługi", s], ["Wariant", opts.colorMode], ["Liczba stron", opts.pages], ["Liczba arkuszy", result.sheets],
+          ["Format", opts.formatName], ["Zadruk", opts.sideMode], ["Papier", opts.paperType], ["Próg cenowy", result.tier]
+        ];
+        const extras = [];
+        if (result.foilActive) {
+          details.push(["Foliowanie", `${opts.foilSide}, ${opts.foilType.toLowerCase()}`]);
+          extras.push(`foliowanie ${opts.foilSide.toLowerCase()} ${opts.foilType.toLowerCase()}`);
+        }
+        if (result.bindingActive) {
+          details.push(["Bindowanie i oprawy", `${opts.bindingType}, ${opts.bindingVariant} × ${result.bindingCopies} szt.`]);
+          extras.push(`${opts.bindingType} ${opts.bindingVariant} × ${result.bindingCopies}`);
+        }
+        if (result.foilActive || result.bindingActive) {
+          details.push(["Druk i papier", `${money(result.printTotal + result.paperTotal)} zł`]);
+          if (result.foilActive) details.push(["Foliowanie – cena", `${money(result.foilTotal)} zł`]);
+          if (result.bindingActive) details.push(["Oprawa – cena", `${money(result.bindingTotal)} zł`]);
+        }
+        showQuote({ title: s, description: [`${s}, ${opts.colorMode}, ${opts.pages} str.`, ...extras].join(", "), price: result.price, details });
         return;
       }
 

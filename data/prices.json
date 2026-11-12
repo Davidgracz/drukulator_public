@@ -1362,13 +1362,21 @@
     },
     "doplaty_do_papieru": {
       "Standardowy 80 g": 0,
-      "Papier kolorowy": 0.3,
-      "Papier etykietowy": 2,
       "Papier kredowy 130 g": 0.3,
       "Papier kredowy 170 g": 0.5,
       "Papier kredowy 250 g": 0.75,
       "Papier kredowy 300 g": 1,
       "Papier kredowy 350 g": 1.5
+    },
+    "foliowanie": {
+      "Jednostronne": {
+        "Satyna": 2,
+        "Błysk": 1.5
+      },
+      "Dwustronne": {
+        "Satyna": 2.5,
+        "Błysk": 2
+      }
     },
     "dla_studentow": {
       "Czarno-biały": {

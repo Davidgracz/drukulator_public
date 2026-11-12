@@ -605,6 +605,77 @@
     return { price: round2(total) };
   }
 
+  // 0.26.1v: „Druk cyfrowy 24h” liczony od liczby STRON (nie kartek).
+  // Strona = jedna zadrukowana strona A4/A3. Dwustronny: dwie strony na jednym arkuszu, więc
+  // arkuszy jest ceil(strony / 2) (nieparzysta ostatnia strona zajmuje cały arkusz, ale druk
+  // pustego tyłu nie jest liczony). Próg cenowy liczy się od liczby zadrukowanych stron × mnożnik formatu.
+  // Papier, foliowanie i wybrane opcje liczone są od fizycznych arkuszy.
+  const DIGITAL_FOIL_NONE = "Brak";
+  const DIGITAL_BINDING_NONE = "Brak";
+  const DIGITAL_BINDING_EXCLUDED = ["Oprawa kanałowa twarda A4"];
+
+  function getDigitalBindingTypes(prices) {
+    const all = prices?.oprawa_prac?.rodzaje_opraw || {};
+    return Object.keys(all).filter(name => !DIGITAL_BINDING_EXCLUDED.includes(name));
+  }
+
+  function calculateDigitalPrint(pricesRoot, options = {}) {
+    const {
+      colorMode, pages, formatName = "A4", paperType = "Standardowy 80 g", sideMode = "Jednostronny",
+      foilSide = DIGITAL_FOIL_NONE, foilType = "",
+      bindingType = DIGITAL_BINDING_NONE, bindingVariant = "", bindingCopies = 1
+    } = options;
+    assertPositive(pages, "Liczba stron");
+    if (!Number.isInteger(Number(pages))) throw new Error("Liczba stron musi być liczbą całkowitą.");
+    const prices = pricesRoot.druk_cyfrowy_i_ksero;
+    const sideMultiplier = Number(prices.mnozniki_zadruku[sideMode]);
+    const formatMultiplier = Number(prices.mnozniki_formatu[formatName]);
+    if (!(sideMultiplier > 0) || !(formatMultiplier > 0)) throw new Error("Nieprawidłowy format lub sposób zadruku.");
+    if (!prices.druk_cyfrowy[colorMode]) throw new Error("Nieprawidłowy rodzaj druku.");
+    if (!(paperType in prices.doplaty_do_papieru)) throw new Error("Nieprawidłowy rodzaj papieru.");
+
+    const sheets = Math.ceil(Number(pages) / sideMultiplier);
+    const printUnits = Number(pages) * formatMultiplier;
+    const tier = getQuantityTier(printUnits);
+    const basePrice = Number(prices.druk_cyfrowy[colorMode][tier]);
+    const printTotal = round2(basePrice * printUnits);
+    const paperSurcharge = Number(prices.doplaty_do_papieru[paperType]);
+    const paperUnits = sheets * formatMultiplier;
+    const paperTotal = round2(paperSurcharge * paperUnits);
+
+    let foilTotal = 0, foilUnitPrice = 0;
+    const foilActive = foilSide && foilSide !== DIGITAL_FOIL_NONE;
+    if (foilActive) {
+      const foilTable = prices.foliowanie?.[foilSide];
+      if (!foilTable) throw new Error("Nieprawidłowy sposób foliowania.");
+      if (!(foilType in foilTable)) throw new Error("Wybierz rodzaj folii.");
+      foilUnitPrice = Number(foilTable[foilType]);
+      foilTotal = round2(foilUnitPrice * paperUnits);
+    }
+
+    let bindingTotal = 0, bindingUnitPrice = 0, copies = 0;
+    const bindingActive = bindingType && bindingType !== DIGITAL_BINDING_NONE;
+    if (bindingActive) {
+      if (DIGITAL_BINDING_EXCLUDED.includes(bindingType)) throw new Error("Ta oprawa nie jest dostępna przy druku cyfrowym.");
+      const variants = pricesRoot.oprawa_prac?.rodzaje_opraw?.[bindingType];
+      if (!variants) throw new Error("Nieprawidłowy rodzaj oprawy.");
+      if (!(bindingVariant in variants)) throw new Error("Wybierz rozmiar oprawy.");
+      assertPositive(bindingCopies, "Liczba opraw");
+      if (!Number.isInteger(Number(bindingCopies))) throw new Error("Liczba opraw musi być liczbą całkowitą.");
+      copies = Number(bindingCopies);
+      bindingUnitPrice = Number(variants[bindingVariant]);
+      bindingTotal = round2(bindingUnitPrice * copies);
+    }
+
+    const price = round2(printTotal + paperTotal + foilTotal + bindingTotal);
+    return {
+      price, pages: Number(pages), sheets, printUnits, tier, basePrice, printTotal,
+      paperSurcharge, paperUnits, paperTotal,
+      foilActive: Boolean(foilActive), foilUnitPrice, foilTotal,
+      bindingActive: Boolean(bindingActive), bindingUnitPrice, bindingCopies: copies, bindingTotal
+    };
+  }
+
   function getApparelDiscount(quantity, discounts) {
     assertPositive(quantity, "Ilość");
     const tiers = [...(discounts.progi_ilosciowe || [])].sort((a, b) => Number(a.min_szt) - Number(b.min_szt));
@@ -854,7 +925,7 @@
     NO_PRINT, DIGITAL_FINISH_KEYS, OFFSET_FINISH_KEYS,
     getBannerPricePerM2, calculateManualCutting, calculateOptionalManualCutting, calculateBanner, calculateBusinessCards, calculateFlyers,
     getStickerPricePerLinearMeter, calculateStickers, calculateNotepads, calculateCatalogProduct,
-    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
+    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
     calculateLamination, getCanvasSuggestions, calculateProportionalCanvasSize, calculateCanvasStandard, calculateCanvasCustom, calculateWedding,
     getQuantityTier, roundUpToStep
   };

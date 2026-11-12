@@ -1,4 +1,4 @@
-/* Drukulator 0.26.0v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.26.1v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
@@ -93,3 +93,7 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
 .d24-promo__lines > div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
 .d24-promo__lines .is-discount { color: var(--alert-info-text); font-weight: 750; }
 @media (max-width: 520px) { .d24-promo__form { flex-direction: column; } }
+
+/* 0.26.1v: ukryte pola formularza (rodzaj folii, rozmiar i liczba opraw w druku cyfrowym) */
+.form-grid .field[hidden] { display: none !important; }
+#digSheetsHint:empty { display: none; }
