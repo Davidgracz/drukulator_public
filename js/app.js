@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.1v";
+  const VERSION = "0.26.2v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -3233,7 +3233,7 @@
       "Wizytówki 24h": ["bcQuantity"],
       "Ulotki 24h": ["flyQuantity"],
       "Plakaty 24h": ["posterQty"],
-      "Druk cyfrowy i ksero 24h": ["digQty"],
+      "Druk cyfrowy i ksero 24h": ["digSets", "digQty"],
       "Folie i banery 24h": ["bannerQty"],
       "Naklejki, etykiety i magnesy": ["stickQty", "stickTaxiQty"],
       "Roll-upy i X-banery": ["rollQty"],
@@ -3328,11 +3328,10 @@
     const foilSide = value("digFoilSide");
     const bindType = value("digBindType");
     return {
-      colorMode: value("digColor"), pages: numberValue("digQty"), formatName: value("digFormat"),
+      colorMode: value("digColor"), pages: numberValue("digQty"), sets: numberValue("digSets"), formatName: value("digFormat"),
       paperType: value("digPaper"), sideMode: value("digSide"),
       foilSide, foilType: foilSide === "Brak" ? "" : value("digFoilType"),
       bindingType: bindType, bindingVariant: bindType === "Brak" ? "" : value("digBindVariant"),
-      bindingCopies: bindType === "Brak" ? 1 : numberValue("digBindCopies"),
       ...overrides
     };
   }
@@ -3343,7 +3342,7 @@
       const service = document.getElementById("digService")?.value || "";
       if (service === "Ksero książki" || service === "Skanowanie") return "str.";
       if (service === "Ksero i druk" || service === "Dla studentów 24h") return "kopii";
-      if (service === "Druk cyfrowy 24h") return "str.";
+      if (service === "Druk cyfrowy 24h") return "kompl.";
     }
     return "szt.";
   }
@@ -4648,7 +4647,7 @@
         "Wizytówki 24h": ["bcFinish", "bcSides", "bcQuantity"],
         "Ulotki 24h": ["flyFormat", "flyVariant", "flyQuantity"],
         "Plakaty 24h": ["posterFormat", "posterQty"],
-        "Druk cyfrowy i ksero 24h": ["digPaper", "digSide", "digFormat", "digColor", "digQty"],
+        "Druk cyfrowy i ksero 24h": ["digPaper", "digSide", "digFormat", "digColor", "digQty", "digSets", "digFoilSide", "digFoilType", "digBindType", "digBindVariant"],
         "Folie i banery 24h": ["bannerMaterial", "bannerQty"],
         "Naklejki, etykiety i magnesy": ["stickProduct", "stickQty"],
         "Roll-upy i X-banery": ["rollSize", "rollQty"]
@@ -4665,14 +4664,17 @@
           result = C.calculateFlyers(state.prices, v.flyPrint, v.flyVariant, v.flyFormat, n("flyQuantity"));
         } else if (state.page === "Plakaty 24h" && ["posterFormat", "posterQty"].includes(fieldId) && v.posterFormat !== "Własny wymiar") {
           result = C.calculatePosters(state.prices, v.posterPrint, v.posterFormat, n("posterQty"));
-        } else if (state.page === "Druk cyfrowy i ksero 24h" && ["digPaper", "digSide", "digFormat", "digColor", "digQty"].includes(fieldId)) {
+        } else if (state.page === "Druk cyfrowy i ksero 24h" && ["digPaper", "digSide", "digFormat", "digColor", "digQty", "digSets", "digFoilSide", "digFoilType", "digBindType", "digBindVariant"].includes(fieldId)) {
           if (v.digService === "Arkuszowanie 24h") return null;
           if (v.digService === "Druk cyfrowy 24h") {
             const foilOn = v.digFoilSide && v.digFoilSide !== "Brak", bindOn = v.digBindType && v.digBindType !== "Brak";
+            const foilTable = foilOn ? state.prices.druk_cyfrowy_i_ksero.foliowanie?.[v.digFoilSide] : null;
+            const variants = bindOn ? state.prices.oprawa_prac.rodzaje_opraw[v.digBindType] : null;
             result = C.calculateDigitalPrint(state.prices, {
-              colorMode: v.digColor, pages: n("digQty"), formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
-              foilSide: foilOn ? v.digFoilSide : "Brak", foilType: foilOn ? v.digFoilType : "",
-              bindingType: bindOn ? v.digBindType : "Brak", bindingVariant: bindOn ? v.digBindVariant : "", bindingCopies: bindOn ? n("digBindCopies") : 1
+              colorMode: v.digColor, pages: n("digQty"), sets: n("digSets") || 1, formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
+              foilSide: foilOn ? v.digFoilSide : "Brak", foilType: foilTable ? (v.digFoilType in foilTable ? v.digFoilType : Object.keys(foilTable)[0]) : "",
+              // Nowy rodzaj oprawy zachowuje bieżący rozmiar, jeśli istnieje, a jeśli nie — pierwszy z listy (jak formularz).
+              bindingType: bindOn ? v.digBindType : "Brak", bindingVariant: variants ? (v.digBindVariant in variants ? v.digBindVariant : Object.keys(variants)[0]) : ""
             });
           } else {
             const svc = v.digService === "Dla studentów 24h" ? "Dla studentów" : v.digService;
@@ -5951,6 +5953,7 @@
     // 0.26.1v: papier kolorowy i etykietowy wycofane — czarno-biały i kolor mają tę samą listę papierów.
     const blackPapers = standardPapers;
     const foilSides = Object.keys(root.foliowanie || {});
+    const foilTypes = Array.from(new Set(Object.values(root.foliowanie || {}).flatMap(table => Object.keys(table || {}))));
     const bindingTypes = C.getDigitalBindingTypes(state.prices);
     const impositionPapers = imposition.papiery || standardPapers.filter(name => ["130 g", "170 g", "250 g", "300 g"].some(weight => name.includes(weight)));
 
@@ -5969,13 +5972,13 @@
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
-          <div class="field half"><label for="digFoilSide">Foliowanie</label><select id="digFoilSide">${options(["Brak", ...foilSides])}</select></div>
-          <div class="field half" id="digFoilTypeField" hidden><label for="digFoilType">Rodzaj folii</label><select id="digFoilType"></select></div>
-          <div class="field half"><label for="digBindType">Bindowanie i oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select></div>
-          <div class="field half" id="digBindVariantField" hidden><label for="digBindVariant">Rozmiar oprawy / spirali</label><select id="digBindVariant"></select></div>
-          <div class="field half" id="digBindCopiesField" hidden><label for="digBindCopies">Liczba opraw</label><input id="digBindCopies" type="number" min="1" step="1" value="1"></div>`;
-        note = "Cena druku liczona jest od liczby stron. Druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, oprawa od liczby opraw. Format A3 kosztuje 2 razy więcej niż A4.";
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
+          <div class="field half"><label for="digSets">Ilość kompletów</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div>
+          <div class="field half" id="digFoilSideField"><label for="digFoilSide">Foliowanie</label><select id="digFoilSide">${options(["Brak", ...foilSides])}</select></div>
+          <div class="field half" id="digFoilTypeField"><label for="digFoilType">Rodzaj folii</label><select id="digFoilType">${options(foilTypes)}</select></div>
+          <div class="field half" id="digBindTypeField"><label for="digBindType">Bindowanie i oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select></div>
+          <div class="field half" id="digBindVariantField"><label for="digBindVariant">Rozmiar oprawy / spirali</label><select id="digBindVariant"></select><p class="d24-inactive-note">Najpierw wybierz rodzaj oprawy.</p></div>`;
+        note = "Komplet to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × komplety), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każdy komplet dostaje własną oprawę. Format A3 kosztuje 2 razy więcej niż A4.";
       } else if (service.value === "Ksero i druk") {
         html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.ksero_i_druk))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field"><label>Rodzaj papieru</label><select id="digPaper">${options(standardPapers)}</select></div><div class="field"><label>Liczba kopii</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
         note = "Format A3 kosztuje 2 razy więcej niż format A4.";
@@ -6005,37 +6008,45 @@
     }
 
     // 0.26.1v: liczba arkuszy, foliowanie oraz bindowanie i oprawy w „Druku cyfrowym 24h”.
+    // 0.26.2v: stały układ 2 × 2 (foliowanie | rodzaj folii, oprawa | rozmiar) — pola po prawej są zawsze na swoim miejscu,
+    // a gdy nic nie wybrano po lewej, są tylko przygaszone (kafelki się nie przesuwają). Liczba opraw = liczba kompletów.
     function wireDigitalExtras() {
-      const qty = document.getElementById("digQty"), side = document.getElementById("digSide"), format = document.getElementById("digFormat");
-      const hint = document.getElementById("digSheetsHint");
-      const foilSide = document.getElementById("digFoilSide"), foilType = document.getElementById("digFoilType"), foilField = document.getElementById("digFoilTypeField");
+      const qty = document.getElementById("digQty"), sets = document.getElementById("digSets"), side = document.getElementById("digSide"), format = document.getElementById("digFormat");
+      const sheetsHint = document.getElementById("digSheetsHint"), setsHint = document.getElementById("digSetsHint");
+      const foilSide = document.getElementById("digFoilSide"), foilTypeField = document.getElementById("digFoilTypeField");
       const bindType = document.getElementById("digBindType"), bindVariant = document.getElementById("digBindVariant");
-      const bindVariantField = document.getElementById("digBindVariantField"), bindCopiesField = document.getElementById("digBindCopiesField");
+      const bindVariantField = document.getElementById("digBindVariantField");
+      const bindings = state.prices.oprawa_prac.rodzaje_opraw;
       function sheetsText() {
         const pages = Math.floor(Number(qty.value));
-        if (!(pages > 0)) { hint.textContent = ""; return; }
-        const sideMultiplier = Number(root.mnozniki_zadruku[side.value]) || 1;
-        const sheets = Math.ceil(pages / sideMultiplier);
-        hint.textContent = `Potrzebne arkusze ${format.value}: ${sheets}`;
+        const setCount = Math.floor(Number(sets.value));
+        if (!(pages > 0)) { sheetsHint.textContent = ""; }
+        else {
+          const sideMultiplier = Number(root.mnozniki_zadruku[side.value]) || 1;
+          const perSet = Math.ceil(pages / sideMultiplier);
+          const total = perSet * (setCount > 0 ? setCount : 1);
+          sheetsHint.textContent = `Potrzebne arkusze ${format.value}: ${total}${setCount > 1 ? ` (${perSet} na komplet)` : ""}`;
+        }
+        setsHint.textContent = bindType.value !== "Brak" ? "Każdy komplet dostaje własną oprawę." : "Komplet to jeden egzemplarz całego dokumentu.";
       }
-      function setFoilTypes() {
-        const known = foilSide.value !== "Brak" && root.foliowanie?.[foilSide.value];
-        foilField.hidden = !known;
-        const previous = foilType.value;
-        foilType.innerHTML = known ? options(Object.keys(root.foliowanie[foilSide.value]), previous) : "";
+      function setInactive(field, inactive) {
+        field.classList.toggle("d24-field-inactive", inactive);
+        field.inert = inactive;
+        if (inactive) field.setAttribute("aria-disabled", "true"); else field.removeAttribute("aria-disabled");
       }
+      function setFoil() { setInactive(foilTypeField, !(foilSide.value !== "Brak" && root.foliowanie?.[foilSide.value])); }
       function setBinding() {
-        const known = bindType.value !== "Brak" && state.prices.oprawa_prac.rodzaje_opraw[bindType.value];
-        bindVariantField.hidden = !known;
-        bindCopiesField.hidden = !known;
+        const known = bindType.value !== "Brak" && bindings[bindType.value];
         const previous = bindVariant.value;
-        bindVariant.innerHTML = known ? options(Object.keys(state.prices.oprawa_prac.rodzaje_opraw[bindType.value]), previous) : "";
+        bindVariant.innerHTML = known ? options(Object.keys(bindings[bindType.value]), previous) : "";
+        setInactive(bindVariantField, !known);
+        sheetsText();
       }
-      [qty, side, format].forEach(control => control.addEventListener("input", sheetsText));
+      [qty, sets, side, format].forEach(control => control.addEventListener("input", sheetsText));
       [side, format].forEach(control => control.addEventListener("change", sheetsText));
-      foilSide.addEventListener("change", setFoilTypes);
+      foilSide.addEventListener("change", setFoil);
       bindType.addEventListener("change", setBinding);
-      setFoilTypes(); setBinding(); sheetsText();
+      setFoil(); setBinding();
     }
 
     service.addEventListener("change", refresh); refresh();
@@ -6085,10 +6096,10 @@
       if (s === "Druk cyfrowy 24h") {
         const opts = digitalPrintOptionsFromForm();
         const result = C.calculateDigitalPrint(state.prices, opts);
-        const details = [
-          ["Rodzaj usługi", s], ["Wariant", opts.colorMode], ["Liczba stron", opts.pages], ["Liczba arkuszy", result.sheets],
-          ["Format", opts.formatName], ["Zadruk", opts.sideMode], ["Papier", opts.paperType], ["Próg cenowy", result.tier]
-        ];
+        const multiSet = result.sets > 1;
+        const details = [["Rodzaj usługi", s], ["Wariant", opts.colorMode], ["Liczba stron", opts.pages]];
+        if (multiSet) details.push(["Ilość kompletów", result.sets], ["Łącznie stron", result.totalPages]);
+        details.push(["Liczba arkuszy", result.sheets], ["Format", opts.formatName], ["Zadruk", opts.sideMode], ["Papier", opts.paperType], ["Próg cenowy", result.tier]);
         const extras = [];
         if (result.foilActive) {
           details.push(["Foliowanie", `${opts.foilSide}, ${opts.foilType.toLowerCase()}`]);
@@ -6103,7 +6114,7 @@
           if (result.foilActive) details.push(["Foliowanie – cena", `${money(result.foilTotal)} zł`]);
           if (result.bindingActive) details.push(["Oprawa – cena", `${money(result.bindingTotal)} zł`]);
         }
-        showQuote({ title: s, description: [`${s}, ${opts.colorMode}, ${opts.pages} str.`, ...extras].join(", "), price: result.price, details });
+        showQuote({ title: s, description: [`${s}, ${opts.colorMode}, ${opts.pages} str.${multiSet ? ` × ${result.sets} kompl.` : ""}`, ...extras].join(", "), price: result.price, details });
         return;
       }
 

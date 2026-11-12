@@ -14,7 +14,8 @@
     'Wizytówki 24h': ['bcFinish', 'bcSides'],
     'Ulotki 24h': ['flyFormat', 'flyVariant'],
     'Plakaty 24h': ['posterFormat'],
-    'Druk cyfrowy i ksero 24h': ['digPaper', 'digSide', 'digFormat'],
+    // 0.26.2v: ceny także na kafelkach foliowania, rodzaju folii, rodzaju oprawy i rozmiaru oprawy / spirali.
+    'Druk cyfrowy i ksero 24h': ['digPaper', 'digSide', 'digFormat', 'digFoilSide', 'digFoilType', 'digBindType', 'digBindVariant'],
     'Folie i banery 24h': ['bannerMaterial'],
     'Naklejki, etykiety i magnesy': ['stickProduct'],
     'Roll-upy i X-banery': ['rollSize'],

@@ -605,11 +605,13 @@
     return { price: round2(total) };
   }
 
-  // 0.26.1v: „Druk cyfrowy 24h” liczony od liczby STRON (nie kartek).
+  // 0.26.1v: „Druk cyfrowy 24h” liczony od liczby STRON (nie kartek), 0.26.2v: z ilością kompletów.
+  // Komplet = jeden egzemplarz całego dokumentu (strony × komplety = wszystkie zadrukowane strony).
   // Strona = jedna zadrukowana strona A4/A3. Dwustronny: dwie strony na jednym arkuszu, więc
-  // arkuszy jest ceil(strony / 2) (nieparzysta ostatnia strona zajmuje cały arkusz, ale druk
-  // pustego tyłu nie jest liczony). Próg cenowy liczy się od liczby zadrukowanych stron × mnożnik formatu.
-  // Papier, foliowanie i wybrane opcje liczone są od fizycznych arkuszy.
+  // arkuszy na komplet jest ceil(strony / 2) (nieparzysta ostatnia strona zajmuje cały arkusz, ale druk
+  // pustego tyłu nie jest liczony). Każdy komplet to osobne arkusze, więc arkusze = arkusze na komplet × komplety.
+  // Próg cenowy liczy się od wszystkich zadrukowanych stron × mnożnik formatu. Papier i foliowanie liczone są
+  // od fizycznych arkuszy, oprawa od liczby kompletów (jedna oprawa na komplet).
   const DIGITAL_FOIL_NONE = "Brak";
   const DIGITAL_BINDING_NONE = "Brak";
   const DIGITAL_BINDING_EXCLUDED = ["Oprawa kanałowa twarda A4"];
@@ -621,12 +623,14 @@
 
   function calculateDigitalPrint(pricesRoot, options = {}) {
     const {
-      colorMode, pages, formatName = "A4", paperType = "Standardowy 80 g", sideMode = "Jednostronny",
+      colorMode, pages, sets = 1, formatName = "A4", paperType = "Standardowy 80 g", sideMode = "Jednostronny",
       foilSide = DIGITAL_FOIL_NONE, foilType = "",
-      bindingType = DIGITAL_BINDING_NONE, bindingVariant = "", bindingCopies = 1
+      bindingType = DIGITAL_BINDING_NONE, bindingVariant = ""
     } = options;
     assertPositive(pages, "Liczba stron");
     if (!Number.isInteger(Number(pages))) throw new Error("Liczba stron musi być liczbą całkowitą.");
+    assertPositive(sets, "Ilość kompletów");
+    if (!Number.isInteger(Number(sets))) throw new Error("Ilość kompletów musi być liczbą całkowitą.");
     const prices = pricesRoot.druk_cyfrowy_i_ksero;
     const sideMultiplier = Number(prices.mnozniki_zadruku[sideMode]);
     const formatMultiplier = Number(prices.mnozniki_formatu[formatName]);
@@ -634,8 +638,11 @@
     if (!prices.druk_cyfrowy[colorMode]) throw new Error("Nieprawidłowy rodzaj druku.");
     if (!(paperType in prices.doplaty_do_papieru)) throw new Error("Nieprawidłowy rodzaj papieru.");
 
-    const sheets = Math.ceil(Number(pages) / sideMultiplier);
-    const printUnits = Number(pages) * formatMultiplier;
+    const setCount = Number(sets);
+    const totalPages = Number(pages) * setCount;
+    const sheetsPerSet = Math.ceil(Number(pages) / sideMultiplier);
+    const sheets = sheetsPerSet * setCount;
+    const printUnits = totalPages * formatMultiplier;
     const tier = getQuantityTier(printUnits);
     const basePrice = Number(prices.druk_cyfrowy[colorMode][tier]);
     const printTotal = round2(basePrice * printUnits);
@@ -653,26 +660,24 @@
       foilTotal = round2(foilUnitPrice * paperUnits);
     }
 
-    let bindingTotal = 0, bindingUnitPrice = 0, copies = 0;
+    let bindingTotal = 0, bindingUnitPrice = 0, bindingCopies = 0;
     const bindingActive = bindingType && bindingType !== DIGITAL_BINDING_NONE;
     if (bindingActive) {
       if (DIGITAL_BINDING_EXCLUDED.includes(bindingType)) throw new Error("Ta oprawa nie jest dostępna przy druku cyfrowym.");
       const variants = pricesRoot.oprawa_prac?.rodzaje_opraw?.[bindingType];
       if (!variants) throw new Error("Nieprawidłowy rodzaj oprawy.");
       if (!(bindingVariant in variants)) throw new Error("Wybierz rozmiar oprawy.");
-      assertPositive(bindingCopies, "Liczba opraw");
-      if (!Number.isInteger(Number(bindingCopies))) throw new Error("Liczba opraw musi być liczbą całkowitą.");
-      copies = Number(bindingCopies);
+      bindingCopies = setCount; // jedna oprawa na komplet
       bindingUnitPrice = Number(variants[bindingVariant]);
-      bindingTotal = round2(bindingUnitPrice * copies);
+      bindingTotal = round2(bindingUnitPrice * bindingCopies);
     }
 
     const price = round2(printTotal + paperTotal + foilTotal + bindingTotal);
     return {
-      price, pages: Number(pages), sheets, printUnits, tier, basePrice, printTotal,
+      price, pages: Number(pages), sets: setCount, totalPages, sheetsPerSet, sheets, printUnits, tier, basePrice, printTotal,
       paperSurcharge, paperUnits, paperTotal,
       foilActive: Boolean(foilActive), foilUnitPrice, foilTotal,
-      bindingActive: Boolean(bindingActive), bindingUnitPrice, bindingCopies: copies, bindingTotal
+      bindingActive: Boolean(bindingActive), bindingUnitPrice, bindingCopies, bindingTotal
     };
   }
 

@@ -78,23 +78,21 @@ t('oprawa: lista bez oprawy kanałowej',()=>{
   assert.deepEqual(Array.from(types),['Oprawa miękka zaciskowa','Bindowanie – spirala plastikowa','Bindowanie – spirala metalowa']);
 });
 
-t('oprawa: cena × liczba opraw, niezależna od liczby stron',()=>{
-  const one=C.calculateDigitalPrint(prices,{...base,bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm',bindingCopies:1});
-  near(one.bindingTotal,7); near(one.price,113); assert.equal(one.bindingActive,true);
-  const three=C.calculateDigitalPrint(prices,{...base,pages:200,bindingType:'Oprawa miękka zaciskowa',bindingVariant:'10 mm',bindingCopies:3});
+t('oprawa: jedna oprawa na komplet, niezależna od liczby stron',()=>{
+  const one=C.calculateDigitalPrint(prices,{...base,bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm'});
+  near(one.bindingTotal,7); near(one.price,113); assert.equal(one.bindingActive,true); assert.equal(one.bindingCopies,1);
+  const three=C.calculateDigitalPrint(prices,{...base,pages:200,sets:3,bindingType:'Oprawa miękka zaciskowa',bindingVariant:'10 mm'});
   near(three.bindingTotal,35.7); assert.equal(three.bindingCopies,3);
 });
 
-t('oprawa: kanałowa odrzucona, brak rozmiaru, zła liczba opraw',()=>{
+t('oprawa: kanałowa odrzucona, brak rozmiaru',()=>{
   assert.throws(()=>C.calculateDigitalPrint(prices,{...base,bindingType:'Oprawa kanałowa twarda A4',bindingVariant:'5 mm'}),/nie jest dostępna/);
   assert.throws(()=>C.calculateDigitalPrint(prices,{...base,bindingType:'Oprawa miękka zaciskowa',bindingVariant:''}),/rozmiar/);
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,bindingType:'Oprawa miękka zaciskowa',bindingVariant:'5 mm',bindingCopies:0}),/Liczba opraw/);
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,bindingType:'Oprawa miękka zaciskowa',bindingVariant:'5 mm',bindingCopies:1.5}),/całkowitą/);
 });
 
 t('wszystko razem: druk + papier + foliowanie + oprawa',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,foilSide:'Dwustronne',foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm',bindingCopies:2});
-  near(r.price,100+6+50+14);
+  const r=C.calculateDigitalPrint(prices,{...base,foilSide:'Dwustronne',foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm'});
+  near(r.price,100+6+50+7);
 });
 
 t('walidacja stron: 0, ujemne, ułamek',()=>{
