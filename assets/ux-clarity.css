@@ -1,4 +1,4 @@
-/* Drukulator 0.25.7v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.26.0v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
@@ -72,3 +72,24 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
   .cart-card.is-stale .cart-card-footer { align-items: flex-start; flex-direction: column; }
   .cart-card.is-stale .cart-card-actions { justify-content: flex-start; }
 }
+
+/* ---------- 0.26.0v: kod promocyjny w koszyku ---------- */
+.d24-promo { margin: 10px 0 6px; }
+.d24-promo__toggle { border: 1px dashed var(--border); border-radius: 12px; padding: 10px 12px; }
+.d24-promo__toggle > summary { cursor: pointer; font-weight: 750; font-size: .9375rem; color: var(--ux-link); list-style-position: inside; }
+.d24-promo__form { display: flex; gap: 8px; margin-top: 10px; }
+.d24-promo__form input { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+.d24-promo__form .button { white-space: nowrap; }
+.d24-promo__status { margin-top: 8px; }
+.d24-promo__msg { padding: 9px 12px; border-radius: 10px; font-size: .875rem; line-height: 1.45; border: 1px solid var(--alert-info-border); background: var(--alert-info-bg); color: var(--alert-info-text); }
+.d24-promo__msg.is-error { border-color: var(--alert-error-border); background: var(--alert-error-bg); color: var(--alert-error-text); }
+.d24-promo__msg.is-warning { border-color: var(--alert-warning-border); background: var(--alert-warning-bg); color: var(--alert-warning-text); margin-top: 8px; }
+.d24-promo__applied { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--alert-info-border); background: var(--alert-info-bg); color: var(--alert-info-text); }
+.d24-promo__applied strong { font-size: 1rem; letter-spacing: .04em; margin-right: 4px; }
+.d24-promo__applied small { display: block; margin-top: 3px; font-size: .8125rem; opacity: .9; }
+.d24-promo__badge { display: inline-block; padding: 1px 7px; border: 1px solid currentColor; border-radius: 999px; font-size: .6875rem; font-weight: 850; letter-spacing: .06em; margin-right: 6px; vertical-align: 1px; }
+.d24-promo__remove { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 750; text-decoration: underline; cursor: pointer; padding: 4px 6px; }
+.d24-promo__lines { margin: 8px 0 0; padding: 0 2px; font-size: .9375rem; }
+.d24-promo__lines > div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.d24-promo__lines .is-discount { color: var(--alert-info-text); font-weight: 750; }
+@media (max-width: 520px) { .d24-promo__form { flex-direction: column; } }

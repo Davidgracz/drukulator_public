@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/mail-audit-lib.php';
 
-const DRUKULATOR_ORDERS_DB_VERSION = '1.3';
+const DRUKULATOR_ORDERS_DB_VERSION = '1.4';
 const DRUKULATOR_ORDERS_RETENTION_MONTHS = 24;
 
 function drukulator_orders_table_name(): string
@@ -54,6 +54,8 @@ function drukulator_orders_install(): bool
         customer_phone varchar(80) NOT NULL DEFAULT '',
         pickup varchar(120) NOT NULL DEFAULT '',
         notes text NOT NULL,
+        promo_code varchar(64) NOT NULL DEFAULT '',
+        discount decimal(12,2) NOT NULL DEFAULT 0,
         public_note text NOT NULL,
         order_name varchar(190) NOT NULL DEFAULT '',
         internal_note text NOT NULL,
@@ -82,6 +84,8 @@ function drukulator_orders_install(): bool
         return false;
     }
 
+    // 0.26.0: starsze zamówienia miały w notatce wewnętrznej „0” (błąd formatu przy zapisie) — czyścimy raz przy aktualizacji bazy.
+    $wpdb->query("UPDATE {$table} SET internal_note = '' WHERE internal_note = '0'");
     update_option('drukulator_orders_db_version', DRUKULATOR_ORDERS_DB_VERSION, false);
     return true;
 }
@@ -129,6 +133,8 @@ function drukulator_orders_store(array $order, string $access_token): bool
             'customer_phone' => (string) ($order['customer_phone'] ?? ''),
             'pickup' => (string) ($order['pickup'] ?? ''),
             'notes' => (string) ($order['notes'] ?? ''),
+            'promo_code' => (string) ($order['promo_code'] ?? ''),
+            'discount' => (float) ($order['discount'] ?? 0),
             'public_note' => '',
             'order_name' => '',
             'internal_note' => '',
@@ -138,7 +144,8 @@ function drukulator_orders_store(array $order, string $access_token): bool
             'created_at' => $now,
             'updated_at' => $now,
         ),
-        array('%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s')
+        // Jeden format na kolumnę, w kolejności kolumn (0.26.0: wcześniej o jeden za mało — internal_note trafiało do bazy jako „0”).
+        array('%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s')
     );
 
     if ($result !== false && mt_rand(1, 20) === 1) {
@@ -307,6 +314,8 @@ function drukulator_orders_list(int $limit = 250): array
         $row['history'] = json_decode((string) $row['history'], true) ?: array();
         $row['id'] = (int) $row['id'];
         $row['total'] = (float) $row['total'];
+        $row['discount'] = (float) ($row['discount'] ?? 0);
+        $row['promo_code'] = (string) ($row['promo_code'] ?? '');
         $row['work_seconds'] = (int) ($row['work_seconds'] ?? 0);
         $row['priority'] = (string) ($row['priority'] ?? 'normal');
         $row['assigned_staff_id'] = $row['assigned_staff_id'] !== null ? (int) $row['assigned_staff_id'] : null;

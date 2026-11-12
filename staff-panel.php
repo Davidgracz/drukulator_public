@@ -46,6 +46,11 @@ if (!$user) {
     @media(max-width:1300px){.p29-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.p29-board{grid-template-columns:repeat(2,minmax(260px,1fr))}}
     @media(max-width:750px){.p29-toolbar{grid-template-columns:1fr 1fr}.p29-board{grid-template-columns:1fr}.p29-metrics{grid-template-columns:1fr 1fr}}
     @media(max-width:440px){.p29-toolbar,.p29-metrics{grid-template-columns:1fr}}
+    /* Kody promocyjne — 0.26.0v */
+    .pr-grid{display:grid;grid-template-columns:390px 1fr;gap:16px;align-items:start}.pr-grid h2{margin:0 0 6px;font-size:20px}.pr-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pr-code-row{display:flex;gap:8px}.pr-code-row input{flex:1;min-width:0;text-transform:uppercase;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em}.pr-code-row button{white-space:nowrap}.pr-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.pr-presets button{border:1px solid #315052;background:#102123;color:#d7e9ea;border-radius:999px;padding:5px 10px;font:inherit;font-size:12px;font-weight:750;cursor:pointer}.pr-presets button:hover{border-color:var(--turq)}.pr-hint{color:var(--muted);font-size:12px;margin:5px 0 0;line-height:1.45}.pr-preview{margin:12px 0;padding:11px 12px;border:1px dashed #315052;border-radius:11px;background:#091314;font-size:13px;line-height:1.5}.pr-msg{margin:10px 0 0;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;background:#3a1717;color:#fecaca;border:1px solid #6b2a2a}.pr-msg[hidden]{display:none}.pr-check{display:flex;align-items:center;gap:9px;margin:12px 0;font-weight:750}.pr-check input{width:18px;height:18px;accent-color:var(--turq)}
+    .pr-card{border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:10px;background:#091314}.pr-card.off{opacity:.72}.pr-card header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.pr-code{font:900 19px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em}.pr-discount{font-weight:900;font-size:18px;color:#8ff0e9}.pr-pill.good{background:#12392b;color:#6ee7b7}.pr-pill.warn{background:#3a2e0d;color:#fbbf24}.pr-pill.off{background:#2a2f31;color:#a8b3b5}.pr-meta{display:flex;flex-wrap:wrap;gap:4px 18px;margin:9px 0 0;color:var(--muted);font-size:13px}.pr-meta b{color:var(--ink)}.pr-card .actions .btn{padding:8px 11px;font-size:13px}
+    @media(max-width:1000px){.pr-grid{grid-template-columns:1fr}}
+    @media(max-width:520px){.pr-row2{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -58,6 +63,7 @@ if (!$user) {
       <button data-tab="production">Produkcja</button>
       <?php if (!empty($user['is_admin'])): ?><button data-tab="monitoring">Monitoring <span id="monitorNavAlert" class="monitor-alert-badge" hidden>!</span></button><?php endif; ?>
       <button data-tab="analytics">Analytics</button>
+      <?php if (d24_staff_can('promo_manage')): ?><button data-tab="promo">Kody promocyjne</button><?php endif; ?>
       <?php if (!empty($user['is_admin'])): ?><button data-tab="staff">Pracownicy</button><button data-tab="settings">Ustawienia</button><?php endif; ?>
     </nav>
     <div class="side-bottom"><a href="/drukulator/">← Drukulator</a><a href="staff-logout.php">Wyloguj</a></div>
@@ -113,6 +119,43 @@ if (!$user) {
       <p class="p29-note" id="prodCoverage">Widok pokazuje do 500 najnowszych zleceń. Liczniki pochodzą z całej bazy.</p>
     </section>
     <section id="tab-analytics" class="tabs-panel"><div id="analyticsPanel"></div></section>
+
+    <?php if (d24_staff_can('promo_manage')): ?>
+    <section id="tab-promo" class="tabs-panel">
+      <div class="pr-grid">
+        <div class="card" id="promoFormCard">
+          <h2 id="promoFormTitle">Nowy kod promocyjny</h2>
+          <p class="muted" style="margin:0 0 8px">Klient wpisuje kod w koszyku. Zniżka obejmuje wartość produktów (nie dostawę), a serwer sprawdza kod jeszcze raz przy wysyłce zamówienia.</p>
+          <input type="hidden" id="promoId" value="">
+          <div class="field"><label for="promoCode">Kod</label><div class="pr-code-row"><input id="promoCode" maxlength="32" autocomplete="off" spellcheck="false" placeholder="np. WIOSNA10"><button class="btn secondary" type="button" id="promoGenerate">Wygeneruj</button></div><p class="pr-hint">3–32 znaków: litery bez polskich znaków, cyfry, „-” lub „_”. Wielkość liter nie ma znaczenia.</p></div>
+          <div class="field"><label for="promoLabel">Nazwa wewnętrzna (opcjonalnie)</label><input id="promoLabel" maxlength="190" placeholder="np. Kampania wiosenna, ulotka z rabatem"></div>
+          <div class="pr-row2">
+            <div class="field"><label for="promoType">Rodzaj zniżki</label><select id="promoType"><option value="percent">Procent (%)</option><option value="amount">Kwota (zł)</option></select></div>
+            <div class="field"><label for="promoValue" id="promoValueLabel">Wysokość zniżki (%)</label><input id="promoValue" inputmode="decimal" autocomplete="off" placeholder="np. 10"></div>
+          </div>
+          <div class="pr-row2">
+            <div class="field"><label for="promoFrom">Ważny od</label><input id="promoFrom" type="date"></div>
+            <div class="field"><label for="promoTo">Ważny do (włącznie)</label><input id="promoTo" type="date"></div>
+          </div>
+          <div class="pr-presets" aria-label="Szybkie ustawienie okresu ważności"><button type="button" data-promo-preset="today">Od dziś</button><button type="button" data-promo-preset="7">Dziś + 7 dni</button><button type="button" data-promo-preset="14">Dziś + 14 dni</button><button type="button" data-promo-preset="30">Dziś + 30 dni</button><button type="button" data-promo-preset="none">Bez ograniczenia czasu</button></div>
+          <p class="pr-hint">Puste pole „od” = działa od razu, puste „do” = bez końca. Daty liczone są w czasie strony, „do” obejmuje cały ostatni dzień.</p>
+          <div class="pr-row2">
+            <div class="field"><label for="promoMin">Min. wartość produktów (zł)</label><input id="promoMin" inputmode="decimal" autocomplete="off" placeholder="puste = bez minimum"></div>
+            <div class="field"><label for="promoMax">Limit użyć (zamówień)</label><input id="promoMax" inputmode="numeric" autocomplete="off" placeholder="puste = bez limitu"></div>
+          </div>
+          <label class="pr-check"><input type="checkbox" id="promoActive" checked> Kod aktywny</label>
+          <div class="pr-preview" id="promoPreview" aria-live="polite"></div>
+          <div class="actions" style="margin-top:0"><button class="btn" type="button" id="promoSave">Zapisz kod</button><button class="btn secondary" type="button" id="promoCancel" hidden>Anuluj edycję</button></div>
+          <div class="pr-msg" id="promoMsg" role="alert" hidden></div>
+        </div>
+        <div class="card">
+          <div class="row-between"><div><h2>Kody promocyjne</h2><div class="muted">Zniżki, okres ważności i zużycie. Użycie liczy się po przyjęciu zamówienia.</div></div><span id="promoCount" class="pill">—</span></div>
+          <div id="promoList" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+    <?php endif; ?>
+
 
     <?php if (!empty($user['is_admin'])): ?>
     <section id="tab-staff" class="tabs-panel"><div class="staff-grid"><div class="card"><h2>Nowe konto pracownika</h2><div class="field"><label>Imię / nazwa pracownika</label><input id="newDisplayName"></div><div class="field"><label>Login</label><input id="newUsername" autocomplete="off"></div><div class="field"><label>Hasło (min. 10 znaków)</label><input id="newPassword" type="password" autocomplete="new-password"></div><div class="field"><label>Uprawnienia</label><div id="newPermissions" class="permission-list"></div></div><button class="btn" id="createStaff">Utwórz konto</button></div><div class="card"><div class="row-between"><div><h2 style="margin:0">Pracownicy</h2><div class="muted">Konta działają tylko w panelu Druk24.</div></div></div><div id="staffList" style="margin-top:14px"></div></div></div></section>
@@ -185,7 +228,7 @@ if (!$user) {
     $$('[data-prod-id]').forEach(b=>b.onclick=()=>{selectedOrderId=b.dataset.prodId;switchTab('orders');renderOrderList();renderOrderDetail();});
     $('#prodCoverage').textContent=`Widok pokazuje ${all.length} ostatnio zmienionych zleceń (maks. 500), z czego ${filtered.length} spełnia filtry. Liczniki u góry pochodzą z całej bazy.`;
   }
-  function renderOrderDetail(){ const box=$('#orderDetail'); const o=(payload?.orders||[]).find(x=>x.order_id===selectedOrderId); if(!o){box.innerHTML='<div class="detail-empty">Wybierz zlecenie z listy.</div>';return;} const staffOptions=(payload.staff||[]).filter(s=>s.active).map(s=>`<option value="${s.id}" ${Number(o.assigned_staff_id)===Number(s.id)?'selected':''}>${esc(s.display_name)}</option>`).join(''); box.innerHTML=`<div class="row-between"><div><div class="pill">${esc(statusLabel(o.status))}</div><h2>${esc(o.order_name||o.order_id)}</h2><div class="sub">${esc(o.order_id)} • utworzono ${date(o.created_at)}</div></div><strong style="font-size:22px">${money(o.total)} zł</strong></div><div class="grid3" style="margin-top:14px"><div class="metric"><span>Klient</span><strong>${esc(o.customer_name||'—')}</strong></div><div class="metric"><span>Kontakt</span><strong>${esc(o.customer_phone||o.customer_email||'—')}</strong></div><div class="metric"><span>Pracownik</span><strong>${esc(o.assigned_name||'Nieprzypisane')}</strong></div></div>${can('orders_rename')?`<div class="section"><h3>Nazwa robocza zlecenia</h3><div class="grid2"><div class="field" style="margin:0"><input id="orderName" maxlength="190" value="${esc(o.order_name)}" placeholder="np. Menu Restauracja Portowa"></div><button class="btn" id="saveOrderName">Zapisz nazwę</button></div></div>`:''}${can('orders_assign')?`<div class="section"><h3>Przypisanie</h3><div class="grid2"><select id="orderAssignee"><option value="">Nieprzypisane</option>${staffOptions}</select><button class="btn secondary" id="saveOrderAssignee">Zapisz przypisanie</button></div></div>`:''}${can('orders_status')?`<div class="section"><h3>Status wewnętrzny</h3><p class="muted">Publiczny podgląd postępu zlecenia jest wyłączony.</p><div class="grid2"><div class="field" style="margin:0"><select id="orderStatus">${Object.entries(payload.statuses||{}).map(([k,v])=>`<option value="${esc(k)}" ${o.status===k?'selected':''}>${esc(v)}</option>`).join('')}</select></div><div class="field" style="margin:0"><textarea id="publicNote" maxlength="500" placeholder="Notatka statusu (obecnie niewidoczna dla klienta)">${esc(o.public_note)}</textarea></div></div><button class="btn" id="saveOrderStatus">Aktualizuj status</button>${o.ready_notified_at?`<div class="notice" style="margin-top:10px;margin-bottom:0">✓ Powiadomienie przyjęte przez WordPress: ${date(o.ready_notified_at)}</div>`:''}</div>`:''}${can('orders_notes')?`<div class="section"><h3>Notatka wewnętrzna</h3><div class="field"><textarea id="internalNote" maxlength="4000" placeholder="Widoczna tylko dla pracowników">${esc(o.internal_note)}</textarea></div><button class="btn secondary" id="saveInternalNote">Zapisz notatkę</button></div>`:''}${productionEditor(o)}<div class="section"><h3>Produkty</h3><div class="items">${(o.items||[]).map((it,i)=>`<div class="item"><div class="row-between"><strong>${i+1}. ${esc(it.title||'Produkt')}</strong><b>${money(it.price)} zł</b></div>${it.description?`<p>${esc(it.description)}</p>`:''}</div>`).join('')}</div></div><div class="section"><h3>Dane klienta</h3><div class="customer"><div><span>E-mail</span><strong>${esc(o.customer_email||'—')}</strong></div><div><span>Telefon</span><strong>${esc(o.customer_phone||'—')}</strong></div><div><span>Odbiór</span><strong>${esc(o.pickup||'—')}</strong></div><div><span>Uwagi klienta</span><strong>${esc(o.notes||'—')}</strong></div></div></div><div class="section"><h3>Historia</h3><div class="items">${[...(o.history||[])].reverse().map(h=>`<div class="item"><div class="row-between"><strong>${esc(h.label||h.status)}</strong><small>${date(h.at)}</small></div>${h.note?`<p>${esc(h.note)}</p>`:''}${h.actor?`<p>Zmienił: ${esc(h.actor)}</p>`:''}</div>`).join('')}</div></div>`;
+  function renderOrderDetail(){ const box=$('#orderDetail'); const o=(payload?.orders||[]).find(x=>x.order_id===selectedOrderId); if(!o){box.innerHTML='<div class="detail-empty">Wybierz zlecenie z listy.</div>';return;} const staffOptions=(payload.staff||[]).filter(s=>s.active).map(s=>`<option value="${s.id}" ${Number(o.assigned_staff_id)===Number(s.id)?'selected':''}>${esc(s.display_name)}</option>`).join(''); box.innerHTML=`<div class="row-between"><div><div class="pill">${esc(statusLabel(o.status))}</div><h2>${esc(o.order_name||o.order_id)}</h2><div class="sub">${esc(o.order_id)} • utworzono ${date(o.created_at)}</div></div><strong style="font-size:22px">${money(o.total)} zł</strong></div><div class="grid3" style="margin-top:14px"><div class="metric"><span>Klient</span><strong>${esc(o.customer_name||'—')}</strong></div><div class="metric"><span>Kontakt</span><strong>${esc(o.customer_phone||o.customer_email||'—')}</strong></div><div class="metric"><span>Pracownik</span><strong>${esc(o.assigned_name||'Nieprzypisane')}</strong></div></div>${o.promo_code?`<div class="notice" style="margin-top:12px;margin-bottom:0">Kod promocyjny <strong>${esc(o.promo_code)}</strong> · zniżka −${money(o.discount)} zł (kwota zlecenia jest już po zniżce, dostawa liczona osobno)</div>`:''}${can('orders_rename')?`<div class="section"><h3>Nazwa robocza zlecenia</h3><div class="grid2"><div class="field" style="margin:0"><input id="orderName" maxlength="190" value="${esc(o.order_name)}" placeholder="np. Menu Restauracja Portowa"></div><button class="btn" id="saveOrderName">Zapisz nazwę</button></div></div>`:''}${can('orders_assign')?`<div class="section"><h3>Przypisanie</h3><div class="grid2"><select id="orderAssignee"><option value="">Nieprzypisane</option>${staffOptions}</select><button class="btn secondary" id="saveOrderAssignee">Zapisz przypisanie</button></div></div>`:''}${can('orders_status')?`<div class="section"><h3>Status wewnętrzny</h3><p class="muted">Publiczny podgląd postępu zlecenia jest wyłączony.</p><div class="grid2"><div class="field" style="margin:0"><select id="orderStatus">${Object.entries(payload.statuses||{}).map(([k,v])=>`<option value="${esc(k)}" ${o.status===k?'selected':''}>${esc(v)}</option>`).join('')}</select></div><div class="field" style="margin:0"><textarea id="publicNote" maxlength="500" placeholder="Notatka statusu (obecnie niewidoczna dla klienta)">${esc(o.public_note)}</textarea></div></div><button class="btn" id="saveOrderStatus">Aktualizuj status</button>${o.ready_notified_at?`<div class="notice" style="margin-top:10px;margin-bottom:0">✓ Powiadomienie przyjęte przez WordPress: ${date(o.ready_notified_at)}</div>`:''}</div>`:''}${can('orders_notes')?`<div class="section"><h3>Notatka wewnętrzna</h3><div class="field"><textarea id="internalNote" maxlength="4000" placeholder="Widoczna tylko dla pracowników">${esc(o.internal_note)}</textarea></div><button class="btn secondary" id="saveInternalNote">Zapisz notatkę</button></div>`:''}${productionEditor(o)}<div class="section"><h3>Produkty</h3><div class="items">${(o.items||[]).map((it,i)=>`<div class="item"><div class="row-between"><strong>${i+1}. ${esc(it.title||'Produkt')}</strong><b>${money(it.price)} zł</b></div>${it.description?`<p>${esc(it.description)}</p>`:''}</div>`).join('')}</div></div><div class="section"><h3>Dane klienta</h3><div class="customer"><div><span>E-mail</span><strong>${esc(o.customer_email||'—')}</strong></div><div><span>Telefon</span><strong>${esc(o.customer_phone||'—')}</strong></div><div><span>Odbiór</span><strong>${esc(o.pickup||'—')}</strong></div><div><span>Uwagi klienta</span><strong>${esc(o.notes||'—')}</strong></div></div></div><div class="section"><h3>Historia</h3><div class="items">${[...(o.history||[])].reverse().map(h=>`<div class="item"><div class="row-between"><strong>${esc(h.label||h.status)}</strong><small>${date(h.at)}</small></div>${h.note?`<p>${esc(h.note)}</p>`:''}${h.actor?`<p>Zmienił: ${esc(h.actor)}</p>`:''}</div>`).join('')}</div></div>`;
     $('#saveOrderName')?.addEventListener('click',async()=>{try{await api({action:'order_name',order_id:o.order_id,order_name:$('#orderName').value});toast('Zapisano nazwę');await load(true)}catch(e){toast(e.message)}});
     $('#saveOrderAssignee')?.addEventListener('click',async()=>{try{await api({action:'order_assign',order_id:o.order_id,staff_id:$('#orderAssignee').value});toast('Zapisano przypisanie');await load(true)}catch(e){toast(e.message)}});
     $('#saveOrderStatus')?.addEventListener('click',async()=>{try{const selectedStatus=$('#orderStatus').value;let confirmReady=false;if(selectedStatus==='ready'&&!o.ready_notified_at){const target=o.customer_email?` na adres ${o.customer_email}`:'';if(!confirm(`Potwierdzasz, że zlecenie jest GOTOWE?\n\nPo zapisaniu statusu zostanie podjęta próba wysłania e-maila${target}.`))return;confirmReady=true;}const j=await api({action:'order_status',order_id:o.order_id,status:selectedStatus,public_note:$('#publicNote').value,confirm_ready:confirmReady});if(j.orders)payload.orders=j.orders;toast(j.message||'Status zaktualizowany');renderAll()}catch(e){toast(e.message)}});
@@ -391,7 +434,73 @@ if (!$user) {
   }
   ['monitorLevel','monitorType','monitorSearch'].forEach(id=>$('#'+id)?.addEventListener(id==='monitorSearch'?'input':'change',renderMonitoring));
   $('#monitorRefresh')?.addEventListener('click',()=>load(false));
-  function renderAll(){ renderFilters(); renderOrderList(); renderOrderDetail(); renderProduction(); renderAnalytics(); if(payload.user.is_admin){renderStaff();renderMonitoring();} if(!can('analytics_view')) document.querySelector('[data-tab=analytics]')?.setAttribute('hidden',''); if(!can('orders_view')) document.querySelector('[data-tab=production]')?.setAttribute('hidden',''); if(!can('orders_view') && currentTab==='orders' && can('analytics_view'))switchTab('analytics'); }
+
+  /* Kody promocyjne — 0.26.0v */
+  const promoStatus={active:['Aktywny','good'],scheduled:['Zaplanowany','warn'],expired:['Wygasł','off'],exhausted:['Wyczerpany','off'],disabled:['Wyłączony','off']};
+  const isoDate=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+  const isoPlusDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return isoDate(d);};
+  const promoDiscountText=p=>p.discount_type==='percent'?Number(p.discount_value).toLocaleString('pl-PL',{maximumFractionDigits:2})+'%':money(p.discount_value)+' zł';
+  const promoValidityText=p=>!p.valid_from&&!p.valid_to?'bez ograniczenia czasu':(p.valid_from&&p.valid_to?'od '+p.valid_from+' do '+p.valid_to:(p.valid_from?'od '+p.valid_from+' (bez końca)':'do '+p.valid_to));
+  function promoMessage(text){ const el=$('#promoMsg'); if(!el)return; el.textContent=text||''; el.hidden=!text; }
+  function promoPreview(){
+    const el=$('#promoPreview'); if(!el)return;
+    const type=$('#promoType').value, raw=String($('#promoValue').value||'').replace(',','.').trim(), v=Number(raw);
+    const from=$('#promoFrom').value, to=$('#promoTo').value, min=String($('#promoMin').value||'').replace(',','.').trim(), max=String($('#promoMax').value||'').trim();
+    $('#promoValueLabel').textContent=type==='percent'?'Wysokość zniżki (%)':'Wysokość zniżki (zł)';
+    const what=raw!==''&&isFinite(v)&&v>0?(type==='percent'?Number(v).toLocaleString('pl-PL',{maximumFractionDigits:2})+'% zniżki':money(v)+' zł zniżki'):'zniżka — uzupełnij wysokość';
+    const when=!from&&!to?'bez ograniczenia czasu':(from&&to?'od '+from+' do '+to+' włącznie':(from?'od '+from+', bez końca':'do '+to+' włącznie'));
+    el.innerHTML='<strong>'+esc(what)+'</strong> na wartość produktów · ważny '+esc(when)+(min!==''&&Number(min)>0?' · od '+esc(money(Number(min)))+' zł':'')+(max!==''?' · maks. '+esc(max)+' użyć':' · bez limitu użyć');
+  }
+  function promoReset(){
+    $('#promoId').value=''; $('#promoCode').value=''; $('#promoCode').disabled=false; $('#promoLabel').value=''; $('#promoType').value='percent'; $('#promoValue').value='';
+    $('#promoFrom').value=''; $('#promoTo').value=''; $('#promoMin').value=''; $('#promoMax').value=''; $('#promoActive').checked=true;
+    $('#promoFormTitle').textContent='Nowy kod promocyjny'; $('#promoSave').textContent='Zapisz kod'; $('#promoCancel').hidden=true; promoMessage(''); promoPreview();
+  }
+  function promoEdit(p){
+    $('#promoId').value=String(p.id); $('#promoCode').value=p.code; $('#promoCode').disabled=true; $('#promoLabel').value=p.label||''; $('#promoType').value=p.discount_type;
+    $('#promoValue').value=String(p.discount_value).replace('.',','); $('#promoFrom').value=p.valid_from||''; $('#promoTo').value=p.valid_to||'';
+    $('#promoMin').value=p.min_total>0?String(p.min_total).replace('.',','):''; $('#promoMax').value=p.max_uses==null?'':String(p.max_uses); $('#promoActive').checked=!!p.active;
+    $('#promoFormTitle').textContent='Edycja kodu '+p.code; $('#promoSave').textContent='Zapisz zmiany'; $('#promoCancel').hidden=false; promoMessage(''); promoPreview();
+    $('#promoFormCard').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function renderPromo(){
+    const list=$('#promoList'); if(!list||!can('promo_manage'))return;
+    const rows=payload?.promo_codes||[];
+    $('#promoCount').textContent=rows.length+(rows.length===1?' kod':' kodów');
+    list.innerHTML=rows.length?rows.map(p=>{
+      const st=promoStatus[p.status]||[p.status,'off'];
+      const used=p.max_uses==null?`${p.used_count} użyć`:`${p.used_count} / ${p.max_uses} użyć`;
+      return `<div class="pr-card ${p.status==='active'?'':'off'}" data-promo="${p.id}"><header><div><span class="pr-code">${esc(p.code)}</span> <span class="pill pr-pill ${st[1]}">${esc(st[0])}</span>${p.label?`<div class="sub">${esc(p.label)}</div>`:''}</div><div class="pr-discount">−${esc(promoDiscountText(p))}</div></header>
+        <div class="pr-meta"><span>Ważny: <b>${esc(promoValidityText(p))}</b></span>${p.min_total>0?`<span>Min. produkty: <b>${money(p.min_total)} zł</b></span>`:''}<span>Użyto: <b>${esc(used)}</b></span><span>Suma zniżek: <b>${money(p.discount_sum)} zł</b></span></div>
+        <div class="actions"><button class="btn secondary" type="button" data-promo-edit="${p.id}">Edytuj</button><button class="btn secondary" type="button" data-promo-toggle="${p.id}" data-active="${p.active?0:1}">${p.active?'Wyłącz':'Włącz'}</button><button class="btn secondary" type="button" data-promo-copy="${esc(p.code)}">Kopiuj kod</button><button class="btn danger" type="button" data-promo-delete="${p.id}">Usuń</button></div></div>`;
+    }).join(''):'<div class="empty">Nie ma jeszcze żadnego kodu. Dodaj pierwszy w formularzu obok.</div>';
+    const byId=id=>rows.find(r=>Number(r.id)===Number(id));
+    $$('[data-promo-edit]').forEach(b=>b.onclick=()=>{const p=byId(b.dataset.promoEdit); if(p)promoEdit(p);});
+    $$('[data-promo-toggle]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const j=await api({action:'promo_toggle',id:Number(b.dataset.promoToggle),active:b.dataset.active==='1'});payload.promo_codes=j.promo_codes||payload.promo_codes;toast(j.message);renderPromo();}catch(e){toast(e.message);b.disabled=false}});
+    $$('[data-promo-delete]').forEach(b=>b.onclick=async()=>{const p=byId(b.dataset.promoDelete); if(!p)return; if(!confirm(`Usunąć kod ${p.code}?\n\nZamówienia, które już go użyły, zostaną bez zmian. Zamiast usuwać, możesz kod wyłączyć.`))return; b.disabled=true;try{const j=await api({action:'promo_delete',id:p.id});payload.promo_codes=j.promo_codes||payload.promo_codes;toast(j.message);if(Number($('#promoId').value)===Number(p.id))promoReset();renderPromo();}catch(e){toast(e.message);b.disabled=false}});
+    $$('[data-promo-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.promoCopy);toast('Skopiowano kod');}catch(e){toast('Nie udało się skopiować — zaznacz kod ręcznie');}});
+  }
+  function promoGenerateCode(){
+    const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; const bytes=new Uint8Array(6); (window.crypto||window.msCrypto).getRandomValues(bytes);
+    return 'DRUK-'+Array.from(bytes).map(b=>alphabet[b%alphabet.length]).join('');
+  }
+  if($('#promoSave')){
+    $('#promoGenerate').addEventListener('click',()=>{ if($('#promoCode').disabled)return; $('#promoCode').value=promoGenerateCode(); promoPreview(); });
+    $('#promoCode').addEventListener('input',e=>{ const pos=e.target.selectionStart; e.target.value=e.target.value.toUpperCase().replace(/\s+/g,''); try{e.target.setSelectionRange(pos,pos)}catch(_){} });
+    ['promoType','promoValue','promoFrom','promoTo','promoMin','promoMax'].forEach(id=>{ $('#'+id).addEventListener('input',promoPreview); $('#'+id).addEventListener('change',promoPreview); });
+    $$('[data-promo-preset]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.promoPreset; if(k==='none'){$('#promoFrom').value='';$('#promoTo').value='';} else if(k==='today'){$('#promoFrom').value=isoPlusDays(0);} else {$('#promoFrom').value=isoPlusDays(0);$('#promoTo').value=isoPlusDays(Number(k));} promoPreview(); }));
+    $('#promoCancel').addEventListener('click',promoReset);
+    $('#promoSave').addEventListener('click',async()=>{
+      const b=$('#promoSave'); b.disabled=true; promoMessage('');
+      try{
+        const j=await api({action:'promo_save',id:Number($('#promoId').value||0),code:$('#promoCode').value,label:$('#promoLabel').value,discount_type:$('#promoType').value,discount_value:$('#promoValue').value,min_total:$('#promoMin').value,valid_from:$('#promoFrom').value,valid_to:$('#promoTo').value,max_uses:$('#promoMax').value,active:$('#promoActive').checked});
+        payload.promo_codes=j.promo_codes||payload.promo_codes; toast(j.message); promoReset(); renderPromo();
+      }catch(e){ promoMessage(e.message); }
+      finally{ b.disabled=false; }
+    });
+    promoReset();
+  }
+  function renderAll(){ renderFilters(); renderOrderList(); renderOrderDetail(); renderProduction(); renderAnalytics(); renderPromo(); if(payload.user.is_admin){renderStaff();renderMonitoring();} if(!can('analytics_view')) document.querySelector('[data-tab=analytics]')?.setAttribute('hidden',''); if(!can('orders_view')) document.querySelector('[data-tab=production]')?.setAttribute('hidden',''); if(!can('orders_view') && currentTab==='orders' && can('analytics_view'))switchTab('analytics'); }
   ['prodSearch','prodPriority','prodDue','prodAssigned'].forEach(id=>$('#'+id)?.addEventListener(id==='prodSearch'?'input':'change',renderProduction));
   $('#prodRefresh')?.addEventListener('click',()=>load(false));
   ['orderSearch','statusFilter','assignmentFilter'].forEach(id=>$('#'+id)?.addEventListener(id==='orderSearch'?'input':'change',renderOrderList));

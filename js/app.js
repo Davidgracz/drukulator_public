@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.25.7v";
+  const VERSION = "0.26.0v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -85,6 +85,7 @@
     order: loadJson("drukulator_order", {
       name: "", email: "", phone: "", pickup: "Odbiór osobisty", notes: ""
     }),
+    promo: normalizePromo(loadJson("drukulator_promo", null)),
     caseConfig: sanitizeCaseConfig(DEFAULT_CASE_CONFIG),
     roulette: normalizeRouletteState(loadSavedRoulette())
   };
@@ -2842,6 +2843,8 @@
     try {
       localStorage.setItem("drukulator_cart", JSON.stringify(state.cart));
       localStorage.setItem("drukulator_order", JSON.stringify(state.order));
+      if (state.promo) localStorage.setItem("drukulator_promo", JSON.stringify(state.promo));
+      else localStorage.removeItem("drukulator_promo");
     } catch {
       // Kalkulator działa również wtedy, gdy przeglądarka blokuje pamięć lokalną.
     }
@@ -6695,8 +6698,7 @@
   function updateMobileCartBar() {
     if (!mobileCartBar || !mobileCartSummary) return;
     const count = state.cart.length;
-    const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
-    const totalWithDelivery = total + orderDeliveryFee(total);
+    const totalWithDelivery = cartTotals().total;
     mobileCartSummary.textContent = count
       ? `${count} ${count === 1 ? "pozycja" : count >= 2 && count <= 4 ? "pozycje" : "pozycji"} • ${money(totalWithDelivery)} zł brutto`
       : "0 pozycji";
@@ -6705,14 +6707,13 @@
 
   function updateQuoteDock() {
     const count = state.cart.length;
-    const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
     if (quoteDock) quoteDock.classList.toggle("quote-dock--filled", count > 0);
     if (quoteDockDescription) quoteDockDescription.textContent = count
       ? `${count} ${count === 1 ? "produkt" : count >= 2 && count <= 4 ? "produkty" : "produktów"} w zapytaniu`
       : "Dodaj produkt, aby przygotować zapytanie";
     if (quoteDockPrice) quoteDockPrice.hidden = count === 0;
     if (quoteDockTotalLabel) quoteDockTotalLabel.textContent = orderTotalLabel();
-    if (quoteDockTotal) quoteDockTotal.textContent = `${money(total + orderDeliveryFee(total))} zł`;
+    if (quoteDockTotal) quoteDockTotal.textContent = `${money(cartTotals().total)} zł`;
     if (quoteDockOpen) quoteDockOpen.innerHTML = count
       ? 'Zobacz koszyk <span aria-hidden="true">↓</span>'
       : 'Wybierz produkt <span aria-hidden="true">→</span>';
@@ -6726,7 +6727,7 @@
       updateMobileCartBar();
       return;
     }
-    const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
+    const totals = cartTotals();
     const staleItems = state.cart.filter(isStaleCartItem);
     cartPanel.innerHTML = `<div class="card cart-shell">
       <div class="cart-heading cart-heading--wide">
@@ -6748,7 +6749,8 @@
         </section>
         <section class="cart-review-summary" aria-label="Podsumowanie kosztów">
           <span class="cart-kicker">RAZEM BRUTTO</span>
-          <div class="cart-total"><span id="cartFinalTotalLabel">${orderTotalLabel()}</span><strong id="cartFinalTotal">${money(total + orderDeliveryFee(total))} zł</strong></div>
+          <div class="d24-promo" id="cartPromoBox" data-promo-sig=""></div>
+          <div class="cart-total"><span id="cartFinalTotalLabel">${orderTotalLabel()}</span><strong id="cartFinalTotal">${money(totals.total)} zł</strong></div>
           ${state.cart.some(item => item.meta?.requiresManualPrice) ? `<p class="d24-manual-cart-note">Niektóre produkty wymagają osobnego ustalenia ceny. Powyższa kwota nie obejmuje ich kosztu.</p>` : ""}
           <div class="d24-cart-total-hint">To nie jest zakup. Realizacja rozpocznie się dopiero po potwierdzeniu ceny i terminu przez drukarnię oraz Twojej akceptacji.</div>
           <section class="quote-share-card">
@@ -6760,12 +6762,12 @@
           <div class="cart-utilities"><button class="button secondary" id="downloadCsv">Pobierz CSV</button><button class="button danger" id="clearCart">Wyczyść zamówienie</button></div>
         </section>
       </div>
-      ${total + orderDeliveryFee(total) > MAX_ORDER_TOTAL ? alertBox(`Maksymalna wartość zamówienia przez kalkulator to ${money(MAX_ORDER_TOTAL)} zł brutto. ${LIMIT_CONTACT_TEXT}`, "warning") : ""}
+      ${totals.limitTotal > MAX_ORDER_TOTAL ? alertBox(`Maksymalna wartość zamówienia przez kalkulator to ${money(MAX_ORDER_TOTAL)} zł brutto. ${LIMIT_CONTACT_TEXT}`, "warning") : ""}
       <div class="cart-order-zone">
         <div class="cart-order-zone__intro"><span class="cart-kicker">OSTATNI KROK</span><h3>Wyślij zamówienie</h3><p>Podaj dane kontaktowe, opcjonalnie dodaj pliki i prześlij zamówienie do Druk24.</p>
           <div class="d24-checkout-steps" aria-label="Etapy przesyłania zamówienia"><span><b>1</b> Kontakt i dostawa</span><span><b>2</b> Pliki i szczegóły (nieobowiązkowe)</span><span><b>3</b> Wyślij zamówienie</span></div>
         </div>
-        ${renderOrderFormHtml(total)}
+        ${renderOrderFormHtml(totals)}
       </div>
     </div>`;
     cartPanel.querySelectorAll("[data-remove]").forEach(button => button.addEventListener("click", () => { state.cart = state.cart.filter(item => String(item.id) !== button.dataset.remove); if (!state.cart.length) { orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); } saveState(); renderCart(); }));
@@ -6790,6 +6792,7 @@
     renderOrderFileList();
     updateOrderText();
     updateMobileCartBar();
+    revalidatePromoOnce();
   }
 
   // 0.25.5: „Oblicz ponownie” — usuwa starą pozycję i otwiera właściwy produkt, a opis starej pozycji zostaje na górze strony jako podpowiedź.
@@ -6926,6 +6929,7 @@
 
 
   // Delivery prices always use the merchandise subtotal, never the fee itself.
+  // 0.26.0: z kodem promocyjnym „subtotal” to wartość produktów PO zniżce (próg darmowej dostawy 300 zł liczy się po zniżce).
   function orderDeliveryFee(subtotal, pickup = state.order.pickup) {
     return pickup === "Dostawa na terenie Szczecina" ? (subtotal >= 300 ? 0 : 20) : 0;
   }
@@ -6934,9 +6938,145 @@
     if (pickup === "Wysyłka kurierska (do ustalenia)") return "Kurier — koszt do potwierdzenia przez drukarnię";
     return "Odbiór osobisty — 0,00 zł";
   }
+
+  // ---- 0.26.0: kody promocyjne ------------------------------------------------------------------------------------
+  // Zniżka liczona w groszach tak samo jak na serwerze (promo-lib.php → d24_promo_discount); serwer i tak liczy ją od nowa przy wysyłce.
+  function round2(value) { return Math.round((Number(value) || 0) * 100) / 100; }
+  function normalizePromo(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const code = String(raw.code || "").trim().toUpperCase();
+    const type = raw.type === "amount" ? "amount" : raw.type === "percent" ? "percent" : "";
+    const value = Number(raw.value);
+    if (!/^[A-Z0-9_-]{3,32}$/.test(code) || !type || !Number.isFinite(value) || value <= 0) return null;
+    return { code, label: String(raw.label || ""), type, value, minTotal: Math.max(0, Number(raw.minTotal) || 0), validTo: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.validTo || "")) ? String(raw.validTo) : "" };
+  }
+  function promoDiscountFor(productsTotal, promo = state.promo) {
+    if (!promo || !promo.code) return 0;
+    const totalCents = Math.round(Number(productsTotal) * 100);
+    if (!(totalCents > 0)) return 0;
+    if (promo.minTotal > 0 && totalCents < Math.round(promo.minTotal * 100)) return 0;
+    const cents = promo.type === "percent" ? Math.round(totalCents * promo.value / 100) : Math.round(promo.value * 100);
+    return Math.max(0, Math.min(totalCents, cents)) / 100;
+  }
+  function cartTotals(pickup = state.order.pickup) {
+    const products = round2(state.cart.reduce((sum, item) => sum + Number(item.price), 0));
+    const discount = promoDiscountFor(products);
+    const afterDiscount = round2(products - discount);
+    const fee = orderDeliveryFee(afterDiscount, pickup);
+    return { products, discount, afterDiscount, fee, total: round2(afterDiscount + fee), limitTotal: round2(products + fee) };
+  }
+  function promoDiscountText(promo) {
+    return promo.type === "percent"
+      ? `${Number(promo.value).toLocaleString(window.DrukulatorI18n?.getLocale?.() || "pl-PL", { maximumFractionDigits: 2 })}%`
+      : `${money(promo.value)} zł`;
+  }
+  function promoDateText(iso) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+    return match ? `${match[3]}.${match[2]}.${match[1]}` : "";
+  }
+  let promoPanelOpen = false;
+  let promoRevalidated = false;
+  function setPromoStatus(text, tone = "info") {
+    const box = document.getElementById("promoStatus");
+    if (box) box.innerHTML = text ? `<div class="d24-promo__msg is-${tone}">${esc(text)}</div>` : "";
+    window.DrukulatorI18n?.refresh?.();
+  }
+  function promoBoxHtml(totals) {
+    const promo = state.promo;
+    if (!promo) {
+      return `<details class="d24-promo__toggle"${promoPanelOpen ? " open" : ""}><summary>Masz kod promocyjny?</summary>
+        <div class="d24-promo__form"><input id="promoInput" type="text" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Wpisz kod" aria-label="Kod promocyjny"><button class="button secondary" id="promoApply" type="button">Zastosuj</button></div>
+        <div id="promoStatus" class="d24-promo__status" aria-live="polite"></div></details>`;
+    }
+    const details = [`−${promoDiscountText(promo)} na produkty`];
+    if (promo.minTotal > 0) details.push(`od ${money(promo.minTotal)} zł`);
+    if (promo.validTo) details.push(`ważny do ${promoDateText(promo.validTo)}`);
+    const belowMin = promo.minTotal > 0 && totals.products < promo.minTotal;
+    const note = !belowMin ? "" : `<div class="d24-promo__msg is-warning">Ten kod obowiązuje przy wartości produktów od ${money(promo.minTotal)} zł. Dodaj produkty, a zniżka naliczy się automatycznie.</div>`;
+    const lines = totals.discount > 0
+      ? `<div class="d24-promo__lines"><div><span>Produkty brutto</span><b>${money(totals.products)} zł</b></div><div class="is-discount"><span>Kod promocyjny ${esc(promo.code)}</span><b>−${money(totals.discount)} zł</b></div><div><span>Produkty po zniżce</span><b>${money(totals.afterDiscount)} zł</b></div></div>`
+      : "";
+    return `<div class="d24-promo__applied"><div><span class="d24-promo__badge">KOD</span> <strong>${esc(promo.code)}</strong><small>${esc(details.join(" · "))}</small></div><button class="d24-promo__remove" id="promoRemove" type="button" aria-label="Usuń kod promocyjny">Usuń</button></div>${note}${lines}`;
+  }
+  // Odświeża blok kodu tylko wtedy, gdy zmienił się kod albo kwoty — dzięki temu wpisywany kod nie znika przy każdej literze w formularzu.
+  function renderPromoBox() {
+    const box = document.getElementById("cartPromoBox");
+    if (!box) return;
+    const totals = cartTotals();
+    const signature = state.promo ? JSON.stringify([state.promo, totals.products, totals.discount, totals.afterDiscount]) : "none";
+    if (box.dataset.promoSig === signature) return;
+    box.dataset.promoSig = signature;
+    box.innerHTML = promoBoxHtml(totals);
+    box.querySelector("details")?.addEventListener("toggle", event => { promoPanelOpen = event.target.open; });
+    const input = document.getElementById("promoInput");
+    input?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); applyPromoCode(); } });
+    document.getElementById("promoApply")?.addEventListener("click", applyPromoCode);
+    document.getElementById("promoRemove")?.addEventListener("click", () => { state.promo = null; promoPanelOpen = false; promoChanged(); showToast("Usunięto kod promocyjny"); });
+    window.DrukulatorI18n?.refresh?.();
+  }
+  function promoChanged() {
+    saveState();
+    if (document.getElementById("orderName")) updateOrderText(); else refreshCheckoutTotals();
+  }
+  async function promoRequest(code, productsTotal) {
+    const response = await fetch("promo-validate.php", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-Requested-With": "Drukulator" },
+      body: JSON.stringify({ code, productsTotal })
+    });
+    return orderFetchJson(response, "Sprawdzanie kodu");
+  }
+  async function applyPromoCode() {
+    const input = document.getElementById("promoInput");
+    if (!input) return;
+    const code = input.value.trim();
+    if (!code) { setPromoStatus("Wpisz kod promocyjny.", "error"); input.focus(); return; }
+    const button = document.getElementById("promoApply");
+    if (button) button.disabled = true;
+    setPromoStatus("Sprawdzam kod…", "info");
+    try {
+      const result = await promoRequest(code, cartTotals().products);
+      if (!result.valid) {
+        setPromoStatus(result.message || "Kod promocyjny jest nieprawidłowy lub nieaktualny.", result.reason === "min_total" ? "warning" : "error");
+        return;
+      }
+      const promo = normalizePromo({ code: result.code, label: result.label, type: result.type, value: result.value, minTotal: result.minTotal, validTo: result.validTo });
+      if (!promo) { setPromoStatus("Nie udało się zastosować kodu. Spróbuj ponownie.", "error"); return; }
+      state.promo = promo;
+      promoPanelOpen = false;
+      promoChanged();
+      showToast("Zastosowano kod promocyjny");
+    } catch (error) {
+      setPromoStatus(error?.message || "Nie udało się sprawdzić kodu. Spróbuj ponownie.", "error");
+    } finally {
+      const again = document.getElementById("promoApply");
+      if (again) again.disabled = false;
+    }
+  }
+  // Raz na wczytanie strony sprawdzamy, czy zapamiętany kod nadal obowiązuje (mógł wygasnąć albo zostać wyłączony).
+  async function revalidatePromoOnce() {
+    if (promoRevalidated || !state.promo || !state.cart.length) return;
+    promoRevalidated = true;
+    const promo = state.promo;
+    try {
+      const result = await promoRequest(promo.code, cartTotals().products);
+      if (state.promo !== promo) return;
+      if (result.valid) {
+        const fresh = normalizePromo({ code: result.code, label: result.label, type: result.type, value: result.value, minTotal: result.minTotal, validTo: result.validTo });
+        if (fresh) { state.promo = fresh; promoChanged(); }
+      } else if (result.reason !== "min_total") {
+        state.promo = null;
+        promoChanged();
+        showToast("Kod promocyjny nie jest już ważny — usunięto go z zamówienia");
+      }
+    } catch {
+      // Brak połączenia: zostawiamy kod, a serwer sprawdzi go ostatecznie przy wysyłce zamówienia.
+    }
+  }
+
   function refreshCheckoutTotals() {
-    const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
-    const fee = orderDeliveryFee(total);
+    const totals = cartTotals();
     const totalEl = document.getElementById("orderFinalTotal");
     const deliveryEl = document.getElementById("orderDeliveryCost");
     const caption = document.getElementById("orderDeliveryExplanation");
@@ -6945,19 +7085,20 @@
     const orderFinalTotalLabel = document.getElementById("orderFinalTotalLabel");
     if (cartTotalLabel) cartTotalLabel.textContent = orderTotalLabel();
     if (orderFinalTotalLabel) orderFinalTotalLabel.textContent = state.order.pickup === "Dostawa na terenie Szczecina" ? "Razem obecnie z dostawą — brutto" : "Razem obecnie — brutto";
-    if (totalEl) totalEl.textContent = `${money(total + fee)} zł`;
-    if (cartTotal) cartTotal.textContent = `${money(total + fee)} zł`;
-    if (deliveryEl) deliveryEl.textContent = orderDeliveryLabel(total);
-    if (caption) caption.textContent = state.order.pickup === "Wysyłka kurierska (do ustalenia)" ? "Podana kwota nie obejmuje kosztu kuriera, który potwierdzi drukarnia." : (total >= 300 && state.order.pickup === "Dostawa na terenie Szczecina" ? "Darmowa dostawa obowiązuje od 300 zł wartości produktów." : "Cena i termin wymagają potwierdzenia drukarni.");
+    if (totalEl) totalEl.textContent = `${money(totals.total)} zł`;
+    if (cartTotal) cartTotal.textContent = `${money(totals.total)} zł`;
+    if (deliveryEl) deliveryEl.textContent = orderDeliveryLabel(totals.afterDiscount);
+    if (caption) caption.textContent = state.order.pickup === "Wysyłka kurierska (do ustalenia)" ? "Podana kwota nie obejmuje kosztu kuriera, który potwierdzi drukarnia." : (totals.afterDiscount >= 300 && state.order.pickup === "Dostawa na terenie Szczecina" ? (totals.discount > 0 ? "Darmowa dostawa obowiązuje od 300 zł wartości produktów po zniżce." : "Darmowa dostawa obowiązuje od 300 zł wartości produktów.") : "Cena i termin wymagają potwierdzenia drukarni.");
     const address = document.getElementById("orderDeliveryAddressField");
     if (address) address.hidden = state.order.pickup !== "Dostawa na terenie Szczecina";
     const addressInput = document.getElementById("orderDeliveryAddress");
     if (addressInput) addressInput.required = state.order.pickup === "Dostawa na terenie Szczecina";
+    renderPromoBox();
     updateQuoteDock();
     updateMobileCartBar();
   }
 
-  function renderOrderFormHtml(total) {
+  function renderOrderFormHtml(totals) {
     return `<section class="order-card">
       <div class="order-card__head"><span class="order-step-badge">1</span><div><h3>Kontakt i dostawa</h3><p>Podaj kontakt, żebyśmy mogli potwierdzić termin, dostępność i realizację.</p></div></div>
       <div class="order-form-grid">
@@ -6967,7 +7108,7 @@
         <div class="field"><label>Sposób odbioru / dostawy</label><select id="orderPickup">${options(["Odbiór osobisty", "Dostawa na terenie Szczecina", "Wysyłka kurierska (do ustalenia)"], ["Odbiór osobisty", "Dostawa na terenie Szczecina", "Wysyłka kurierska (do ustalenia)"].includes(state.order.pickup) ? state.order.pickup : "Odbiór osobisty")}</select></div>
         <div class="field d24-shipping-address" id="orderDeliveryAddressField" ${state.order.pickup === "Dostawa na terenie Szczecina" ? "" : "hidden"}><label>Adres dostawy w Szczecinie *</label><input id="orderDeliveryAddress" maxlength="220" value="${esc(state.order.deliveryAddress || "")}" placeholder="Ulica, numer budynku/lokalu, Szczecin" autocomplete="street-address"></div>
       </div>
-      <div class="d24-delivery-note" role="note"><strong id="orderDeliveryCost">${esc(orderDeliveryLabel(total))}</strong><small>Dostawa na terenie Szczecina: 20 zł, bezpłatnie przy wartości produktów od 300 zł. Wysyłka kurierska możliwa po uzgodnieniu kosztów z drukarnią.</small></div>
+      <div class="d24-delivery-note" role="note"><strong id="orderDeliveryCost">${esc(orderDeliveryLabel(totals.afterDiscount))}</strong><small>Dostawa na terenie Szczecina: 20 zł, bezpłatnie przy wartości produktów od 300 zł. Wysyłka kurierska możliwa po uzgodnieniu kosztów z drukarnią.</small></div>
       <div class="order-section">
         <div class="order-section__title"><span class="order-step-badge">2</span><div><strong>Pliki i szczegóły (nieobowiązkowe)</strong><small>Możesz dodać projekt, ale nie jest to wymagane do przesłania zamówienia.</small></div></div>
         <div class="field"><label>Uwagi</label><textarea id="orderNotes" maxlength="3000" placeholder="Termin, sposób pakowania, dodatkowe informacje...">${esc(state.order.notes)}</textarea></div>
@@ -6989,8 +7130,8 @@
       <div class="order-section order-section--submit">
         <div class="order-section__title"><span class="order-step-badge">3</span><div><strong>Wyślij zamówienie</strong><small>Samo wysłanie nie powoduje obowiązku zapłaty. Drukarnia potwierdzi cenę i termin przed realizacją.</small></div></div>
         <label class="privacy-check"><input id="orderPrivacy" type="checkbox"> <span>Zapoznałem/am się z <a href="/polityka-prywatnosci/" target="_blank" rel="noopener">polityką prywatności</a> i zgadzam się na kontakt w sprawie tego zamówienia. *</span></label>
-        <div class="order-submit-summary"><span id="orderFinalTotalLabel">Razem obecnie — brutto</span><strong id="orderFinalTotal">${money(total + orderDeliveryFee(total))} zł</strong></div><p id="orderDeliveryExplanation" class="d24-delivery-explanation" aria-live="polite"></p>
-        <div class="actions"><button id="sendOrder" class="button full button--primary-large" type="button"${Number(total + orderDeliveryFee(total)) > MAX_ORDER_TOTAL ? " disabled" : ""}>Wyślij zamówienie do Druk24</button></div>
+        <div class="order-submit-summary"><span id="orderFinalTotalLabel">Razem obecnie — brutto</span><strong id="orderFinalTotal">${money(totals.total)} zł</strong></div><p id="orderDeliveryExplanation" class="d24-delivery-explanation" aria-live="polite"></p>
+        <div class="actions"><button id="sendOrder" class="button full button--primary-large" type="button"${totals.limitTotal > MAX_ORDER_TOTAL ? " disabled" : ""}>Wyślij zamówienie do Druk24</button></div>
         <div id="orderSendStatus" class="order-send-status" aria-live="polite"></div>
       </div>
       <details class="order-copy-details"><summary>Tekst wiadomości do ręcznego skopiowania</summary>
@@ -7004,14 +7145,14 @@
     state.order = { name: value("orderName"), email: value("orderEmail"), phone: value("orderPhone"), pickup: value("orderPickup"), deliveryAddress: value("orderDeliveryAddress"), notes: value("orderNotes") };
     saveState();
     document.getElementById("orderSubject").value = "Zamówienie do potwierdzenia — Druk24";
-    const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
+    const totals = cartTotals();
     const lines = ["Dzień dobry,", "", "przesyłam zamówienie do weryfikacji w drukarni Druk24:", ""];
     state.cart.forEach((item, index) => {
       lines.push(`${index + 1}. ${item.title}`, `   ${item.description}`);
       (item.details || []).forEach(([label, val]) => lines.push(`   ${label}: ${val}`));
       lines.push(`   Cena brutto: ${money(item.price)} zł`, "");
     });
-    lines.push(`PRODUKTY BRUTTO: ${money(total)} zł`, `Dostawa: ${orderDeliveryLabel(total)}`, `RAZEM Z DOSTAWĄ: ${money(total + orderDeliveryFee(total))} zł${state.order.pickup === "Wysyłka kurierska (do ustalenia)" ? " (bez kosztu kuriera)" : ""}`, "", "Dane zamawiającego:", `Imię i nazwisko / firma: ${state.order.name || "—"}`, `E-mail: ${state.order.email || "—"}`, `Telefon: ${state.order.phone || "—"}`, `Sposób odbioru: ${state.order.pickup}`);
+    lines.push(`PRODUKTY BRUTTO: ${money(totals.products)} zł`, ...(totals.discount > 0 ? [`KOD PROMOCYJNY ${state.promo.code}: −${money(totals.discount)} zł`, `PRODUKTY PO ZNIŻCE: ${money(totals.afterDiscount)} zł`] : []), `Dostawa: ${orderDeliveryLabel(totals.afterDiscount)}`, `RAZEM Z DOSTAWĄ: ${money(totals.total)} zł${state.order.pickup === "Wysyłka kurierska (do ustalenia)" ? " (bez kosztu kuriera)" : ""}`, "", "Dane zamawiającego:", `Imię i nazwisko / firma: ${state.order.name || "—"}`, `E-mail: ${state.order.email || "—"}`, `Telefon: ${state.order.phone || "—"}`, `Sposób odbioru: ${state.order.pickup}`);
     if (state.order.pickup === "Dostawa na terenie Szczecina") lines.push(`Adres dostawy: ${state.order.deliveryAddress}, Szczecin`);
     lines.push("Termin realizacji do potwierdzenia przez drukarnię.");
     if (state.order.notes.trim()) lines.push("", "Uwagi do zamówienia:", state.order.notes.trim());
@@ -7037,6 +7178,7 @@
     if (!response.ok || !data?.success) {
       const failure = new Error(data?.message || `${context}: błąd HTTP ${response.status}.`);
       failure.httpStatus = response.status;
+      if (data?.promoInvalid) failure.promoInvalid = true;
       throw failure;
     }
     return data;
@@ -7045,6 +7187,7 @@
   // 0.25.5: przyczyna nieudanej wysyłki do statystyk (tylko ogólna kategoria, bez treści zamówienia i bez danych klienta).
   function classifyOrderError(error) {
     if (error?.orderErrorReason) return error.orderErrorReason;
+    if (error?.promoInvalid) return "validation";
     const message = String(error?.message || error || "");
     if (error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(message)) return "network";
     if (/starszej wersji kalkulatora/i.test(message)) return "stale_item";
@@ -7213,8 +7356,8 @@
       document.querySelector(".cart-card.is-stale")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
       return;
     }
-    const orderTotal = state.cart.reduce((sum, item) => sum + Number(item.price), 0) + orderDeliveryFee(state.cart.reduce((sum, item) => sum + Number(item.price), 0));
-    if (orderTotal > MAX_ORDER_TOTAL) {
+    const sendTotals = cartTotals();
+    if (sendTotals.limitTotal > MAX_ORDER_TOTAL) {
       window.alert(`Maksymalna wartość zamówienia przez kalkulator to ${money(MAX_ORDER_TOTAL)} zł brutto. ${LIMIT_CONTACT_TEXT}`);
       status.innerHTML = alertBox(`Maksymalna wartość zamówienia przez kalkulator to ${money(MAX_ORDER_TOTAL)} zł brutto. ${LIMIT_CONTACT_TEXT}`, "warning");
       trackOrderError("limit");
@@ -7275,6 +7418,8 @@
         website,
         analyticsSession: analyticsSession()
       };
+      // 0.26.0: kod wysyłamy tylko wtedy, gdy realnie daje zniżkę; serwer i tak sprawdza go od nowa.
+      if (sendTotals.discount > 0 && state.promo) payload.promoCode = state.promo.code;
       if (orderFiles.length) {
         try {
           payload.uploadToken = await uploadOrderFilesInChunks(orderFiles, status);
@@ -7295,9 +7440,18 @@
       const confirmationText = result.confirmationSent
         ? " Potwierdzenie zostało wysłane również na podany adres e-mail."
         : " Zgłoszenie dotarło do Druk24, ale automatyczne potwierdzenie dla klienta nie zostało wysłane. Sprawdź poprawność adresu lub skontaktuj się z nami.";
-      status.innerHTML = `<div class="order-success-card ${result.confirmationSent ? "is-success" : "is-warning"}"><div class="order-success-card__icon">✓</div><div><strong>Zamówienie przesłano do potwierdzenia</strong><p>Numer zgłoszenia: <b>${esc(result.orderId)}</b>.</p><p>Drukarnia sprawdzi zgłoszenie i poda termin realizacji. Produkcja nie rozpoczęła się automatycznie.${esc(confirmationText)}</p></div></div>`;
+      status.innerHTML = `<div class="order-success-card ${result.confirmationSent ? "is-success" : "is-warning"}"><div class="order-success-card__icon">✓</div><div><strong>Zamówienie przesłano do potwierdzenia</strong><p>Numer zgłoszenia: <b>${esc(result.orderId)}</b>.</p><p>Drukarnia sprawdzi zgłoszenie i poda termin realizacji. Produkcja nie rozpoczęła się automatycznie.${esc(confirmationText)}</p>${result.promoCode ? `<p>Zastosowano kod promocyjny <b>${esc(result.promoCode)}</b>: −${money(result.promoDiscount)} zł.</p>` : ""}</div></div>`;
       showToast("Wysłano zamówienie do potwierdzenia");
     } catch (error) {
+      if (error?.promoInvalid) {
+        // 0.26.0: serwer nie przyjął kodu (wygasł, limit użyć, zmiana wartości zamówienia) — zdejmujemy go i pokazujemy nową kwotę.
+        state.promo = null;
+        saveState();
+        updateOrderText();
+        status.innerHTML = alertBox(`${error.message || "Kod promocyjny jest nieprawidłowy lub nieaktualny."} Usunęliśmy kod z zamówienia — sprawdź nową kwotę i wyślij zamówienie ponownie.`, "warning");
+        trackOrderError("validation");
+        return;
+      }
       const networkFailure = error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(String(error.message || ""));
       const message = networkFailure
         ? "Nie udało się połączyć z serwerem podczas wysyłki. Możliwy jest limit hostingu, blokada zabezpieczeń lub przerwane połączenie. Sprawdź pocztę przed ponowną próbą — zgłoszenie mogło już dotrzeć."
@@ -7317,7 +7471,8 @@
   }
 
   function downloadCsv() {
-    const rows = [["Lp.", "Produkt", "Opis", "Cena brutto"], ...state.cart.map((item, i) => [i + 1, item.title, item.description, Number(item.price).toFixed(2).replace(".", ",")]), [], ["", "RAZEM", "", state.cart.reduce((sum, item) => sum + Number(item.price), 0).toFixed(2).replace(".", ",")]];
+    const csvTotals = cartTotals();
+    const rows = [["Lp.", "Produkt", "Opis", "Cena brutto"], ...state.cart.map((item, i) => [i + 1, item.title, item.description, Number(item.price).toFixed(2).replace(".", ",")]), [], ...(csvTotals.discount > 0 ? [["", "PRODUKTY", "", csvTotals.products.toFixed(2).replace(".", ",")], ["", `KOD PROMOCYJNY ${state.promo.code}`, "", (-csvTotals.discount).toFixed(2).replace(".", ",")]] : []), ["", "RAZEM", "", csvTotals.afterDiscount.toFixed(2).replace(".", ",")]];
     const csv = "\uFEFF" + rows.map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(";")).join("\r\n");
     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); link.download = "zamówienie_kalkulator_druku.csv"; link.click(); URL.revokeObjectURL(link.href);
   }

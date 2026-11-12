@@ -25,6 +25,7 @@ require_once __DIR__ . '/monitoring-lib.php';
 require_once __DIR__ . '/mail-audit-lib.php';
 require_once __DIR__ . '/analytics-v2-lib.php';
 require_once __DIR__ . '/upload-staging-lib.php';
+require_once __DIR__ . '/promo-lib.php';
 
 d24_staff_install();
 drukulator_orders_install();
@@ -59,6 +60,8 @@ function d24_staff_public_orders(array $orders): array
             'customer_phone' => (string) ($row['customer_phone'] ?? ''),
             'pickup' => (string) ($row['pickup'] ?? ''),
             'notes' => (string) ($row['notes'] ?? ''),
+            'promo_code' => (string) ($row['promo_code'] ?? ''),
+            'discount' => (float) ($row['discount'] ?? 0),
             'public_note' => (string) ($row['public_note'] ?? ''),
             'internal_note' => (string) ($row['internal_note'] ?? ''),
             'assigned_staff_id' => $row['assigned_staff_id'] ?? null,
@@ -125,6 +128,9 @@ if ($method === 'GET') {
         }, d24_staff_list_users());
     } else {
         $payload['staff'] = array();
+    }
+    if (d24_staff_can('promo_manage')) {
+        $payload['promo_codes'] = d24_promo_list();
     }
     if (d24_staff_can('analytics_view')) {
         $stats = get_option('drukulator_analytics_v1', array());
@@ -215,6 +221,28 @@ if ($action === 'mail_retry_ready') {
         $success ? 'Powtórne przekazanie e-maila o gotowości do WordPressa' : 'Nieudana próba ponowienia e-maila o gotowości', $orderId, array('method' => 'manual_retry'));
     d24_staff_api_response($success, (string) ($result['message'] ?? 'Nieznany wynik.'), $success ? 200 : 502,
         array('mail_audit' => d24_mail_audit_dashboard(), 'orders' => d24_staff_public_orders(drukulator_orders_list(500))));
+}
+
+// Kody promocyjne (0.26.0v): tworzenie, edycja, włączanie/wyłączanie i usuwanie wymaga uprawnienia „promo_manage”.
+if (in_array($action, array('promo_save', 'promo_toggle', 'promo_delete'), true)) {
+    if (!d24_staff_can('promo_manage')) d24_staff_api_response(false, 'Brak uprawnień do kodów promocyjnych.', 403);
+    $actor = (string) ($user['display_name'] ?? 'Pracownik');
+    if ($action === 'promo_save') {
+        [$ok, $message, $promoId] = d24_promo_save($data, $actor);
+        if ($ok) d24_monitor_log('promo_saved', 'info', 'Zapisano kod promocyjny', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
+        d24_staff_api_response($ok, $message, $ok ? 200 : 400, array('promo_codes' => d24_promo_list()));
+    }
+    $promoId = (int) ($data['id'] ?? 0);
+    if ($promoId <= 0) d24_staff_api_response(false, 'Nieprawidłowy kod.', 400);
+    if ($action === 'promo_toggle') {
+        $active = !empty($data['active']);
+        $ok = d24_promo_set_active($promoId, $active);
+        if ($ok) d24_monitor_log('promo_toggled', 'info', $active ? 'Włączono kod promocyjny' : 'Wyłączono kod promocyjny', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
+        d24_staff_api_response($ok, $ok ? ($active ? 'Kod został włączony.' : 'Kod został wyłączony.') : 'Nie znaleziono kodu.', $ok ? 200 : 404, array('promo_codes' => d24_promo_list()));
+    }
+    $ok = d24_promo_delete($promoId);
+    if ($ok) d24_monitor_log('promo_deleted', 'info', 'Usunięto kod promocyjny', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
+    d24_staff_api_response($ok, $ok ? 'Kod został usunięty.' : 'Nie znaleziono kodu.', $ok ? 200 : 404, array('promo_codes' => d24_promo_list()));
 }
 
 if ($action === 'order_status') {

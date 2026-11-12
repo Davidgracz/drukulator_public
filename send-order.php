@@ -368,6 +368,7 @@ require_once __DIR__ . '/order-status-lib.php';
 require_once __DIR__ . '/monitoring-lib.php';
 require_once __DIR__ . '/mail-audit-lib.php';
 require_once __DIR__ . '/analytics-v2-lib.php';
+require_once __DIR__ . '/promo-lib.php';
 $order_started_at = microtime(true);
 
 $site_host = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
@@ -552,13 +553,35 @@ if (!$order_lines) {
     drukulator_response(false, 'Nie udało się odczytać pozycji z koszyka.', 422);
 }
 
-$products_total = $total;
-$delivery_fee = $pickup === 'Dostawa na terenie Szczecina' && $products_total < 300.0 ? 20.0 : 0.0;
-$total = round($products_total + $delivery_fee, 2);
+$products_total = round($total, 2);
+
+// 0.26.0: kod promocyjny — sprawdzany tu od nowa (data, limity, minimum), niezależnie od tego, co pokazała przeglądarka.
+// Zniżka dotyczy wartości produktów; próg darmowej dostawy liczymy po zniżce, a limit kalkulatora przed zniżką.
+$promo_code = '';
+$promo_id = 0;
+$promo_discount = 0.0;
+$promo_label = '';
+$promo_reserved = false;
+if (isset($data['promoCode']) && is_string($data['promoCode']) && trim($data['promoCode']) !== '') {
+    $promo_check = d24_promo_evaluate($data['promoCode'], $products_total);
+    if (!$promo_check['ok']) {
+        drukulator_response(false, (string) $promo_check['message'], 422, array('promoInvalid' => true));
+    }
+    $promo_code = (string) $promo_check['promo']['code'];
+    $promo_id = (int) $promo_check['promo']['id'];
+    $promo_discount = (float) $promo_check['discount'];
+    $promo_label = $promo_check['promo']['discount_type'] === 'percent'
+        ? rtrim(rtrim(number_format((float) $promo_check['promo']['discount_value'], 2, ',', ''), '0'), ',') . '%'
+        : number_format((float) $promo_check['promo']['discount_value'], 2, ',', ' ') . ' zł';
+}
+$products_after_discount = round($products_total - $promo_discount, 2);
+$delivery_fee = $pickup === 'Dostawa na terenie Szczecina' && $products_after_discount < 300.0 ? 20.0 : 0.0;
+$limit_total = round($products_total + $delivery_fee, 2);
+$total = round($products_after_discount + $delivery_fee, 2);
 $delivery_note = $pickup === 'Dostawa na terenie Szczecina'
     ? ($delivery_fee > 0 ? 'Dostawa na terenie Szczecina — 20,00 zł' : 'Dostawa na terenie Szczecina — GRATIS od 300 zł produktów')
     : ($pickup === 'Wysyłka kurierska (do ustalenia)' ? 'Wysyłka kurierska — koszt do ustalenia, NIE jest zawarty w sumie' : 'Odbiór osobisty — 0,00 zł');
-if ($total > DRUKULATOR_MAX_ORDER_TOTAL) {
+if ($limit_total > DRUKULATOR_MAX_ORDER_TOTAL) {
     drukulator_response(
         false,
         drukulator_limit_message('Maksymalna wartość zamówienia przez kalkulator to 5 000,00 zł brutto.'),
@@ -579,8 +602,18 @@ if ($upload_token !== '') {
     });
 }
 
+if ($promo_id > 0) {
+    // Jedno użycie rezerwujemy atomowo tuż przed zapisem zamówienia; przy błędzie poczty jest zwracane.
+    if (!d24_promo_reserve($promo_id, $promo_discount)) {
+        drukulator_response(false, 'Kod promocyjny przestał obowiązywać lub osiągnął limit użyć. Usuń go z koszyka albo wpisz inny.', 422, array('promoInvalid' => true));
+    }
+    $promo_reserved = true;
+}
+
 $status_token = wp_generate_password(40, false, false);
 $status_saved = drukulator_orders_store(array(
+    'promo_code' => $promo_code,
+    'discount' => $promo_discount,
     'order_id' => $order_id,
     'total' => $total,
     'items' => $stored_items,
@@ -601,6 +634,10 @@ $message_lines = array(
 );
 $message_lines = array_merge($message_lines, $order_lines);
 $message_lines[] = 'PRODUKTY BRUTTO: ' . number_format($products_total, 2, ',', ' ') . ' zł';
+if ($promo_code !== '') {
+    $message_lines[] = 'KOD PROMOCYJNY: ' . $promo_code . ' (' . $promo_label . ') — ZNIŻKA: -' . number_format($promo_discount, 2, ',', ' ') . ' zł';
+    $message_lines[] = 'PRODUKTY PO ZNIŻCE: ' . number_format($products_after_discount, 2, ',', ' ') . ' zł';
+}
 $message_lines[] = $delivery_note;
 $message_lines[] = 'RAZEM Z DOSTAWĄ: ' . number_format($total, 2, ',', ' ') . ' zł' . ($pickup === 'Wysyłka kurierska (do ustalenia)' ? ' (bez kosztu kuriera)' : '');
 $message_lines[] = '';
@@ -646,6 +683,9 @@ if (!$sent) {
     if ($status_saved) {
         drukulator_orders_delete($order_id);
     }
+    if ($promo_reserved) {
+        d24_promo_release($promo_id, $promo_discount);
+    }
     d24_monitor_log('order_mail_failed', 'error', 'Serwer pocztowy nie przyjął wiadomości do drukarni', $order_id, array(
         'files' => count($attachment_names), 'total' => $total, 'channel' => 'office',
         'bytes' => array_sum(array_map('filesize', array_filter($attachments, 'is_file')))
@@ -666,6 +706,9 @@ d24_monitor_log('order_mail_accepted', 'info', 'Serwer przyjął e-mail z zapyta
 ), (int) round((microtime(true) - $order_started_at) * 1000));
 // Server-confirmed enquiry, independent of browser telemetry or page unloading.
 d24_analytics_verified_order($order_id, (float) $total, $cart, $data['analyticsSession'] ?? null);
+if ($promo_code !== '') {
+    d24_monitor_log('promo_used', 'info', 'Zamówienie z kodem promocyjnym', $order_id, array('note' => $promo_code, 'total' => $promo_discount));
+}
 if (!$status_saved) {
     d24_monitor_log('order_record_failed', 'warning', 'E-mail przyjęty, ale nie zapisano zlecenia w bazie', $order_id);
 }
@@ -687,6 +730,11 @@ $customer_message .= '<p style="margin:0 0 12px;line-height:1.65;"><strong>Dosta
 if ($delivery_address !== '') $customer_message .= '<p style="margin:0 0 12px;line-height:1.65;"><strong>Adres:</strong> ' . esc_html($delivery_address) . ', Szczecin</p>';
 $customer_message .= '<h2 style="margin:26px 0 14px;font-size:21px;color:#111827;">Podsumowanie zamówienia</h2>';
 $customer_message .= implode('', $customer_order_html);
+if ($promo_code !== '') {
+    $customer_message .= '<div style="margin:18px 0 0;padding:14px 18px;border:1px dashed #088fca;border-radius:10px;background:#eff7fd;color:#0f172a;font-size:15px;line-height:1.6;">'
+        . 'Kod promocyjny <strong>' . esc_html($promo_code) . '</strong> (' . esc_html($promo_label) . '): <strong>−' . esc_html(number_format($promo_discount, 2, ',', ' ') . ' zł') . '</strong><br>'
+        . 'Produkty po zniżce: <strong>' . esc_html(number_format($products_after_discount, 2, ',', ' ') . ' zł') . '</strong></div>';
+}
 $customer_message .= '<div style="margin:20px 0 0;padding:16px 18px;border-radius:10px;background:#0f172a;color:#ffffff;font-size:20px;font-weight:800;text-align:right;">RAZEM Z DOSTAWĄ: ' . esc_html(number_format($total, 2, ',', ' ') . ' zł') . ($pickup === 'Wysyłka kurierska (do ustalenia)' ? ' (bez kosztu kuriera)' : '') . '</div>';
 if ($attachment_names) {
     $customer_message .= '<div style="margin-top:22px;padding:16px;border:1px solid #d7dee8;border-radius:10px;"><strong>Dołączone pliki</strong><ul style="margin:8px 0 0;padding-left:20px;color:#475569;">';
@@ -736,5 +784,8 @@ drukulator_response(
         'orderId' => $order_id,
         'confirmationSent' => $confirmation_sent,
         'attachmentCount' => count($attachment_names),
+        'promoCode' => $promo_code,
+        'promoDiscount' => $promo_discount,
+        'total' => $total,
     )
 );
