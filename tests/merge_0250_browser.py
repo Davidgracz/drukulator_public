@@ -28,7 +28,7 @@ with sync_playwright() as p:
  def setv(sel,val):
   page.evaluate("([s,v])=>{const e=document.querySelector(s);e.value=v;e.dispatchEvent(new Event('change',{bubbles:true}))}",[sel,val]); page.wait_for_timeout(450)
  # --- wygląd 0.23.x ---
- assert page.locator('#versionLabel').inner_text()=='0.26.2v'
+ assert page.locator('#versionLabel').inner_text()=='0.26.3v'
  assert page.locator('#mobilePriceBar').count()==0 and page.locator('.menu-toggle__label').count()==0
  assert page.evaluate("document.documentElement.dataset.drukulatorVersion")!='0.25.0v' or True
  assert page.locator('#quoteDock').is_visible()

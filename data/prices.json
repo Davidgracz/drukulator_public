@@ -1369,14 +1369,9 @@
       "Papier kredowy 350 g": 1.5
     },
     "foliowanie": {
-      "Jednostronne": {
-        "Satyna": 2,
-        "Błysk": 1.5
-      },
-      "Dwustronne": {
-        "Satyna": 2.5,
-        "Błysk": 2
-      }
+      "Satyna": 2,
+      "Błysk": 1.5,
+      "Mat": 1.5
     },
     "dla_studentow": {
       "Czarno-biały": {

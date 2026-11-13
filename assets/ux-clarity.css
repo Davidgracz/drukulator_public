@@ -1,4 +1,4 @@
-/* Drukulator 0.26.2v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.26.3v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
@@ -112,3 +112,31 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
 .content .d24-field-inactive > select:not(.d24-native-covered) { display: none; }
 .d24-inactive-note { display: none; margin: 0; font-size: .75rem; color: var(--muted); }
 .content .d24-field-inactive .d24-inactive-note { display: block; }
+/* 0.26.3v: druk cyfrowy — foliowanie i bindowanie w rozwijanych sekcjach (domyślnie zwiniętych). W nagłówku zwiniętej sekcji
+   widać wybraną opcję i jej cenę. Wewnątrz sekcji pola mają stały układ (foliowanie: jedno pole z kafelkami; oprawa: rodzaj | rozmiar). */
+.form-grid .d24-extra { grid-column: 1 / -1; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+.d24-extra > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; cursor: pointer; list-style: none; border-radius: 12px; font-weight: 600; color: var(--text); }
+.d24-extra > summary::-webkit-details-marker { display: none; }
+.d24-extra > summary::after { content: ""; flex: 0 0 auto; width: 8px; height: 8px; margin-left: 4px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s ease; }
+.d24-extra[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.d24-extra > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.d24-extra .d24-extra__title { flex: 0 0 auto; }
+.d24-extra .d24-extra__state { margin-left: auto; min-width: 0; text-align: right; font-weight: 500; font-size: .875rem; color: var(--muted); overflow-wrap: anywhere; }
+.d24-extra .d24-extra__state--on { color: var(--text); }
+.d24-extra .d24-extra__state:empty { display: none; }
+.d24-extra[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+/* Po rozwinięciu wybór widać na kafelkach, więc podsumowanie znika — nagłówek ma wtedy stałą wysokość i kafelki pod nim się nie przesuwają. */
+.d24-extra[open] .d24-extra__state { display: none; }
+.d24-extra__body { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; padding: 14px; border-top: 1px solid var(--border); }
+.d24-extra__body > .field { grid-column: 1 / -1; min-width: 0; }
+.d24-extra__body > .field.half { grid-column: span 6; }
+@media (max-width: 760px) {
+  .d24-extra__body > .field.half { grid-column: 1 / -1; }
+  .d24-extra > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
+  .d24-extra .d24-extra__state { grid-column: 1; grid-row: 2; margin: 2px 0 0; text-align: left; }
+  .d24-extra > summary::after { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+}
+/* Komunikat pod foliowaniem zajmuje miejsce także wtedy, gdy jest niewidoczny — przejście między kredą 250 g a cieńszym papierem
+   nie przesuwa kafelków oprawy pod spodem. */
+#digFoilField .d24-inactive-note { display: block; visibility: hidden; }
+#digFoilField.d24-field-inactive .d24-inactive-note { visibility: visible; }

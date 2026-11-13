@@ -54,15 +54,21 @@ with sync_playwright() as p:
             papers=opts(page,'#digPaper')
             assert papers==['Standardowy 80 g','Papier kredowy 130 g','Papier kredowy 170 g','Papier kredowy 250 g','Papier kredowy 300 g','Papier kredowy 350 g'],papers
         # --- foliowanie i oprawy: stan początkowy
-        assert opts(page,'#digFoilSide')==['Brak','Jednostronne','Dwustronne']
-        assert inactive(page,'digFoilTypeField') and vis(page,'#digFoilTypeField')
+        # 0.26.3: foliowanie i bindowanie są w rozwijanych sekcjach, domyślnie zwiniętych
+        assert opts(page,'#digFoil')==['Brak','Satyna','Błysk','Mat']
+        assert page.evaluate('document.getElementById("digFoilBox").open')==False and page.evaluate('document.getElementById("digBindBox").open')==False
+        assert not page.locator('#digFoilField').is_visible() and not page.locator('#digBindTypeField').is_visible()
+        assert page.locator('#digFoilBox > summary').is_visible() and page.locator('#digBindBox > summary').is_visible()
+        assert page.locator('#digFoilState').text_content().strip()=='Tylko kreda od 250 g' and page.locator('#digBindState').text_content().strip()=='Brak'
+        assert inactive(page,'digFoilField')   # domyślny papier (80 g) nie nadaje się do foliowania
         types=opts(page,'#digBindType')
         assert types==['Brak','Oprawa miękka zaciskowa','Bindowanie – spirala plastikowa','Bindowanie – spirala metalowa'],types
         assert not any('kanałowa' in t for t in types)
-        assert inactive(page,'digBindVariantField') and vis(page,'#digBindVariantField') and page.locator('#digBindCopies').count()==0   # brak pola „Liczba opraw”
+        assert inactive(page,'digBindVariantField') and page.locator('#digBindCopies').count()==0   # brak pola „Liczba opraw”
         assert page.locator('label[for="digSets"]').inner_text().strip()=='Ilość kompletów' and page.locator('#digSets').input_value()=='1'
-        assert page.locator('label[for="digFoilSide"]').inner_text().strip()=='Foliowanie'
-        assert page.locator('label[for="digBindType"]').inner_text().strip()=='Bindowanie i oprawy'
+        assert page.locator('#digFoilBox .d24-extra__title').text_content().strip()=='Foliowanie' and page.locator('#digFoilBox').locator('label[for="digFoil"]').text_content().strip()=='Rodzaj folii'
+        assert page.locator('#digBindBox .d24-extra__title').text_content().strip()=='Bindowanie i oprawy'
+        assert page.locator('#digFoilSide').count()==0 and page.locator('#digFoilType').count()==0   # nie ma już podziału na jedno- i dwustronne
         # --- cena: 40 stron, dwustronnie, kolor, kreda 130 -> 20 arkuszy
         setv(page,'#digColor','Kolorowy'); setv(page,'#digFormat','A4'); setv(page,'#digSide','Dwustronny'); setv(page,'#digPaper','Papier kredowy 130 g'); setv(page,'#digQty','40')
         assert page.locator('#digSheetsHint').inner_text().strip()=='Potrzebne arkusze A4: 20',page.locator('#digSheetsHint').inner_text()
@@ -76,20 +82,33 @@ with sync_playwright() as p:
         setv(page,'#digSide','Dwustronny'); setv(page,'#digQty','5'); assert 'arkusze A4: 3' in page.locator('#digSheetsHint').inner_text()
         setv(page,'#digFormat','A3'); assert 'arkusze A3: 3' in page.locator('#digSheetsHint').inner_text()
         setv(page,'#digFormat','A4'); setv(page,'#digQty','40')
-        # --- foliowanie: wszystkie warianty
-        expected={('Jednostronne','Satyna'):2,('Jednostronne','Błysk'):1.5,('Dwustronne','Satyna'):2.5,('Dwustronne','Błysk'):2}
-        for (side,typ),per in expected.items():
-            setv(page,'#digFoilSide',side)
-            assert not inactive(page,'digFoilTypeField') and opts(page,'#digFoilType')==['Satyna','Błysk']
-            setv(page,'#digFoilType',typ)
-            want=106+per*20
-            got=price(page)
-            assert got==f'{want:.2f}'.replace('.',',')+' zł',(side,typ,got)
-            q=quote_text(page); assert 'Foliowanie' in q and side in q and typ.lower() in q.lower()
-        setv(page,'#digFoilSide','Brak'); assert inactive(page,'digFoilTypeField'); assert price(page)=='106,00 zł'
+        # --- foliowanie: tylko kreda od 250 g; Satyna 2 zł, Błysk 1,5 zł, Mat 1,5 zł za arkusz (bez podziału na jedno- i dwustronne)
+        assert inactive(page,'digFoilField') and page.locator('#digFoilField').evaluate('e=>e.inert')   # kreda 130 g — foliowanie niedostępne
+        for paper in ('Papier kredowy 250 g','Papier kredowy 300 g','Papier kredowy 350 g'):
+            setv(page,'#digPaper',paper); assert not inactive(page,'digFoilField') and not page.locator('#digFoilField').evaluate('e=>e.inert'),paper
+        setv(page,'#digPaper','Papier kredowy 250 g')
+        assert price(page)=='115,00 zł'    # 40 stron × 2,50 + 20 arkuszy × 0,75
+        for typ,per in (('Satyna',2),('Błysk',1.5),('Mat',1.5)):
+            for side,sheets in (('Dwustronny',20),('Jednostronny',40)):
+                setv(page,'#digSide',side); setv(page,'#digFoil',typ)
+                base_price=(100+15) if side=='Dwustronny' else (100+30)    # 40 str. jednostronnie = 40 arkuszy × 0,75
+                want=base_price+per*sheets
+                got=price(page)
+                assert got==f'{want:.2f}'.replace('.',',')+' zł',(typ,side,got)
+                q=quote_text(page); assert re.search(r'Foliowanie\s*'+typ,q) and re.search(r'Foliowanie – cena\s*'+f'{per*sheets:.2f}'.replace('.',','),q),(typ,q)
+                assert 'jednostronne' not in q.lower().split('foliowanie')[1][:40]
+        setv(page,'#digSide','Dwustronny'); setv(page,'#digFoil','Satyna')
+        assert page.locator('#digFoilState').text_content().strip()=='Satyna · +40,00 zł',page.locator('#digFoilState').text_content()
+        # zmiana papieru na cieńszy zeruje foliowanie
+        setv(page,'#digPaper','Papier kredowy 170 g'); assert page.locator('#digFoil').input_value()=='Brak' and inactive(page,'digFoilField')
+        assert page.locator('#digFoilState').text_content().strip()=='Tylko kreda od 250 g'
+        assert page.locator('#digFoilField .d24-smart-choice[aria-pressed="true"] strong').first.text_content().strip()=='Brak'
+        assert price(page)=='110,00 zł'    # 100 + 20 arkuszy × 0,50 (kreda 170 g)
+        setv(page,'#digPaper','Papier kredowy 130 g'); setv(page,'#digFoil','Brak'); assert price(page)=='106,00 zł'
         # --- oprawy
         setv(page,'#digBindType','Bindowanie – spirala plastikowa')
         assert not inactive(page,'digBindVariantField')
+        assert page.locator('#digBindState').text_content().strip().startswith('Bindowanie – spirala plastikowa, 12,5 mm · +')
         assert opts(page,'#digBindVariant')[0]=='12,5 mm'
         setv(page,'#digBindVariant','14 mm'); assert price(page)=='113,00 zł'
         # komplety: oprawa na każdy komplet, druk od wszystkich stron
@@ -108,23 +127,23 @@ with sync_playwright() as p:
         assert 'Liczba stron musi być większa od zera' in quote_text(page),quote_text(page)
         setv(page,'#digQty','40')
         # --- wszystko razem (3 komplety) + koszyk
-        setv(page,'#digSets','3'); setv(page,'#digFoilSide','Dwustronne'); setv(page,'#digFoilType','Satyna'); setv(page,'#digBindType','Bindowanie – spirala metalowa'); setv(page,'#digBindVariant','8 mm')
-        got=price(page); assert got=='432,00 zł',got   # 120 stron × 2,00 + 60 arkuszy × 0,30 + 60 × 2,50 + 3 × 8
+        setv(page,'#digSets','3'); setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna'); setv(page,'#digBindType','Bindowanie – spirala metalowa'); setv(page,'#digBindVariant','8 mm')
+        got=price(page); assert got=='429,00 zł',got   # 120 stron × 2,00 + 60 arkuszy × 0,75 + 60 × 2 + 3 × 8
         q=quote_text(page)
-        assert 'Bindowanie i oprawy' in q and '8 mm' in q and re.search(r'Foliowanie – cena\s*150,00 zł',q) and re.search(r'Oprawa – cena\s*24,00 zł',q),q
+        assert 'Bindowanie i oprawy' in q and '8 mm' in q and re.search(r'Foliowanie – cena\s*120,00 zł',q) and re.search(r'Oprawa – cena\s*24,00 zł',q),q
         assert re.search(r'Ilość kompletów\s*3',q) and re.search(r'Łącznie stron\s*120',q) and re.search(r'Liczba arkuszy\s*60',q),q
         page.locator('#calculate').click(); page.wait_for_timeout(400)   # zaufane kliknięcie = dodanie do koszyka
         cart=json.loads(page.evaluate('localStorage.getItem("drukulator_cart")'))
-        assert len(cart)==1 and abs(cart[0]['price']-432)<0.001,cart
-        d=cart[0]['description']; assert '40 str. × 3 kompl.' in d and 'foliowanie dwustronne satyna' in d and 'spirala metalowa 8 mm × 3' in d,d
+        assert len(cart)==1 and abs(cart[0]['price']-429)<0.001,cart
+        d=cart[0]['description']; assert '40 str. × 3 kompl.' in d and 'foliowanie satyna' in d and 'dwustronne' not in d.lower().split('foliowanie')[1] and 'spirala metalowa 8 mm × 3' in d,d
         # --- inne usługi bez zmian
         go(page)
         setv(page,'#digService','Ksero i druk'); assert page.locator('label[for="digQty"], #digQty').count()>=1
         assert 'Liczba kopii' in page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-        assert page.locator('#digFoilSide').count()==0 and page.locator('#digSets').count()==0
+        assert page.locator('#digFoil').count()==0 and page.locator('#digSets').count()==0 and page.locator('.d24-extra').count()==0
         setv(page,'#digService','Ksero książki'); setv(page,'#digColor',opts(page,'#digColor')[0]); assert price(page).endswith('zł')
         # --- przeskok z powrotem nie gubi pól
-        setv(page,'#digService','Druk cyfrowy 24h'); assert page.locator('#digFoilSide').count()==1 and inactive(page,'digFoilTypeField') and page.locator('#digSets').input_value()=='1'
+        setv(page,'#digService','Druk cyfrowy 24h'); assert page.locator('#digFoil').count()==1 and inactive(page,'digFoilField') and page.locator('#digSets').input_value()=='1' and page.evaluate('document.getElementById("digFoilBox").open')==False
         # --- brak poziomego przewijania
         assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth+1'),(width,page.evaluate('document.documentElement.scrollWidth'))
         assert not errors,errors
@@ -144,27 +163,42 @@ with sync_playwright() as p:
     del d['foliowanie']
     page,errors=boot(browser,1300,prices_override=old); go(page)
     assert 'Papier kolorowy' not in opts(page,'#digPaper') and 'Papier etykietowy' not in opts(page,'#digPaper')
-    setv(page,'#digFoilSide','Dwustronne'); setv(page,'#digFoilType','Błysk'); setv(page,'#digQty','10'); setv(page,'#digSide','Jednostronny'); setv(page,'#digColor','Czarno-biały'); setv(page,'#digPaper','Standardowy 80 g')
-    got=price(page); assert got=='30,00 zł',got   # 10 stron × 1 zł + 10 arkuszy × 2 zł
+    setv(page,'#digQty','10'); setv(page,'#digSide','Jednostronny'); setv(page,'#digColor','Czarno-biały'); setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Błysk')
+    got=price(page); assert got=='32,50 zł',got   # 10 stron × 1 zł + 10 arkuszy × 0,75 zł + 10 × 1,50 zł (domyślne ceny foliowania dopisane)
     assert not errors,errors
     page.close()
-    custom=copy.deepcopy(prices); custom['druk_cyfrowy_i_ksero']['foliowanie']={'Jednostronne':{'Satyna':3.2},'Dwustronne':{}}
+    # stary układ z 0.26.1v/0.26.2v (Jednostronne/Dwustronne) jest zastępowany nowym cennikiem: Satyna 2, Błysk 1,5, Mat 1,5
+    legacy=copy.deepcopy(prices); legacy['druk_cyfrowy_i_ksero']['foliowanie']={'Jednostronne':{'Satyna':3.2,'Błysk':1.5},'Dwustronne':{'Satyna':2.5,'Błysk':2}}
+    page,errors=boot(browser,1300,prices_override=legacy); go(page)
+    assert opts(page,'#digFoil')==['Brak','Satyna','Błysk','Mat']
+    setv(page,'#digQty','10'); setv(page,'#digSide','Jednostronny'); setv(page,'#digColor','Czarno-biały'); setv(page,'#digPaper','Papier kredowy 250 g')
+    for typ,want in (('Satyna','37,50 zł'),('Błysk','32,50 zł'),('Mat','32,50 zł')):
+        setv(page,'#digFoil',typ); got=price(page); assert got==want,(typ,got)
+    assert not errors,errors
+    page.close()
+    # własne ceny w nowym układzie zostają, brakujące pozycje są uzupełniane domyślnymi
+    custom=copy.deepcopy(prices); custom['druk_cyfrowy_i_ksero']['foliowanie']={'Satyna':3.2}
     page,errors=boot(browser,1300,prices_override=custom); go(page)
-    setv(page,'#digFoilSide','Jednostronne'); assert opts(page,'#digFoilType')==['Satyna','Błysk']
-    setv(page,'#digFoilType','Satyna'); setv(page,'#digQty','10'); setv(page,'#digSide','Jednostronny'); setv(page,'#digColor','Czarno-biały'); setv(page,'#digPaper','Standardowy 80 g')
-    got=price(page); assert got=='42,00 zł',got   # 10 + 10 × 3,20 (własna cena zostaje)
-    setv(page,'#digFoilSide','Dwustronne'); setv(page,'#digFoilType','Błysk'); got=price(page); assert got=='30,00 zł',got   # brakująca pozycja uzupełniona domyślną
+    assert opts(page,'#digFoil')==['Brak','Satyna','Błysk','Mat']
+    setv(page,'#digQty','10'); setv(page,'#digSide','Jednostronny'); setv(page,'#digColor','Czarno-biały'); setv(page,'#digPaper','Papier kredowy 250 g')
+    setv(page,'#digFoil','Satyna'); got=price(page); assert got=='49,50 zł',got   # 10 + 7,50 + 10 × 3,20 (własna cena zostaje)
+    setv(page,'#digFoil','Mat'); got=price(page); assert got=='32,50 zł',got      # brakująca pozycja uzupełniona domyślną
     assert not errors,errors
     page.close()
     # --- angielski
     page,errors=boot(browser,1300,lang='en')
     go(page)
+    page.locator('#digFoilBox > summary').click(); page.locator('#digBindBox > summary').click(); page.wait_for_timeout(300)
     txt=page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-    for need in ('Number of pages','Number of sets','Lamination','Binding','Film type','Choose the binding type first.'):
+    for need in ('Number of pages','Number of sets','Lamination','Binding','Lamination type','Matte','Choose the binding type first.','Lamination is available only for coated paper of 250 g and heavier.'):
         assert need in txt,(need,txt)
-    assert 'Liczba stron' not in txt and 'Foliowanie' not in txt and 'Ilość kompletów' not in txt
-    setv(page,'#digFoilSide','Jednostronne'); txt=page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-    assert 'Film type' in txt and ('Satin' in page.locator('#digFoilType').evaluate('e=>e.innerText')),txt
+    assert page.locator('#digFoilState').text_content().strip()=='Coated paper 250 g and up only',page.locator('#digFoilState').text_content()   # po rozwinięciu podsumowanie jest ukryte
+    assert 'Liczba stron' not in txt and 'Foliowanie' not in txt and 'Ilość kompletów' not in txt and 'Tylko kreda' not in txt
+    setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna'); page.wait_for_timeout(300)
+    st=page.locator('#digFoilState').text_content(); assert st.startswith('Satin · +') and 'PLN' in st,st
+    setv(page,'#digFoil','Mat'); page.wait_for_timeout(300); st=page.locator('#digFoilState').text_content(); assert st.startswith('Matte · +') and 'PLN' in st,st
+    setv(page,'#digBindType','Bindowanie – spirala metalowa'); page.wait_for_timeout(300)
+    st=page.locator('#digBindState').text_content(); assert 'coil' in st.lower() or 'spiral' in st.lower(),st
     assert not errors,errors
     page.close()
     browser.close()

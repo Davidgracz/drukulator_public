@@ -14,7 +14,7 @@ t('ceny: papier kolorowy i etykietowy usunięte, foliowanie jest',()=>{
   const d=prices.druk_cyfrowy_i_ksero;
   assert.equal('Papier kolorowy' in d.doplaty_do_papieru,false);
   assert.equal('Papier etykietowy' in d.doplaty_do_papieru,false);
-  assert.deepEqual(d.foliowanie,{Jednostronne:{Satyna:2,'Błysk':1.5},Dwustronne:{Satyna:2.5,'Błysk':2}});
+  assert.deepEqual(d.foliowanie,{Satyna:2,'Błysk':1.5,Mat:1.5});   // 0.26.3: jeden cennik, bez podziału na jedno- i dwustronne
 });
 
 t('dwustronny: 40 stron = 20 arkuszy, druk od stron, papier od arkuszy',()=>{
@@ -49,27 +49,54 @@ t('granice progów: 20 -> 1-20, 21 -> 21-100, 101 -> 101-500, 501 -> 501+',()=>{
   assert.equal(tier(101),'101-500'); assert.equal(tier(500),'101-500'); assert.equal(tier(501),'501+');
 });
 
-t('foliowanie: brak = 0, każda z czterech kombinacji',()=>{
-  const none=C.calculateDigitalPrint(prices,{...base,foilSide:'Brak'});
-  near(none.foilTotal,0); assert.equal(none.foilActive,false);
-  const table={Jednostronne:{Satyna:2,'Błysk':1.5},Dwustronne:{Satyna:2.5,'Błysk':2}};
-  for(const side of Object.keys(table)) for(const type of Object.keys(table[side])){
-    const r=C.calculateDigitalPrint(prices,{...base,foilSide:side,foilType:type});
-    near(r.foilTotal,table[side][type]*20,`${side} ${type}`); // 20 arkuszy
-    near(r.price,106+table[side][type]*20); assert.equal(r.foilActive,true);
+const foilBase={...base,paperType:'Papier kredowy 250 g'};   // foliowanie tylko dla kredy od 250 g
+t('foliowanie: brak = 0, każdy z trzech rodzajów (jedna cena za arkusz, bez podziału na strony zadruku)',()=>{
+  const none=C.calculateDigitalPrint(prices,{...foilBase,foilType:'Brak'});
+  near(none.foilTotal,0); assert.equal(none.foilActive,false); assert.equal(none.foilType,'Brak');
+  near(none.price,100+15); // 40 stron × 2,50 + 20 arkuszy × 0,75
+  const table={Satyna:2,'Błysk':1.5,Mat:1.5};
+  for(const type of Object.keys(table)){
+    for(const sideMode of ['Jednostronny','Dwustronny']){
+      const sheets=sideMode==='Jednostronny'?40:20;
+      const r=C.calculateDigitalPrint(prices,{...foilBase,sideMode,foilType:type});
+      near(r.foilTotal,table[type]*sheets,`${type} ${sideMode}`); assert.equal(r.foilActive,true); assert.equal(r.foilType,type);
+    }
   }
+  near(C.calculateDigitalPrint(prices,{...foilBase,foilType:'Satyna'}).price,115+40);
 });
 
 t('foliowanie liczone od arkuszy, A3 = 2 × A4',()=>{
-  const a4=C.calculateDigitalPrint(prices,{...base,pages:10,sideMode:'Jednostronny',foilSide:'Jednostronne',foilType:'Błysk'});
+  const a4=C.calculateDigitalPrint(prices,{...foilBase,pages:10,sideMode:'Jednostronny',foilType:'Błysk'});
   near(a4.foilTotal,15); // 10 arkuszy × 1,50
-  const a3=C.calculateDigitalPrint(prices,{...base,pages:10,sideMode:'Jednostronny',formatName:'A3',foilSide:'Jednostronne',foilType:'Błysk'});
+  const a3=C.calculateDigitalPrint(prices,{...foilBase,pages:10,sideMode:'Jednostronny',formatName:'A3',foilType:'Błysk'});
   near(a3.foilTotal,30);
 });
 
-t('foliowanie: brak rodzaju folii lub nieznany sposób -> błąd',()=>{
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,foilSide:'Dwustronne',foilType:''}),/rodzaj folii/);
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,foilSide:'Trójstronne',foilType:'Satyna'}),/foliowania/);
+t('foliowanie: tylko kreda od 250 g (250, 300, 350 tak; 80 g, 130 g, 170 g nie)',()=>{
+  for(const paper of ['Papier kredowy 250 g','Papier kredowy 300 g','Papier kredowy 350 g']){
+    assert.equal(C.isDigitalFoilPaper(paper),true,paper);
+    near(C.calculateDigitalPrint(prices,{...base,paperType:paper,foilType:'Mat'}).foilTotal,30);
+  }
+  for(const paper of ['Standardowy 80 g','Papier kredowy 130 g','Papier kredowy 170 g']){
+    assert.equal(C.isDigitalFoilPaper(paper),false,paper);
+    assert.throws(()=>C.calculateDigitalPrint(prices,{...base,paperType:paper,foilType:'Satyna'}),/tylko dla papieru kredowego od 250 g/);
+    near(C.calculateDigitalPrint(prices,{...base,paperType:paper,foilType:'Brak'}).foilTotal,0); // bez foliowania cienki papier działa jak dotąd
+  }
+  assert.equal(C.isDigitalFoilPaper('Papier kolorowy'),false); assert.equal(C.isDigitalFoilPaper(''),false); assert.equal(C.isDigitalFoilPaper(undefined),false);
+  assert.equal(C.isDigitalFoilPaper('Karton 300 g'),false); // tylko kreda
+});
+
+t('foliowanie: lista rodzajów z cennika, nieznany rodzaj -> błąd, stary układ nie przechodzi',()=>{
+  assert.deepEqual(Array.from(C.getDigitalFoilTypes(prices)),['Satyna','Błysk','Mat']);
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...foilBase,foilType:'Brokat'}),/rodzaj folii/);
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...foilBase,foilType:'Jednostronne'}),/rodzaj folii/);
+  const legacy=JSON.parse(JSON.stringify(prices)); legacy.druk_cyfrowy_i_ksero.foliowanie={Jednostronne:{Satyna:2}};
+  assert.deepEqual(Array.from(C.getDigitalFoilTypes(legacy)),[]);
+});
+
+t('foliowanie: opcja foilSide ze starej wersji jest ignorowana',()=>{
+  const r=C.calculateDigitalPrint(prices,{...foilBase,foilSide:'Dwustronne',foilType:'Brak'});
+  assert.equal(r.foilActive,false); near(r.foilTotal,0);
 });
 
 t('oprawa: lista bez oprawy kanałowej',()=>{
@@ -91,8 +118,8 @@ t('oprawa: kanałowa odrzucona, brak rozmiaru',()=>{
 });
 
 t('wszystko razem: druk + papier + foliowanie + oprawa',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,foilSide:'Dwustronne',foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm'});
-  near(r.price,100+6+50+7);
+  const r=C.calculateDigitalPrint(prices,{...foilBase,foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm'});
+  near(r.price,100+15+40+7);   // druk 40 × 2,50 + papier 20 × 0,75 + folia 20 × 2 + oprawa 7
 });
 
 t('walidacja stron: 0, ujemne, ułamek',()=>{

@@ -615,16 +615,30 @@
   const DIGITAL_FOIL_NONE = "Brak";
   const DIGITAL_BINDING_NONE = "Brak";
   const DIGITAL_BINDING_EXCLUDED = ["Oprawa kanałowa twarda A4"];
+  // 0.26.3v: foliowanie (Satyna / Błysk / Mat, jedna cena za arkusz bez podziału na jedno- i dwustronne)
+  // jest dostępne tylko dla papieru kredowego o gramaturze od 250 g wzwyż.
+  const DIGITAL_FOIL_MIN_GRAMS = 250;
 
   function getDigitalBindingTypes(prices) {
     const all = prices?.oprawa_prac?.rodzaje_opraw || {};
     return Object.keys(all).filter(name => !DIGITAL_BINDING_EXCLUDED.includes(name));
   }
 
+  function isDigitalFoilPaper(paperType) {
+    const name = String(paperType || "");
+    const grams = /(\d+)\s*g\b/i.exec(name);
+    return /kredow/i.test(name) && Boolean(grams) && Number(grams[1]) >= DIGITAL_FOIL_MIN_GRAMS;
+  }
+
+  function getDigitalFoilTypes(pricesRoot) {
+    const table = pricesRoot?.druk_cyfrowy_i_ksero?.foliowanie || {};
+    return Object.keys(table).filter(name => name !== DIGITAL_FOIL_NONE && Number(table[name]) >= 0 && table[name] !== null && table[name] !== "");
+  }
+
   function calculateDigitalPrint(pricesRoot, options = {}) {
     const {
       colorMode, pages, sets = 1, formatName = "A4", paperType = "Standardowy 80 g", sideMode = "Jednostronny",
-      foilSide = DIGITAL_FOIL_NONE, foilType = "",
+      foilType = DIGITAL_FOIL_NONE,
       bindingType = DIGITAL_BINDING_NONE, bindingVariant = ""
     } = options;
     assertPositive(pages, "Liczba stron");
@@ -651,12 +665,11 @@
     const paperTotal = round2(paperSurcharge * paperUnits);
 
     let foilTotal = 0, foilUnitPrice = 0;
-    const foilActive = foilSide && foilSide !== DIGITAL_FOIL_NONE;
+    const foilActive = Boolean(foilType) && foilType !== DIGITAL_FOIL_NONE;
     if (foilActive) {
-      const foilTable = prices.foliowanie?.[foilSide];
-      if (!foilTable) throw new Error("Nieprawidłowy sposób foliowania.");
-      if (!(foilType in foilTable)) throw new Error("Wybierz rodzaj folii.");
-      foilUnitPrice = Number(foilTable[foilType]);
+      if (!isDigitalFoilPaper(paperType)) throw new Error(`Foliowanie jest dostępne tylko dla papieru kredowego od ${DIGITAL_FOIL_MIN_GRAMS} g.`);
+      if (!getDigitalFoilTypes(pricesRoot).includes(foilType)) throw new Error("Nieprawidłowy rodzaj folii.");
+      foilUnitPrice = Number(prices.foliowanie[foilType]);
       foilTotal = round2(foilUnitPrice * paperUnits);
     }
 
@@ -676,7 +689,7 @@
     return {
       price, pages: Number(pages), sets: setCount, totalPages, sheetsPerSet, sheets, printUnits, tier, basePrice, printTotal,
       paperSurcharge, paperUnits, paperTotal,
-      foilActive: Boolean(foilActive), foilUnitPrice, foilTotal,
+      foilActive, foilType: foilActive ? foilType : DIGITAL_FOIL_NONE, foilUnitPrice, foilTotal,
       bindingActive: Boolean(bindingActive), bindingUnitPrice, bindingCopies, bindingTotal
     };
   }
@@ -930,7 +943,7 @@
     NO_PRINT, DIGITAL_FINISH_KEYS, OFFSET_FINISH_KEYS,
     getBannerPricePerM2, calculateManualCutting, calculateOptionalManualCutting, calculateBanner, calculateBusinessCards, calculateFlyers,
     getStickerPricePerLinearMeter, calculateStickers, calculateNotepads, calculateCatalogProduct,
-    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
+    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, isDigitalFoilPaper, getDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
     calculateLamination, getCanvasSuggestions, calculateProportionalCanvasSize, calculateCanvasStandard, calculateCanvasCustom, calculateWedding,
     getQuantityTier, roundUpToStep
   };

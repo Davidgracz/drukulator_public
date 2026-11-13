@@ -39,15 +39,15 @@ t('próg cenowy liczony od wszystkich stron: 10 stron × 2 komplety = 20 -> 1-20
 });
 
 t('A3: mnożnik formatu dla druku, papieru i foliowania',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,colorMode:'Czarno-biały',pages:10,sets:2,formatName:'A3',sideMode:'Jednostronny',paperType:'Papier kredowy 130 g',foilSide:'Jednostronne',foilType:'Błysk'});
+  const r=C.calculateDigitalPrint(prices,{...base,colorMode:'Czarno-biały',pages:10,sets:2,formatName:'A3',sideMode:'Jednostronny',paperType:'Papier kredowy 250 g',foilType:'Błysk'});
   assert.equal(r.printUnits,40); assert.equal(r.tier,'21-100'); near(r.printTotal,20);      // 40 × 0,50
-  near(r.paperTotal,0.3*20*2);                                                              // 20 arkuszy × 2
-  near(r.foilTotal,1.5*20*2); near(r.price,20+12+60);
+  near(r.paperTotal,0.75*20*2);                                                             // 20 arkuszy × 2
+  near(r.foilTotal,1.5*20*2); near(r.price,20+30+60);
 });
 
 t('foliowanie liczone od wszystkich arkuszy (wszystkie komplety)',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,sets:3,foilSide:'Dwustronne',foilType:'Satyna'});
-  near(r.foilTotal,2.5*60); // 3 × 20 arkuszy
+  const r=C.calculateDigitalPrint(prices,{...base,paperType:'Papier kredowy 300 g',sets:3,foilType:'Satyna'});
+  near(r.foilTotal,2*60); // 3 × 20 arkuszy
 });
 
 t('oprawa: jedna na komplet (ceny z „Oprawy prac”)',()=>{
@@ -65,9 +65,9 @@ t('liczba opraw z opcji jest ignorowana (usunięte pole)',()=>{
 });
 
 t('wszystko razem: 3 komplety',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,sets:3,foilSide:'Jednostronne',foilType:'Błysk',bindingType:'Bindowanie – spirala metalowa',bindingVariant:'8 mm'});
-  // 120 stron -> 101-500: 2,00 × 120 = 240; papier 60 arkuszy × 0,30 = 18; folia 60 × 1,50 = 90; oprawa 3 × 8 = 24
-  assert.equal(r.tier,'101-500'); near(r.printTotal,240); near(r.paperTotal,18); near(r.foilTotal,90); near(r.bindingTotal,24); near(r.price,372);
+  const r=C.calculateDigitalPrint(prices,{...base,paperType:'Papier kredowy 250 g',sets:3,foilType:'Błysk',bindingType:'Bindowanie – spirala metalowa',bindingVariant:'8 mm'});
+  // 120 stron -> 101-500: 2,00 × 120 = 240; papier 60 arkuszy × 0,75 = 45; folia 60 × 1,50 = 90; oprawa 3 × 8 = 24
+  assert.equal(r.tier,'101-500'); near(r.printTotal,240); near(r.paperTotal,45); near(r.foilTotal,90); near(r.bindingTotal,24); near(r.price,399);
 });
 
 t('walidacja kompletów: 0, ujemne, ułamek',()=>{
