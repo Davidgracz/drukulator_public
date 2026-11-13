@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.3v";
+  const VERSION = "0.26.4v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2600,6 +2600,18 @@
       }
     }
 
+    // 0.26.4v: papier firmowy — nowe ceny A4 (500 – 280 zł, 1000 – 330 zł, 2500 – 460 zł) i nowy format A5 (500 – 190 zł, 1000 – 230 zł, 2500 – 280 zł).
+    // Starsze cenniki z serwera lub z przeglądarki dostają nowe ceny tylko wtedy, gdy A4 ma jeszcze dawne ceny domyślne (własne zmiany zostają).
+    const letterhead = pricesToMigrate.papier_firmowy?.preprint_90g_kolor_jednostronny;
+    if (letterhead && typeof letterhead === "object") {
+      const legacyA4 = { "500": 350, "1000": 545, "2500": 715 };
+      const a4 = letterhead.A4;
+      if (a4 && typeof a4 === "object" && Object.keys(a4).length === 3 && Object.entries(legacyA4).every(([quantity, price]) => Number(a4[quantity]) === price)) {
+        Object.assign(a4, { "500": 280, "1000": 330, "2500": 460 });
+      }
+      if (!letterhead.A5 || typeof letterhead.A5 !== "object") letterhead.A5 = { "500": 190, "1000": 230, "2500": 280 };
+    }
+
     const standardStickers = pricesToMigrate.naklejki?.powierzchniowe?.["Naklejki, etykiety"];
     if (standardStickers && Number(standardStickers.minimum_m2) === 1) {
       standardStickers.minimum_m2 = 0.7;
@@ -5030,7 +5042,7 @@
       root["Papier firmowy"] = {
         warianty: {
           "Preprint 90 g, kolor jednostronny": {
-            opis: "Papier firmowy A4, preprint 90 g, druk kolorowy jednostronny.",
+            opis: "Papier firmowy w formacie A4 lub A5, preprint 90 g, druk kolorowy jednostronny.",
             formaty: deepClone(preprint)
           }
         }
@@ -7075,7 +7087,7 @@
 
 
   // Delivery prices always use the merchandise subtotal, never the fee itself.
-  // 0.26.0: z kodem promocyjnym „subtotal” to wartość produktów PO zniżce (próg darmowej dostawy 300 zł liczy się po zniżce).
+  // 0.26.0: z kodem rabatowym „subtotal” to wartość produktów PO zniżce (próg darmowej dostawy 300 zł liczy się po zniżce).
   function orderDeliveryFee(subtotal, pickup = state.order.pickup) {
     return pickup === "Dostawa na terenie Szczecina" ? (subtotal >= 300 ? 0 : 20) : 0;
   }
@@ -7085,7 +7097,7 @@
     return "Odbiór osobisty — 0,00 zł";
   }
 
-  // ---- 0.26.0: kody promocyjne ------------------------------------------------------------------------------------
+  // ---- 0.26.0: kody rabatowe ------------------------------------------------------------------------------------
   // Zniżka liczona w groszach tak samo jak na serwerze (promo-lib.php → d24_promo_discount); serwer i tak liczy ją od nowa przy wysyłce.
   function round2(value) { return Math.round((Number(value) || 0) * 100) / 100; }
   function normalizePromo(raw) {
@@ -7122,17 +7134,22 @@
   }
   let promoPanelOpen = false;
   let promoRevalidated = false;
-  function setPromoStatus(text, tone = "info") {
-    const box = document.getElementById("promoStatus");
+  // 0.26.4v: kod rabatowy ma dwa pola — rozwijane w podsumowaniu po prawej (prefiks „promo”) i stałe okienko nad sumą w formularzu
+  // zamówienia (prefiks „orderPromo”). Komunikat pokazujemy przy tym polu, w którym klient wpisał kod.
+  function setPromoStatus(text, tone = "info", prefix = "promo") {
+    const box = document.getElementById(`${prefix}Status`);
     if (box) box.innerHTML = text ? `<div class="d24-promo__msg is-${tone}">${esc(text)}</div>` : "";
     window.DrukulatorI18n?.refresh?.();
   }
-  function promoBoxHtml(totals) {
+  function promoBoxHtml(totals, inline = false) {
     const promo = state.promo;
+    const prefix = inline ? "orderPromo" : "promo";
     if (!promo) {
-      return `<details class="d24-promo__toggle"${promoPanelOpen ? " open" : ""}><summary>Masz kod promocyjny?</summary>
-        <div class="d24-promo__form"><input id="promoInput" type="text" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Wpisz kod" aria-label="Kod promocyjny"><button class="button secondary" id="promoApply" type="button">Zastosuj</button></div>
-        <div id="promoStatus" class="d24-promo__status" aria-live="polite"></div></details>`;
+      const form = `<div class="d24-promo__form"><input id="${prefix}Input" type="text" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Wpisz kod" aria-label="Kod rabatowy"><button class="button secondary" id="${prefix}Apply" type="button">Zastosuj</button></div>
+        <div id="${prefix}Status" class="d24-promo__status" aria-live="polite"></div>`;
+      // Stałe okienko (bez rozwijania) nad sumą w formularzu zamówienia; w podsumowaniu po prawej zostaje rozwijane „Masz kod rabatowy?”.
+      if (inline) return `<div class="d24-promo__inline"><label class="d24-promo__label" for="${prefix}Input">Kod rabatowy</label>${form}</div>`;
+      return `<details class="d24-promo__toggle"${promoPanelOpen ? " open" : ""}><summary>Masz kod rabatowy?</summary>${form}</details>`;
     }
     const details = [`−${promoDiscountText(promo)} na produkty`];
     if (promo.minTotal > 0) details.push(`od ${money(promo.minTotal)} zł`);
@@ -7140,25 +7157,27 @@
     const belowMin = promo.minTotal > 0 && totals.products < promo.minTotal;
     const note = !belowMin ? "" : `<div class="d24-promo__msg is-warning">Ten kod obowiązuje przy wartości produktów od ${money(promo.minTotal)} zł. Dodaj produkty, a zniżka naliczy się automatycznie.</div>`;
     const lines = totals.discount > 0
-      ? `<div class="d24-promo__lines"><div><span>Produkty brutto</span><b>${money(totals.products)} zł</b></div><div class="is-discount"><span>Kod promocyjny ${esc(promo.code)}</span><b>−${money(totals.discount)} zł</b></div><div><span>Produkty po zniżce</span><b>${money(totals.afterDiscount)} zł</b></div></div>`
+      ? `<div class="d24-promo__lines"><div><span>Produkty brutto</span><b>${money(totals.products)} zł</b></div><div class="is-discount"><span>Kod rabatowy ${esc(promo.code)}</span><b>−${money(totals.discount)} zł</b></div><div><span>Produkty po zniżce</span><b>${money(totals.afterDiscount)} zł</b></div></div>`
       : "";
-    return `<div class="d24-promo__applied"><div><span class="d24-promo__badge">KOD</span> <strong>${esc(promo.code)}</strong><small>${esc(details.join(" · "))}</small></div><button class="d24-promo__remove" id="promoRemove" type="button" aria-label="Usuń kod promocyjny">Usuń</button></div>${note}${lines}`;
+    return `<div class="d24-promo__applied"><div><span class="d24-promo__badge">KOD</span> <strong>${esc(promo.code)}</strong><small>${esc(details.join(" · "))}</small></div><button class="d24-promo__remove" id="${prefix}Remove" type="button" aria-label="Usuń kod rabatowy">Usuń</button></div>${note}${lines}`;
   }
   // Odświeża blok kodu tylko wtedy, gdy zmienił się kod albo kwoty — dzięki temu wpisywany kod nie znika przy każdej literze w formularzu.
   function renderPromoBox() {
-    const box = document.getElementById("cartPromoBox");
-    if (!box) return;
     const totals = cartTotals();
     const signature = state.promo ? JSON.stringify([state.promo, totals.products, totals.discount, totals.afterDiscount]) : "none";
-    if (box.dataset.promoSig === signature) return;
-    box.dataset.promoSig = signature;
-    box.innerHTML = promoBoxHtml(totals);
-    box.querySelector("details")?.addEventListener("toggle", event => { promoPanelOpen = event.target.open; });
-    const input = document.getElementById("promoInput");
-    input?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); applyPromoCode(); } });
-    document.getElementById("promoApply")?.addEventListener("click", applyPromoCode);
-    document.getElementById("promoRemove")?.addEventListener("click", () => { state.promo = null; promoPanelOpen = false; promoChanged(); showToast("Usunięto kod promocyjny"); });
-    window.DrukulatorI18n?.refresh?.();
+    let changed = false;
+    [["cartPromoBox", false, "promo"], ["orderPromoBox", true, "orderPromo"]].forEach(([id, inline, prefix]) => {
+      const box = document.getElementById(id);
+      if (!box || box.dataset.promoSig === signature) return;
+      box.dataset.promoSig = signature;
+      box.innerHTML = promoBoxHtml(totals, inline);
+      changed = true;
+      box.querySelector("details")?.addEventListener("toggle", event => { promoPanelOpen = event.target.open; });
+      document.getElementById(`${prefix}Input`)?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); applyPromoCode(prefix); } });
+      document.getElementById(`${prefix}Apply`)?.addEventListener("click", () => applyPromoCode(prefix));
+      document.getElementById(`${prefix}Remove`)?.addEventListener("click", () => { state.promo = null; promoPanelOpen = false; promoChanged(); showToast("Usunięto kod rabatowy"); });
+    });
+    if (changed) window.DrukulatorI18n?.refresh?.();
   }
   function promoChanged() {
     saveState();
@@ -7173,30 +7192,30 @@
     });
     return orderFetchJson(response, "Sprawdzanie kodu");
   }
-  async function applyPromoCode() {
-    const input = document.getElementById("promoInput");
+  async function applyPromoCode(prefix = "promo") {
+    const input = document.getElementById(`${prefix}Input`);
     if (!input) return;
     const code = input.value.trim();
-    if (!code) { setPromoStatus("Wpisz kod promocyjny.", "error"); input.focus(); return; }
-    const button = document.getElementById("promoApply");
+    if (!code) { setPromoStatus("Wpisz kod rabatowy.", "error", prefix); input.focus(); return; }
+    const button = document.getElementById(`${prefix}Apply`);
     if (button) button.disabled = true;
-    setPromoStatus("Sprawdzam kod…", "info");
+    setPromoStatus("Sprawdzam kod…", "info", prefix);
     try {
       const result = await promoRequest(code, cartTotals().products);
       if (!result.valid) {
-        setPromoStatus(result.message || "Kod promocyjny jest nieprawidłowy lub nieaktualny.", result.reason === "min_total" ? "warning" : "error");
+        setPromoStatus(result.message || "Kod rabatowy jest nieprawidłowy lub nieaktualny.", result.reason === "min_total" ? "warning" : "error", prefix);
         return;
       }
       const promo = normalizePromo({ code: result.code, label: result.label, type: result.type, value: result.value, minTotal: result.minTotal, validTo: result.validTo });
-      if (!promo) { setPromoStatus("Nie udało się zastosować kodu. Spróbuj ponownie.", "error"); return; }
+      if (!promo) { setPromoStatus("Nie udało się zastosować kodu. Spróbuj ponownie.", "error", prefix); return; }
       state.promo = promo;
       promoPanelOpen = false;
       promoChanged();
-      showToast("Zastosowano kod promocyjny");
+      showToast("Zastosowano kod rabatowy");
     } catch (error) {
-      setPromoStatus(error?.message || "Nie udało się sprawdzić kodu. Spróbuj ponownie.", "error");
+      setPromoStatus(error?.message || "Nie udało się sprawdzić kodu. Spróbuj ponownie.", "error", prefix);
     } finally {
-      const again = document.getElementById("promoApply");
+      const again = document.getElementById(`${prefix}Apply`);
       if (again) again.disabled = false;
     }
   }
@@ -7214,7 +7233,7 @@
       } else if (result.reason !== "min_total") {
         state.promo = null;
         promoChanged();
-        showToast("Kod promocyjny nie jest już ważny — usunięto go z zamówienia");
+        showToast("Kod rabatowy nie jest już ważny — usunięto go z zamówienia");
       }
     } catch {
       // Brak połączenia: zostawiamy kod, a serwer sprawdzi go ostatecznie przy wysyłce zamówienia.
@@ -7230,7 +7249,7 @@
     const cartTotalLabel = document.getElementById("cartFinalTotalLabel");
     const orderFinalTotalLabel = document.getElementById("orderFinalTotalLabel");
     if (cartTotalLabel) cartTotalLabel.textContent = orderTotalLabel();
-    if (orderFinalTotalLabel) orderFinalTotalLabel.textContent = state.order.pickup === "Dostawa na terenie Szczecina" ? "Razem obecnie z dostawą — brutto" : "Razem obecnie — brutto";
+    if (orderFinalTotalLabel) orderFinalTotalLabel.textContent = state.order.pickup === "Dostawa na terenie Szczecina" ? "Razem z dostawą — brutto" : "Razem — brutto";
     if (totalEl) totalEl.textContent = `${money(totals.total)} zł`;
     if (cartTotal) cartTotal.textContent = `${money(totals.total)} zł`;
     if (deliveryEl) deliveryEl.textContent = orderDeliveryLabel(totals.afterDiscount);
@@ -7276,7 +7295,8 @@
       <div class="order-section order-section--submit">
         <div class="order-section__title"><span class="order-step-badge">3</span><div><strong>Wyślij zamówienie</strong><small>Samo wysłanie nie powoduje obowiązku zapłaty. Drukarnia potwierdzi cenę i termin przed realizacją.</small></div></div>
         <label class="privacy-check"><input id="orderPrivacy" type="checkbox"> <span>Zapoznałem/am się z <a href="/polityka-prywatnosci/" target="_blank" rel="noopener">polityką prywatności</a> i zgadzam się na kontakt w sprawie tego zamówienia. *</span></label>
-        <div class="order-submit-summary"><span id="orderFinalTotalLabel">Razem obecnie — brutto</span><strong id="orderFinalTotal">${money(totals.total)} zł</strong></div><p id="orderDeliveryExplanation" class="d24-delivery-explanation" aria-live="polite"></p>
+        <div class="d24-promo d24-promo--inline" id="orderPromoBox" data-promo-sig=""></div>
+        <div class="order-submit-summary"><span id="orderFinalTotalLabel">Razem — brutto</span><strong id="orderFinalTotal">${money(totals.total)} zł</strong></div><p id="orderDeliveryExplanation" class="d24-delivery-explanation" aria-live="polite"></p>
         <div class="actions"><button id="sendOrder" class="button full button--primary-large" type="button"${totals.limitTotal > MAX_ORDER_TOTAL ? " disabled" : ""}>Wyślij zamówienie do Druk24</button></div>
         <div id="orderSendStatus" class="order-send-status" aria-live="polite"></div>
       </div>
@@ -7298,7 +7318,7 @@
       (item.details || []).forEach(([label, val]) => lines.push(`   ${label}: ${val}`));
       lines.push(`   Cena brutto: ${money(item.price)} zł`, "");
     });
-    lines.push(`PRODUKTY BRUTTO: ${money(totals.products)} zł`, ...(totals.discount > 0 ? [`KOD PROMOCYJNY ${state.promo.code}: −${money(totals.discount)} zł`, `PRODUKTY PO ZNIŻCE: ${money(totals.afterDiscount)} zł`] : []), `Dostawa: ${orderDeliveryLabel(totals.afterDiscount)}`, `RAZEM Z DOSTAWĄ: ${money(totals.total)} zł${state.order.pickup === "Wysyłka kurierska (do ustalenia)" ? " (bez kosztu kuriera)" : ""}`, "", "Dane zamawiającego:", `Imię i nazwisko / firma: ${state.order.name || "—"}`, `E-mail: ${state.order.email || "—"}`, `Telefon: ${state.order.phone || "—"}`, `Sposób odbioru: ${state.order.pickup}`);
+    lines.push(`PRODUKTY BRUTTO: ${money(totals.products)} zł`, ...(totals.discount > 0 ? [`KOD RABATOWY ${state.promo.code}: −${money(totals.discount)} zł`, `PRODUKTY PO ZNIŻCE: ${money(totals.afterDiscount)} zł`] : []), `Dostawa: ${orderDeliveryLabel(totals.afterDiscount)}`, `RAZEM Z DOSTAWĄ: ${money(totals.total)} zł${state.order.pickup === "Wysyłka kurierska (do ustalenia)" ? " (bez kosztu kuriera)" : ""}`, "", "Dane zamawiającego:", `Imię i nazwisko / firma: ${state.order.name || "—"}`, `E-mail: ${state.order.email || "—"}`, `Telefon: ${state.order.phone || "—"}`, `Sposób odbioru: ${state.order.pickup}`);
     if (state.order.pickup === "Dostawa na terenie Szczecina") lines.push(`Adres dostawy: ${state.order.deliveryAddress}, Szczecin`);
     lines.push("Termin realizacji do potwierdzenia przez drukarnię.");
     if (state.order.notes.trim()) lines.push("", "Uwagi do zamówienia:", state.order.notes.trim());
@@ -7586,7 +7606,7 @@
       const confirmationText = result.confirmationSent
         ? " Potwierdzenie zostało wysłane również na podany adres e-mail."
         : " Zgłoszenie dotarło do Druk24, ale automatyczne potwierdzenie dla klienta nie zostało wysłane. Sprawdź poprawność adresu lub skontaktuj się z nami.";
-      status.innerHTML = `<div class="order-success-card ${result.confirmationSent ? "is-success" : "is-warning"}"><div class="order-success-card__icon">✓</div><div><strong>Zamówienie przesłano do potwierdzenia</strong><p>Numer zgłoszenia: <b>${esc(result.orderId)}</b>.</p><p>Drukarnia sprawdzi zgłoszenie i poda termin realizacji. Produkcja nie rozpoczęła się automatycznie.${esc(confirmationText)}</p>${result.promoCode ? `<p>Zastosowano kod promocyjny <b>${esc(result.promoCode)}</b>: −${money(result.promoDiscount)} zł.</p>` : ""}</div></div>`;
+      status.innerHTML = `<div class="order-success-card ${result.confirmationSent ? "is-success" : "is-warning"}"><div class="order-success-card__icon">✓</div><div><strong>Zamówienie przesłano do potwierdzenia</strong><p>Numer zgłoszenia: <b>${esc(result.orderId)}</b>.</p><p>Drukarnia sprawdzi zgłoszenie i poda termin realizacji. Produkcja nie rozpoczęła się automatycznie.${esc(confirmationText)}</p>${result.promoCode ? `<p>Zastosowano kod rabatowy <b>${esc(result.promoCode)}</b>: −${money(result.promoDiscount)} zł.</p>` : ""}</div></div>`;
       showToast("Wysłano zamówienie do potwierdzenia");
     } catch (error) {
       if (error?.promoInvalid) {
@@ -7594,7 +7614,7 @@
         state.promo = null;
         saveState();
         updateOrderText();
-        status.innerHTML = alertBox(`${error.message || "Kod promocyjny jest nieprawidłowy lub nieaktualny."} Usunęliśmy kod z zamówienia — sprawdź nową kwotę i wyślij zamówienie ponownie.`, "warning");
+        status.innerHTML = alertBox(`${error.message || "Kod rabatowy jest nieprawidłowy lub nieaktualny."} Usunęliśmy kod z zamówienia — sprawdź nową kwotę i wyślij zamówienie ponownie.`, "warning");
         trackOrderError("validation");
         return;
       }
@@ -7618,7 +7638,7 @@
 
   function downloadCsv() {
     const csvTotals = cartTotals();
-    const rows = [["Lp.", "Produkt", "Opis", "Cena brutto"], ...state.cart.map((item, i) => [i + 1, item.title, item.description, Number(item.price).toFixed(2).replace(".", ",")]), [], ...(csvTotals.discount > 0 ? [["", "PRODUKTY", "", csvTotals.products.toFixed(2).replace(".", ",")], ["", `KOD PROMOCYJNY ${state.promo.code}`, "", (-csvTotals.discount).toFixed(2).replace(".", ",")]] : []), ["", "RAZEM", "", csvTotals.afterDiscount.toFixed(2).replace(".", ",")]];
+    const rows = [["Lp.", "Produkt", "Opis", "Cena brutto"], ...state.cart.map((item, i) => [i + 1, item.title, item.description, Number(item.price).toFixed(2).replace(".", ",")]), [], ...(csvTotals.discount > 0 ? [["", "PRODUKTY", "", csvTotals.products.toFixed(2).replace(".", ",")], ["", `KOD RABATOWY ${state.promo.code}`, "", (-csvTotals.discount).toFixed(2).replace(".", ",")]] : []), ["", "RAZEM", "", csvTotals.afterDiscount.toFixed(2).replace(".", ",")]];
     const csv = "\uFEFF" + rows.map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(";")).join("\r\n");
     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); link.download = "zamówienie_kalkulator_druku.csv"; link.click(); URL.revokeObjectURL(link.href);
   }

@@ -1,4 +1,4 @@
-/* Drukulator 0.26.3v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.26.4v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
@@ -73,7 +73,7 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
   .cart-card.is-stale .cart-card-actions { justify-content: flex-start; }
 }
 
-/* ---------- 0.26.0v: kod promocyjny w koszyku ---------- */
+/* ---------- 0.26.0v: kod rabatowy w koszyku ---------- */
 .d24-promo { margin: 10px 0 6px; }
 .d24-promo__toggle { border: 1px dashed var(--border); border-radius: 12px; padding: 10px 12px; }
 .d24-promo__toggle > summary { cursor: pointer; font-weight: 750; font-size: .9375rem; color: var(--ux-link); list-style-position: inside; }
@@ -140,3 +140,14 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
    nie przesuwa kafelków oprawy pod spodem. */
 #digFoilField .d24-inactive-note { display: block; visibility: hidden; }
 #digFoilField.d24-field-inactive .d24-inactive-note { visibility: visible; }
+/* 0.26.4v: kod rabatowy — stałe okienko (bez rozwijania) nad sumą „Razem — brutto” w formularzu zamówienia; w podsumowaniu po prawej
+   zostaje rozwijane „Masz kod rabatowy?”. Suma „Razem — brutto” jest wyraźnie większa. */
+.d24-promo--inline { margin: 14px 0 0; }
+.d24-promo__inline { padding: 12px 14px; border: 1px solid var(--border); border-radius: 11px; background: var(--panel); }
+.d24-promo__label { display: block; margin: 0 0 8px; font-size: .8125rem; font-weight: 750; color: var(--text); }
+.d24-promo__inline .d24-promo__form { margin-top: 0; }
+.d24-promo--inline .d24-promo__lines { margin-top: 10px; }
+.d24-promo--inline .d24-promo__applied { margin: 0; }
+.d24-promo--inline + .order-submit-summary { margin-top: 10px; }
+.order-submit-summary span { font-size: .875rem; font-weight: 650; }
+.order-submit-summary strong { font-size: clamp(1.75rem, 4.2vw, 2.4rem); line-height: 1.1; font-weight: 850; white-space: nowrap; }

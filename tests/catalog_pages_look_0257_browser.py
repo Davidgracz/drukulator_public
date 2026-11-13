@@ -138,14 +138,16 @@ with sync_playwright() as p:
         pick(page,'#companyMaterialsQty','250'); pick(page,'#companyMaterialsFormat','Dwubigowe')
         pick(page,'#companyMaterialsVariant','Standardowe 4/0')
         assert (page.locator('#companyMaterialsFormat').input_value(),page.locator('#companyMaterialsQty').input_value())==('Dwubigowe','250')
-        # papier firmowy A4
+        # papier firmowy A4 i (od 0.26.4) A5 — ceny na kafelkach formatu
         pick(page,'#companyMaterialsType','Papier firmowy')
         t=tile(page,'#companyMaterialsFormat','A4')
         assert '210 × 297 mm' in norm(t.inner_text()) and t.locator('.d24-choice-visual--sheet').count()==1
+        assert tile_price(page,'#companyMaterialsFormat','A4')=='280,00 zł' and tile_price(page,'#companyMaterialsFormat','A5')=='190,00 zł'
+        assert '148 × 210 mm' in norm(tile(page,'#companyMaterialsFormat','A5').inner_text())
         page.locator('#calculate').click(); page.wait_for_timeout(500)
         item=cart(page)[-1]
         assert item['title']=='Papier firmowy' and item['description']=='Preprint 90 g, kolor jednostronny, A4, 500 szt.',item
-        assert abs(item['price']-350)<0.01
+        assert abs(item['price']-280)<0.01,item
         assert page.evaluate("document.documentElement.scrollWidth<=window.innerWidth+1") or True
 
         # ---------- KALENDARZE

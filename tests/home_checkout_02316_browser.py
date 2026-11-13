@@ -68,7 +68,7 @@ with sync_playwright() as p:
                     '1 Kontakt i dostawa', '2 Pliki i szczegóły (nieobowiązkowe)', '3 Wyślij zamówienie'], steps
                 assert page.locator('.order-step-badge').all_inner_texts() == ['1','2','3']
                 assert page.locator('.cart-review-summary__note').count()==0
-                assert page.locator('#orderFinalTotalLabel').inner_text()=='Razem obecnie — brutto'
+                assert page.locator('#orderFinalTotalLabel').inner_text()=='Razem — brutto'
                 assert page.locator('#cartFinalTotalLabel').inner_text()=='Razem brutto'
                 page.locator('#orderPickup').select_option('Dostawa na terenie Szczecina')
                 assert page.locator('#orderFinalTotal').inner_text()=='140,00 zł'

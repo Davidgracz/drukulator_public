@@ -25,7 +25,7 @@ function d24_staff_permissions_catalog(): array
         'orders_assign' => 'Przypisywanie pracowników',
         'orders_production' => 'Terminy, priorytety i czas pracy',
         'analytics_view' => 'Podgląd Analytics',
-        'promo_manage' => 'Kody promocyjne (tworzenie i edycja)',
+        'promo_manage' => 'Kody rabatowe (tworzenie i edycja)',
     );
 }
 

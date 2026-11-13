@@ -223,13 +223,13 @@ if ($action === 'mail_retry_ready') {
         array('mail_audit' => d24_mail_audit_dashboard(), 'orders' => d24_staff_public_orders(drukulator_orders_list(500))));
 }
 
-// Kody promocyjne (0.26.0v): tworzenie, edycja, włączanie/wyłączanie i usuwanie wymaga uprawnienia „promo_manage”.
+// Kody rabatowe (0.26.0v): tworzenie, edycja, włączanie/wyłączanie i usuwanie wymaga uprawnienia „promo_manage”.
 if (in_array($action, array('promo_save', 'promo_toggle', 'promo_delete'), true)) {
-    if (!d24_staff_can('promo_manage')) d24_staff_api_response(false, 'Brak uprawnień do kodów promocyjnych.', 403);
+    if (!d24_staff_can('promo_manage')) d24_staff_api_response(false, 'Brak uprawnień do kodów rabatowych.', 403);
     $actor = (string) ($user['display_name'] ?? 'Pracownik');
     if ($action === 'promo_save') {
         [$ok, $message, $promoId] = d24_promo_save($data, $actor);
-        if ($ok) d24_monitor_log('promo_saved', 'info', 'Zapisano kod promocyjny', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
+        if ($ok) d24_monitor_log('promo_saved', 'info', 'Zapisano kod rabatowy', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
         d24_staff_api_response($ok, $message, $ok ? 200 : 400, array('promo_codes' => d24_promo_list()));
     }
     $promoId = (int) ($data['id'] ?? 0);
@@ -237,11 +237,11 @@ if (in_array($action, array('promo_save', 'promo_toggle', 'promo_delete'), true)
     if ($action === 'promo_toggle') {
         $active = !empty($data['active']);
         $ok = d24_promo_set_active($promoId, $active);
-        if ($ok) d24_monitor_log('promo_toggled', 'info', $active ? 'Włączono kod promocyjny' : 'Wyłączono kod promocyjny', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
+        if ($ok) d24_monitor_log('promo_toggled', 'info', $active ? 'Włączono kod rabatowy' : 'Wyłączono kod rabatowy', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
         d24_staff_api_response($ok, $ok ? ($active ? 'Kod został włączony.' : 'Kod został wyłączony.') : 'Nie znaleziono kodu.', $ok ? 200 : 404, array('promo_codes' => d24_promo_list()));
     }
     $ok = d24_promo_delete($promoId);
-    if ($ok) d24_monitor_log('promo_deleted', 'info', 'Usunięto kod promocyjny', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
+    if ($ok) d24_monitor_log('promo_deleted', 'info', 'Usunięto kod rabatowy', '', array('note' => 'kod #' . $promoId, 'staff' => $actor));
     d24_staff_api_response($ok, $ok ? 'Kod został usunięty.' : 'Nie znaleziono kodu.', $ok ? 200 : 404, array('promo_codes' => d24_promo_list()));
 }
 

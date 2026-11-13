@@ -1,10 +1,10 @@
-"""0.26.0: kody promocyjne — biblioteka promo-lib.php i zapis zamówienia z kodem na atrapie WordPressa (SQLite zamiast MySQL),
+"""0.26.0: kody rabatowe — biblioteka promo-lib.php i zapis zamówienia z kodem na atrapie WordPressa (SQLite zamiast MySQL),
 plus kontrola statyczna endpointów (promo-validate.php, send-order.php, staff-api.php, staff-panel.php)."""
 import re,shutil,subprocess
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 if not shutil.which('php'):
-    print('UWAGA: brak php — pominięto test kodów promocyjnych'); raise SystemExit(0)
+    print('UWAGA: brak php — pominięto test kodów rabatowych'); raise SystemExit(0)
 for name in ('promo-lib.php','promo-validate.php','send-order.php','staff-api.php','staff-panel.php','order-status-lib.php','staff-auth-lib.php'):
     lint=subprocess.run(['php','-l',str(root/name)],capture_output=True,text=True); assert lint.returncode==0,(name,lint.stdout+lint.stderr)
 r=subprocess.run(['php',str(root/'tests/promo_0260_harness.php'),str(root)],capture_output=True,text=True)

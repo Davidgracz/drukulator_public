@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Sprawdzenie kodu promocyjnego z koszyka (0.26.0v). Tylko podgląd zniżki — kod jest ponownie sprawdzany i „zużywany”
+ * Sprawdzenie kodu rabatowego z koszyka (0.26.0v). Tylko podgląd zniżki — kod jest ponownie sprawdzany i „zużywany”
  * dopiero przy wysyłce zamówienia (send-order.php).
  * POST JSON: { "code": "LATO10", "productsTotal": 123.45 }
  */

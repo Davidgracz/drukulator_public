@@ -1,4 +1,4 @@
-"""0.26.0: kody promocyjne w koszyku — zastosowanie kodu, sumy i próg darmowej dostawy po zniżce, zgodność wyliczeń z serwerem
+"""0.26.0: kody rabatowe w koszyku — zastosowanie kodu, sumy i próg darmowej dostawy po zniżce, zgodność wyliczeń z serwerem
 (wspólna tabela promo_0260_cases.json), minimalna wartość, błędne kody, usuwanie, ponowne sprawdzenie zapamiętanego kodu,
 payload i odpowiedź przy wysyłce zamówienia, odrzucenie kodu przez serwer, CSV, tłumaczenie EN. Serwer jest atrapą w przeglądarce."""
 import json,re
@@ -13,7 +13,7 @@ styles=['assets/styles.css','assets/frontend-refresh.css','assets/druk24-brand-f
 scripts=['js/i18n.js','js/calculators.js','js/checkout-experience.js','js/intelligent-search.js','js/quote-interpreter.js','js/malfini-preview.js','js/app.js','js/frontend-refresh.js','js/smart-forms.js','js/product-preview.js','js/intelligent-configurator.js','js/variant-comparison.js']
 prices,terms,cases=[json.loads((root/f).read_text()) for f in ['data/prices.json','data/search-terms.json','data/case-items.json']]
 parity=json.loads((root/'tests/promo_0260_cases.json').read_text())
-GENERIC='Kod promocyjny jest nieprawidłowy lub nieaktualny.'
+GENERIC='Kod rabatowy jest nieprawidłowy lub nieaktualny.'
 DB={   # atrapa tabeli kodów po stronie serwera
   'LATO10':{'code':'LATO10','label':'Lato','type':'percent','value':10,'minTotal':0,'validTo':'2026-12-31'},
   'MIN100':{'code':'MIN100','label':'','type':'amount','value':25,'minTotal':100,'validTo':''},
@@ -41,7 +41,7 @@ def boot(browser,width,cart,promo=None,db=None,lang=None):
         const row=window.__promoDb[code];
         if(!row) return json(200,{success:true,valid:false,reason:'invalid',message:generic});
         if(row.minTotal>0 && body.productsTotal<row.minTotal) return json(200,{success:true,valid:false,reason:'min_total',message:'Ten kod obowiązuje przy wartości produktów od '+row.minTotal.toFixed(2).replace('.',',')+' zł.'});
-        return json(200,{success:true,valid:true,message:'Kod promocyjny został zastosowany.',...row});}
+        return json(200,{success:true,valid:true,message:'Kod rabatowy został zastosowany.',...row});}
       if(u.includes("send-order.php")){
         const payload=JSON.parse(opt.body); window.__orders.push(payload);
         if(window.__sendMode==='promoInvalid') return json(422,{success:false,message:generic,promoInvalid:true});
@@ -60,7 +60,7 @@ def boot(browser,width,cart,promo=None,db=None,lang=None):
 def t(page,sel): return page.locator(sel).first.inner_text().replace(' ',' ').replace(' ',' ').strip()
 def stored(page,key): return page.evaluate('k=>localStorage.getItem(k)',key)
 def apply(page,code):
-    page.locator('summary:has-text("Masz kod promocyjny?")').click() if not page.locator('#promoInput').is_visible() else None
+    page.locator('summary:has-text("Masz kod rabatowy?")').click() if not page.locator('#promoInput').is_visible() else None
     page.locator('#promoInput').fill(code); page.locator('#promoApply').click(); page.wait_for_timeout(350)
 def fill_order(page):
     page.locator('#orderName').fill('Jan Test'); page.locator('#orderEmail').fill('jan@example.com')
@@ -73,10 +73,10 @@ with sync_playwright() as p:
         # --- 1) wpisanie kodu: zniżka, sumy, zapis, tekst wiadomości, pasek koszyka
         page,errors=boot(browser,width,[item(200)])
         assert t(page,'#cartFinalTotal')=='200,00 zł'
-        assert page.locator('summary:has-text("Masz kod promocyjny?")').count()==1 and page.locator('.d24-promo__lines').count()==0
+        assert page.locator('summary:has-text("Masz kod rabatowy?")').count()==1 and page.locator('#cartPromoBox .d24-promo__lines').count()==0
         # pusty kod
-        page.locator('summary:has-text("Masz kod promocyjny?")').click(); page.locator('#promoApply').click(); page.wait_for_timeout(200)
-        assert 'Wpisz kod promocyjny.' in t(page,'#promoStatus') and page.evaluate('window.__promoCalls.length')==0
+        page.locator('summary:has-text("Masz kod rabatowy?")').click(); page.locator('#promoApply').click(); page.wait_for_timeout(200)
+        assert 'Wpisz kod rabatowy.' in t(page,'#promoStatus') and page.evaluate('window.__promoCalls.length')==0
         # błędny kod: ogólny komunikat, nic nie zmienia
         apply(page,'zly kod'); assert GENERIC in t(page,'#promoStatus'),t(page,'#promoStatus')
         assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł'
@@ -85,31 +85,31 @@ with sync_playwright() as p:
         apply(page,'RATE'); assert 'Zbyt wiele prób' in t(page,'#promoStatus'),t(page,'#promoStatus')
         # dobry kod (małe litery, spacje)
         page.locator('#promoInput').fill('  lato10 '); page.locator('#promoApply').click(); page.wait_for_timeout(350)
-        assert page.locator('.d24-promo__applied').count()==1 and 'LATO10' in t(page,'.d24-promo__applied')
-        assert '−10% na produkty' in t(page,'.d24-promo__applied') and 'ważny do 31.12.2026' in t(page,'.d24-promo__applied'),t(page,'.d24-promo__applied')
-        lines=page.locator('.d24-promo__lines > div').all_inner_texts()
+        assert page.locator('#cartPromoBox .d24-promo__applied').count()==1 and 'LATO10' in t(page,'#cartPromoBox .d24-promo__applied')
+        assert '−10% na produkty' in t(page,'#cartPromoBox .d24-promo__applied') and 'ważny do 31.12.2026' in t(page,'#cartPromoBox .d24-promo__applied'),t(page,'#cartPromoBox .d24-promo__applied')
+        lines=page.locator('#cartPromoBox .d24-promo__lines > div').all_inner_texts()
         norm=[re.sub(r'\s+',' ',x.replace(' ',' ')).strip() for x in lines]
-        assert norm==['Produkty brutto 200,00 zł','Kod promocyjny LATO10 −20,00 zł','Produkty po zniżce 180,00 zł'],norm
+        assert norm==['Produkty brutto 200,00 zł','Kod rabatowy LATO10 −20,00 zł','Produkty po zniżce 180,00 zł'],norm
         assert t(page,'#cartFinalTotal')=='180,00 zł' and t(page,'#orderFinalTotal')=='180,00 zł',(t(page,'#cartFinalTotal'),t(page,'#orderFinalTotal'))
         assert t(page,'#quoteDockTotal')=='180,00 zł',t(page,'#quoteDockTotal')
         assert json.loads(stored(page,'drukulator_promo'))['code']=='LATO10'
         text=page.locator('#orderText').input_value()
-        assert 'PRODUKTY BRUTTO: 200,00 zł' in text and 'KOD PROMOCYJNY LATO10: −20,00 zł' in text and 'PRODUKTY PO ZNIŻCE: 180,00 zł' in text and 'RAZEM Z DOSTAWĄ: 180,00 zł' in text,text
+        assert 'PRODUKTY BRUTTO: 200,00 zł' in text and 'KOD RABATOWY LATO10: −20,00 zł' in text and 'PRODUKTY PO ZNIŻCE: 180,00 zł' in text and 'RAZEM Z DOSTAWĄ: 180,00 zł' in text,text
         # wpisywanie w formularzu zamówienia nie przerysowuje bloku kodu
         page.locator('#orderName').fill('Jan'); page.locator('#orderName').fill('Jan Kowalski')
-        assert page.locator('.d24-promo__applied').count()==1
+        assert page.locator('#cartPromoBox .d24-promo__applied').count()==1
         # CSV
         page.locator('#downloadCsv').click(); page.wait_for_timeout(200)
         csv=page.evaluate('async()=>await window.__csv.text()').lstrip('﻿').split('\r\n')
         rows=[r.replace('"','').split(';') for r in csv]
-        assert ['','PRODUKTY','','200,00'] in rows and ['','KOD PROMOCYJNY LATO10','','-20,00'] in rows and ['','RAZEM','','180,00'] in rows,rows
+        assert ['','PRODUKTY','','200,00'] in rows and ['','KOD RABATOWY LATO10','','-20,00'] in rows and ['','RAZEM','','180,00'] in rows,rows
         # usunięcie kodu
         page.locator('#promoRemove').click(); page.wait_for_timeout(250)
-        assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('.d24-promo__lines').count()==0
-        assert page.locator('summary:has-text("Masz kod promocyjny?")').count()==1
-        assert 'KOD PROMOCYJNY' not in page.locator('#orderText').input_value()
+        assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('#cartPromoBox .d24-promo__lines').count()==0
+        assert page.locator('summary:has-text("Masz kod rabatowy?")').count()==1
+        assert 'KOD RABATOWY' not in page.locator('#orderText').input_value()
         # kod z minimum: za mało produktów → komunikat serwera, kod nie zostaje zapamiętany
-        apply(page,'MIN100'); assert t(page,'.d24-promo__applied')[:3]=='KOD' # 200 zł ≥ 100 zł → działa
+        apply(page,'MIN100'); assert t(page,'#cartPromoBox .d24-promo__applied')[:3]=='KOD' # 200 zł ≥ 100 zł → działa
         assert t(page,'#cartFinalTotal')=='175,00 zł',t(page,'#cartFinalTotal')
         page.locator('#promoRemove').click(); page.wait_for_timeout(200)
         dims=page.evaluate('({scroll:document.documentElement.scrollWidth,inner:innerWidth})')
@@ -120,7 +120,7 @@ with sync_playwright() as p:
         # --- 2) kod z minimalną wartością (zapamiętany) i koszyk poniżej minimum: ostrzeżenie, brak zniżki, brak kodu w wysyłce
         page,errors=boot(browser,width,[item(80)],promo=DB['MIN100'])
         assert 'Ten kod obowiązuje przy wartości produktów od 100,00 zł' in t(page,'#cartPromoBox'),t(page,'#cartPromoBox')
-        assert page.locator('.d24-promo__lines').count()==0 and t(page,'#cartFinalTotal')=='80,00 zł'
+        assert page.locator('#cartPromoBox .d24-promo__lines').count()==0 and t(page,'#cartFinalTotal')=='80,00 zł'
         assert json.loads(stored(page,'drukulator_promo'))['code']=='MIN100'      # kod zostaje — po dodaniu produktów zacznie działać
         fill_order(page); page.locator('#sendOrder').click(); page.wait_for_timeout(500)
         assert 'promoCode' not in page.evaluate('window.__orders[0]'),page.evaluate('window.__orders[0]')
@@ -131,7 +131,7 @@ with sync_playwright() as p:
         assert t(page,'#cartFinalTotal')=='180,00 zł'
         fill_order(page); page.locator('#sendOrder').click(); page.wait_for_timeout(600)
         order=page.evaluate('window.__orders[0]'); assert order['promoCode']=='LATO10',order
-        assert 'Zastosowano kod promocyjny LATO10: −20,00 zł' in t(page,'#orderSendStatus'),t(page,'#orderSendStatus')
+        assert 'Zastosowano kod rabatowy LATO10: −20,00 zł' in t(page,'#orderSendStatus'),t(page,'#orderSendStatus')
         page.close()
         page,errors=boot(browser,width,[item(200)])
         fill_order(page); page.locator('#sendOrder').click(); page.wait_for_timeout(500)
@@ -142,7 +142,7 @@ with sync_playwright() as p:
         page,errors=boot(browser,width,[item(200)],promo=DB['LATO10'])
         page.evaluate("window.__sendMode='promoInvalid'"); fill_order(page); page.locator('#sendOrder').click(); page.wait_for_timeout(600)
         st=t(page,'#orderSendStatus'); assert GENERIC in st and 'Usunęliśmy kod z zamówienia' in st,st
-        assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('.d24-promo__lines').count()==0
+        assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('#cartPromoBox .d24-promo__lines').count()==0
         raw=page.evaluate('async()=>Promise.all(window.__beacons.map(async b=>await b.blob.text()))'); ev=[json.loads(x) for x in raw]
         errs=[e['data']['reason'] for e in ev if e['event']=='order_error']; assert errs==['validation'],errs
         assert page.locator('#sendOrder').is_enabled()
@@ -151,7 +151,7 @@ with sync_playwright() as p:
         # --- 5) ponowne sprawdzenie zapamiętanego kodu po wczytaniu strony: wygasły znika, zmieniony jest odświeżony
         page,errors=boot(browser,width,[item(200)],promo=DB['LATO10'],db={})
         page.wait_for_timeout(400)
-        assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('.d24-promo__applied').count()==0
+        assert stored(page,'drukulator_promo') is None and t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('#cartPromoBox .d24-promo__applied').count()==0
         assert 'nie jest już ważny' in t(page,'#toast'),t(page,'#toast')
         page.close()
         page,errors=boot(browser,width,[item(200)],promo=DB['LATO10'],db={'LATO10':{**DB['LATO10'],'value':20}})
@@ -161,7 +161,7 @@ with sync_playwright() as p:
         page.close()
         # uszkodzony zapis w pamięci przeglądarki nie psuje koszyka
         page,errors=boot(browser,width,[item(200)],promo={'code':'<script>','type':'percent','value':10})
-        assert t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('.d24-promo__applied').count()==0 and not errors,errors
+        assert t(page,'#cartFinalTotal')=='200,00 zł' and page.locator('#cartPromoBox .d24-promo__applied').count()==0 and not errors,errors
         page.close()
         page,errors=boot(browser,width,[item(200)],promo={'code':'LATO10','type':'percent','value':-5})
         assert t(page,'#cartFinalTotal')=='200,00 zł' and not errors,errors
@@ -170,10 +170,10 @@ with sync_playwright() as p:
         # --- 6) tłumaczenie EN bloku kodu
         page,errors=boot(browser,width,[item(200)],promo=DB['LATO10'],lang='en')
         en=t(page,'#cartPromoBox')
-        assert 'Products incl. VAT' in en and 'Products after discount' in en and 'Promo code LATO10' in en and 'on products' in en and 'valid until' in en,en
+        assert 'Products incl. VAT' in en and 'Products after discount' in en and 'Discount code LATO10' in en and 'on products' in en and 'valid until' in en,en
         page.close()
         page,errors=boot(browser,width,[item(200)],lang='en')
-        assert 'Do you have a promo code?' in t(page,'#cartPromoBox')
+        assert 'Do you have a discount code?' in t(page,'#cartPromoBox')
         page.locator('#cartPromoBox summary').click()
         assert page.locator('#promoApply').inner_text().strip()=='Apply' and page.locator('#promoInput').get_attribute('placeholder')=='Enter code'
         page.close()
@@ -202,13 +202,80 @@ with sync_playwright() as p:
         promo={'code':'PARITY','label':'','type':c['type'],'value':c['value'],'minTotal':0,'validTo':''}
         page,errors=boot(browser,1300,[item(c['total'])],promo=promo,db={'PARITY':promo})
         if c['expected']>0:
-            got=t(page,'.d24-promo__lines .is-discount b')
+            got=t(page,'#cartPromoBox .d24-promo__lines .is-discount b')
             assert got==f"−{money(c['expected'])} zł",(c,got)
         else:
-            assert page.locator('.d24-promo__lines').count()==0,c
+            assert page.locator('#cartPromoBox .d24-promo__lines').count()==0,c
         assert t(page,'#cartFinalTotal')==f"{money(round(c['total']-c['expected'],2))} zł",(c,t(page,'#cartFinalTotal'))
         assert not errors,errors
         page.close()
     print('PASS promo parity + delivery threshold',flush=True)
+
+    # --- 9) 0.26.4: stałe okienko „Kod rabatowy” w formularzu zamówienia (nad sumą, bez rozwijania) obok rozwijanego bloku po prawej
+    for width in (1300,390):
+        page,errors=boot(browser,width,[item(200)])
+        box='#orderPromoBox'
+        assert page.locator(box).count()==1 and page.locator(box).is_visible()
+        assert page.locator(box+' details').count()==0 and page.locator(box+' summary').count()==0     # na stałe, bez rozwijania
+        assert page.locator('#orderPromoInput').is_visible() and page.locator('#orderPromoApply').is_visible()   # bez klikania
+        assert t(page,box+' .d24-promo__label')=='Kod rabatowy',t(page,box+' .d24-promo__label')
+        assert page.locator('#cartPromoBox details.d24-promo__toggle').count()==1 and page.locator('#cartPromoBox summary:has-text("Masz kod rabatowy?")').count()==1   # prawa strona jak dotąd
+        assert not page.locator('#cartPromoBox #promoInput').is_visible()                                # rozwija się dopiero po kliknięciu
+        # położenie: okienko leży nad linią „Razem — brutto”
+        yb=page.eval_on_selector(box,'e=>e.getBoundingClientRect().bottom'); ys=page.eval_on_selector('.order-submit-summary','e=>e.getBoundingClientRect().top')
+        assert yb<=ys+0.5 and ys-yb<40,(yb,ys)
+        # etykieta bez „obecnie” i wyraźnie większa suma
+        summary=t(page,'.order-submit-summary')
+        assert 'obecnie' not in summary.lower() and t(page,'#orderFinalTotalLabel')=='Razem — brutto' and 'obecnie' not in page.locator('#cartPromoBox').evaluate('e=>e.closest(".cart-review-summary")?.innerText||""').lower(),summary
+        fs=page.eval_on_selector('#orderFinalTotal','e=>parseFloat(getComputedStyle(e).fontSize)'); lab=page.eval_on_selector('#orderFinalTotalLabel','e=>parseFloat(getComputedStyle(e).fontSize)')
+        assert fs>=24 and fs>=1.6*lab and fs>=1.5*16,(fs,lab)
+        assert page.evaluate('(()=>{const s=document.getElementById("orderFinalTotal");return s.scrollWidth<=s.clientWidth+1&&document.documentElement.scrollWidth<=innerWidth+1})()')
+        # pusty i błędny kod
+        page.locator('#orderPromoApply').click(); page.wait_for_timeout(200)
+        assert 'Wpisz kod rabatowy.' in t(page,'#orderPromoStatus') and page.evaluate('window.__promoCalls.length')==0
+        page.locator('#orderPromoInput').fill('zly kod'); page.locator('#orderPromoApply').click(); page.wait_for_timeout(350)
+        assert GENERIC in t(page,'#orderPromoStatus') and t(page,'#cartFinalTotal')=='200,00 zł' and stored(page,'drukulator_promo') is None
+        # wpisany, ale niezatwierdzony kod nie ginie przy pisaniu w polach formularza
+        page.locator('#orderPromoInput').fill('lato'); page.locator('#orderName').fill('Jan'); page.locator('#orderEmail').fill('jan@example.com')
+        assert page.locator('#orderPromoInput').input_value()=='lato'
+        # klawisz Enter zatwierdza kod, oba bloki pokazują zastosowany kod i ta sama suma
+        page.locator('#orderPromoInput').fill(' lato10 '); page.locator('#orderPromoInput').press('Enter'); page.wait_for_timeout(400)
+        for sel in ('#orderPromoBox','#cartPromoBox'):
+            assert page.locator(sel+' .d24-promo__applied').count()==1 and 'LATO10' in t(page,sel+' .d24-promo__applied'),sel
+            norm=[re.sub(r'\s+',' ',x.replace(' ',' ')).strip() for x in page.locator(sel+' .d24-promo__lines > div').all_inner_texts()]
+            assert norm==['Produkty brutto 200,00 zł','Kod rabatowy LATO10 −20,00 zł','Produkty po zniżce 180,00 zł'],(sel,norm)
+        assert page.locator(box+' input').count()==0 and page.locator('#cartPromoBox summary').count()==0
+        assert t(page,'#orderFinalTotal')=='180,00 zł' and t(page,'#cartFinalTotal')=='180,00 zł'
+        assert t(page,'#orderFinalTotalLabel')=='Razem — brutto'
+        yb=page.eval_on_selector(box,'e=>e.getBoundingClientRect().bottom'); ys=page.eval_on_selector('.order-submit-summary','e=>e.getBoundingClientRect().top'); assert yb<=ys+0.5,(yb,ys)
+        # wysyłka zamówienia z kodem wpisanym w okienku
+        page.locator('#orderPrivacy').check(); page.locator('#sendOrder').click(); page.wait_for_timeout(500)
+        assert page.evaluate('window.__orders.at(-1).promoCode')=='LATO10'
+        # usunięcie z okienka → oba bloki wracają do stanu wyjściowego
+        page.locator('#orderPromoRemove').click(); page.wait_for_timeout(300)
+        assert stored(page,'drukulator_promo') is None and t(page,'#orderFinalTotal')=='200,00 zł'
+        assert page.locator('.d24-promo__applied').count()==0 and page.locator('#orderPromoInput').is_visible() and page.locator('#cartPromoBox summary').count()==1
+        # kod zatwierdzony po prawej pojawia się w okienku i można go usunąć po prawej
+        page.locator('#cartPromoBox summary').click(); page.locator('#promoInput').fill('PIATKA'); page.locator('#promoApply').click(); page.wait_for_timeout(350)
+        assert page.locator('#orderPromoBox .d24-promo__applied').count()==1 and 'PIATKA' in t(page,'#orderPromoBox .d24-promo__applied') and t(page,'#orderFinalTotal')=='150,00 zł'
+        page.locator('#promoRemove').click(); page.wait_for_timeout(300)
+        assert page.locator('.d24-promo__applied').count()==0 and page.locator('#orderPromoInput').is_visible() and t(page,'#orderFinalTotal')=='200,00 zł'
+        # zapamiętany kod z minimalną wartością: ostrzeżenie widać także w okienku
+        page.close()
+        page,errors=boot(browser,width,[item(80)],promo=DB['MIN100'])
+        assert 'Ten kod obowiązuje przy wartości produktów od 100,00 zł' in t(page,'#orderPromoBox'),t(page,'#orderPromoBox')
+        assert t(page,'#orderFinalTotal')=='80,00 zł' and not errors,errors
+        # brak słowa „promocyjny” w widocznym interfejsie koszyka
+        assert 'promocyj' not in page.locator('body').inner_text().lower()
+        page.close()
+        # EN
+        page,errors=boot(browser,width,[item(200)],lang='en')
+        assert t(page,'#orderPromoBox .d24-promo__label')=='Discount code',t(page,'#orderPromoBox .d24-promo__label')
+        assert t(page,'#orderFinalTotalLabel')=='Total incl. VAT',t(page,'#orderFinalTotalLabel')
+        assert page.locator('#orderPromoApply').inner_text().strip()=='Apply' and page.locator('#orderPromoInput').get_attribute('placeholder')=='Enter code'
+        assert 'promo' not in page.locator('body').inner_text().lower().replace('promocj','')
+        assert not errors,errors
+        page.close()
+    print('PASS promo inline box (0.26.4)',flush=True)
     browser.close()
 print('PASS promo_0260_browser')

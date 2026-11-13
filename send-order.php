@@ -555,7 +555,7 @@ if (!$order_lines) {
 
 $products_total = round($total, 2);
 
-// 0.26.0: kod promocyjny — sprawdzany tu od nowa (data, limity, minimum), niezależnie od tego, co pokazała przeglądarka.
+// 0.26.0: kod rabatowy — sprawdzany tu od nowa (data, limity, minimum), niezależnie od tego, co pokazała przeglądarka.
 // Zniżka dotyczy wartości produktów; próg darmowej dostawy liczymy po zniżce, a limit kalkulatora przed zniżką.
 $promo_code = '';
 $promo_id = 0;
@@ -605,7 +605,7 @@ if ($upload_token !== '') {
 if ($promo_id > 0) {
     // Jedno użycie rezerwujemy atomowo tuż przed zapisem zamówienia; przy błędzie poczty jest zwracane.
     if (!d24_promo_reserve($promo_id, $promo_discount)) {
-        drukulator_response(false, 'Kod promocyjny przestał obowiązywać lub osiągnął limit użyć. Usuń go z koszyka albo wpisz inny.', 422, array('promoInvalid' => true));
+        drukulator_response(false, 'Kod rabatowy przestał obowiązywać lub osiągnął limit użyć. Usuń go z koszyka albo wpisz inny.', 422, array('promoInvalid' => true));
     }
     $promo_reserved = true;
 }
@@ -635,7 +635,7 @@ $message_lines = array(
 $message_lines = array_merge($message_lines, $order_lines);
 $message_lines[] = 'PRODUKTY BRUTTO: ' . number_format($products_total, 2, ',', ' ') . ' zł';
 if ($promo_code !== '') {
-    $message_lines[] = 'KOD PROMOCYJNY: ' . $promo_code . ' (' . $promo_label . ') — ZNIŻKA: -' . number_format($promo_discount, 2, ',', ' ') . ' zł';
+    $message_lines[] = 'KOD RABATOWY: ' . $promo_code . ' (' . $promo_label . ') — ZNIŻKA: -' . number_format($promo_discount, 2, ',', ' ') . ' zł';
     $message_lines[] = 'PRODUKTY PO ZNIŻCE: ' . number_format($products_after_discount, 2, ',', ' ') . ' zł';
 }
 $message_lines[] = $delivery_note;
@@ -707,7 +707,7 @@ d24_monitor_log('order_mail_accepted', 'info', 'Serwer przyjął e-mail z zapyta
 // Server-confirmed enquiry, independent of browser telemetry or page unloading.
 d24_analytics_verified_order($order_id, (float) $total, $cart, $data['analyticsSession'] ?? null);
 if ($promo_code !== '') {
-    d24_monitor_log('promo_used', 'info', 'Zamówienie z kodem promocyjnym', $order_id, array('note' => $promo_code, 'total' => $promo_discount));
+    d24_monitor_log('promo_used', 'info', 'Zamówienie z kodem rabatowym', $order_id, array('note' => $promo_code, 'total' => $promo_discount));
 }
 if (!$status_saved) {
     d24_monitor_log('order_record_failed', 'warning', 'E-mail przyjęty, ale nie zapisano zlecenia w bazie', $order_id);
@@ -732,7 +732,7 @@ $customer_message .= '<h2 style="margin:26px 0 14px;font-size:21px;color:#111827
 $customer_message .= implode('', $customer_order_html);
 if ($promo_code !== '') {
     $customer_message .= '<div style="margin:18px 0 0;padding:14px 18px;border:1px dashed #088fca;border-radius:10px;background:#eff7fd;color:#0f172a;font-size:15px;line-height:1.6;">'
-        . 'Kod promocyjny <strong>' . esc_html($promo_code) . '</strong> (' . esc_html($promo_label) . '): <strong>−' . esc_html(number_format($promo_discount, 2, ',', ' ') . ' zł') . '</strong><br>'
+        . 'Kod rabatowy <strong>' . esc_html($promo_code) . '</strong> (' . esc_html($promo_label) . '): <strong>−' . esc_html(number_format($promo_discount, 2, ',', ' ') . ' zł') . '</strong><br>'
         . 'Produkty po zniżce: <strong>' . esc_html(number_format($products_after_discount, 2, ',', ' ') . ' zł') . '</strong></div>';
 }
 $customer_message .= '<div style="margin:20px 0 0;padding:16px 18px;border-radius:10px;background:#0f172a;color:#ffffff;font-size:20px;font-weight:800;text-align:right;">RAZEM Z DOSTAWĄ: ' . esc_html(number_format($total, 2, ',', ' ') . ' zł') . ($pickup === 'Wysyłka kurierska (do ustalenia)' ? ' (bez kosztu kuriera)' : '') . '</div>';

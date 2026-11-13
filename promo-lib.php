@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 /**
- * Kody promocyjne Drukulatora (0.26.0v).
+ * Kody rabatowe Drukulatora (0.26.0v).
  *
- * Kod ustawia pracownik w panelu (zakładka „Kody promocyjne”): zniżka w % albo w zł, okres ważności,
+ * Kod ustawia pracownik w panelu (zakładka „Kody rabatowe”): zniżka w % albo w zł, okres ważności,
  * opcjonalnie minimalna wartość produktów i limit użyć. Klient wpisuje kod w koszyku; serwer sprawdza go
  * ponownie przy wysyłce zamówienia (send-order.php), więc zniżki nie da się wymusić w przeglądarce.
  * Zniżka dotyczy wartości produktów (nie dostawy). Daty są w czasie strony (strefa WordPressa).
@@ -15,7 +15,7 @@ const D24_PROMO_DB_VERSION = '1.0';
 const D24_PROMO_MAX_AMOUNT = 5000.0;
 const D24_PROMO_CODE_MIN = 3;
 const D24_PROMO_CODE_MAX = 32;
-const D24_PROMO_GENERIC_ERROR = 'Kod promocyjny jest nieprawidłowy lub nieaktualny.';
+const D24_PROMO_GENERIC_ERROR = 'Kod rabatowy jest nieprawidłowy lub nieaktualny.';
 
 function d24_promo_table(): string
 {
@@ -175,7 +175,7 @@ function d24_promo_evaluate(string $input_code, float $products_total): array
         return $fail('min_total', 'Ten kod obowiązuje przy wartości produktów od ' . number_format($promo['min_total'], 2, ',', ' ') . ' zł.');
     }
     $discount = d24_promo_discount($promo['discount_type'], $promo['discount_value'], $products_total);
-    return array('ok' => true, 'reason' => '', 'message' => 'Kod promocyjny został zastosowany.', 'promo' => $promo, 'discount' => $discount);
+    return array('ok' => true, 'reason' => '', 'message' => 'Kod rabatowy został zastosowany.', 'promo' => $promo, 'discount' => $discount);
 }
 
 /** Rezerwuje jedno użycie (atomowo, z kontrolą limitu). */

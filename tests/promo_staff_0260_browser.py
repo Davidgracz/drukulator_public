@@ -1,4 +1,4 @@
-"""0.26.0: panel pracowniczy — zakładka „Kody promocyjne”: lista ze statusami, formularz z podglądem i szybkimi ustawieniami okresu
+"""0.26.0: panel pracowniczy — zakładka „Kody rabatowe”: lista ze statusami, formularz z podglądem i szybkimi ustawieniami okresu
 ważności, generator kodu, zapis, błąd walidacji z serwera, edycja, włączanie/wyłączanie, usuwanie oraz kod i zniżka w szczegółach zlecenia.
 Panel uruchamiany z atrapą API (serwer w pamięci przeglądarki)."""
 import json,re
@@ -32,7 +32,7 @@ order={"order_id":"D24-PROMO-1","order_name":"","status":"received","total":270.
  "production_started_at":"","production_finished_at":"","work_started_at":"","work_seconds":0,"ready_notified_at":"","history":[{"status":"received","label":"Zapytanie otrzymane","at":"2026-11-12 10:00:00"}],"created_at":"2026-11-12 10:00:00","updated_at":"2026-11-12 10:00:00"}
 plain={**order,"order_id":"D24-PLAIN-1","promo_code":"","discount":0.0,"total":50.0,"updated_at":"2026-11-11 10:00:00"}
 boot={"success":True,"csrf":"tok","user":{"id":1,"is_admin":True,"permissions":[],"display_name":"Test"},"orders":[order,plain],"staff":[],"statuses":{"received":"Zapytanie otrzymane"},"production_summary":{},"production_priorities":{},
-      "permissions_catalog":{"promo_manage":"Kody promocyjne (tworzenie i edycja)"},"promo_codes":codes}
+      "permissions_catalog":{"promo_manage":"Kody rabatowe (tworzenie i edycja)"},"promo_codes":codes}
 SERVER='''([bootPayload])=>{
   window.__calls=[]; let list=JSON.parse(JSON.stringify(bootPayload.promo_codes)); let nextId=10;
   const reply=(status,obj)=>({ok:status<400,status,json:async()=>obj});
@@ -81,7 +81,7 @@ with sync_playwright() as p:
         assert '−10%' in w and 'od 2026-11-01 do 2026-12-31' in w and '3 / 10 użyć' in w and '123,40 zł' in w and 'Kampania wiosenna' in w,w
         r=norm(card(page,'RABAT25').inner_text()); assert '−25,00 zł' in r and 'bez ograniczenia czasu' in r and 'Min. produkty: 100,00 zł' in r and '0 użyć' in r,r
         # --- formularz: podgląd, szybkie okresy, generator
-        assert page.locator('#promoFormTitle').inner_text()=='Nowy kod promocyjny' and page.locator('#promoCancel').is_hidden()
+        assert page.locator('#promoFormTitle').inner_text()=='Nowy kod rabatowy' and page.locator('#promoCancel').is_hidden()
         page.locator('#promoValue').fill('15'); page.locator('#promoMax').fill('50'); page.locator('#promoMin').fill('100,50')
         pv=norm(page.locator('#promoPreview').inner_text()); assert '15% zniżki' in pv and 'maks. 50 użyć' in pv and '100,50 zł' in pv and 'bez ograniczenia czasu' in pv,pv
         page.locator('[data-promo-preset="14"]').click()
@@ -104,7 +104,7 @@ with sync_playwright() as p:
         call=page.evaluate('window.__calls.at(-1)'); plus30=page.evaluate('''()=>{const d=new Date();d.setDate(d.getDate()+30);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}''')
         assert call=={'action':'promo_save','id':0,'code':'LATO15','label':'Test ulotka','discount_type':'percent','discount_value':'15','min_total':'100,50','valid_from':today,'valid_to':plus30,'max_uses':'50','active':True,'csrf':'tok'},call
         assert cards(page).count()==7 and norm(card(page,'LATO15').locator('.pr-pill').inner_text())=='Aktywny'
-        assert page.locator('#promoCode').input_value()=='' and page.locator('#promoFormTitle').inner_text()=='Nowy kod promocyjny' and page.locator('#promoMsg').is_hidden()
+        assert page.locator('#promoCode').input_value()=='' and page.locator('#promoFormTitle').inner_text()=='Nowy kod rabatowy' and page.locator('#promoMsg').is_hidden()
         assert cards(page).first.locator('.pr-code').inner_text()=='LATO15'          # najnowszy na górze
         # duplikat
         page.locator('#promoCode').fill('LATO15'); page.locator('#promoValue').fill('5'); page.locator('#promoSave').click(); page.wait_for_timeout(300)
@@ -118,9 +118,9 @@ with sync_playwright() as p:
         page.locator('#promoGenerate').click(); assert page.locator('#promoCode').input_value()=='LATO15'            # generator nie nadpisuje kodu przy edycji
         page.locator('#promoValue').fill('20'); page.locator('#promoSave').click(); page.wait_for_timeout(400)
         call=page.evaluate('window.__calls.at(-1)'); assert call['id']==10 and call['discount_value']=='20' and call['action']=='promo_save',call
-        assert '−20%' in norm(card(page,'LATO15').inner_text()) and page.locator('#promoFormTitle').inner_text()=='Nowy kod promocyjny'
+        assert '−20%' in norm(card(page,'LATO15').inner_text()) and page.locator('#promoFormTitle').inner_text()=='Nowy kod rabatowy'
         card(page,'RABAT25').locator('[data-promo-edit]').click(); page.locator('#promoCancel').click()
-        assert page.locator('#promoFormTitle').inner_text()=='Nowy kod promocyjny' and page.locator('#promoCode').input_value()=='' and not page.locator('#promoCode').is_disabled()
+        assert page.locator('#promoFormTitle').inner_text()=='Nowy kod rabatowy' and page.locator('#promoCode').input_value()=='' and not page.locator('#promoCode').is_disabled()
         # --- włączanie / wyłączanie
         card(page,'LATO15').locator('[data-promo-toggle]').click(); page.wait_for_timeout(300)
         assert norm(card(page,'LATO15').locator('.pr-pill').inner_text())=='Wyłączony' and norm(card(page,'LATO15').locator('[data-promo-toggle]').inner_text())=='Włącz'
@@ -134,9 +134,9 @@ with sync_playwright() as p:
         # --- zlecenie: kod i zniżka w szczegółach
         page.locator('button[data-tab="orders"]').first.click(); page.wait_for_selector('.order-row',timeout=5000)
         page.locator('.order-row',has_text='D24-PROMO-1').first.click(); page.wait_for_timeout(300)
-        d=norm(page.locator('#orderDetail').inner_text()); assert 'Kod promocyjny WIOSNA10' in d and '−30,00 zł' in d,d[:600]
+        d=norm(page.locator('#orderDetail').inner_text()); assert 'Kod rabatowy WIOSNA10' in d and '−30,00 zł' in d,d[:600]
         page.locator('.order-row',has_text='D24-PLAIN-1').first.click(); page.wait_for_timeout(300)
-        assert 'Kod promocyjny' not in norm(page.locator('#orderDetail').inner_text())
+        assert 'Kod rabatowy' not in norm(page.locator('#orderDetail').inner_text())
         dims=page.evaluate('({scroll:document.documentElement.scrollWidth,inner:innerWidth})')
         page.locator('button[data-tab="promo"]').first.click()
         dims=page.evaluate('({scroll:document.documentElement.scrollWidth,inner:innerWidth})'); assert dims['scroll']<=dims['inner']+1,(width,dims)
