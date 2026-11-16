@@ -95,10 +95,10 @@ with sync_playwright() as p:
                 want=base_price+per*sheets
                 got=price(page)
                 assert got==f'{want:.2f}'.replace('.',',')+' zł',(typ,side,got)
-                q=quote_text(page); assert re.search(r'Foliowanie\s*'+typ,q) and re.search(r'Foliowanie – cena\s*'+f'{per*sheets:.2f}'.replace('.',','),q),(typ,q)
+                q=quote_text(page); assert re.search(r'Foliowanie\s*'+{'Satyna':'Z folią soft skin','Błysk':'Z folią błysk','Mat':'Z folią mat'}[typ],q) and re.search(r'Foliowanie – cena\s*'+f'{per*sheets:.2f}'.replace('.',','),q),(typ,q)
                 assert 'jednostronne' not in q.lower().split('foliowanie')[1][:40]
         setv(page,'#digSide','Dwustronny'); setv(page,'#digFoil','Satyna')
-        assert page.locator('#digFoilState').text_content().strip()=='Satyna · +40,00 zł',page.locator('#digFoilState').text_content()
+        assert page.locator('#digFoilState').text_content().strip()=='Z folią soft skin · +40,00 zł',page.locator('#digFoilState').text_content()
         # zmiana papieru na cieńszy zeruje foliowanie
         setv(page,'#digPaper','Papier kredowy 170 g'); assert page.locator('#digFoil').input_value()=='Brak' and inactive(page,'digFoilField')
         assert page.locator('#digFoilState').text_content().strip()=='Tylko kreda od 250 g'
@@ -135,7 +135,7 @@ with sync_playwright() as p:
         page.locator('#calculate').click(); page.wait_for_timeout(400)   # zaufane kliknięcie = dodanie do koszyka
         cart=json.loads(page.evaluate('localStorage.getItem("drukulator_cart")'))
         assert len(cart)==1 and abs(cart[0]['price']-429)<0.001,cart
-        d=cart[0]['description']; assert '40 str. × 3 kompl.' in d and 'foliowanie satyna' in d and 'dwustronne' not in d.lower().split('foliowanie')[1] and 'spirala metalowa 8 mm × 3' in d,d
+        d=cart[0]['description']; assert '40 str. × 3 kompl.' in d and 'z folią soft skin' in d and 'dwustronne' not in d.lower() and 'spirala metalowa 8 mm × 3' in d,d
         # --- inne usługi bez zmian
         go(page)
         setv(page,'#digService','Ksero i druk'); assert page.locator('label[for="digQty"], #digQty').count()>=1
@@ -190,13 +190,13 @@ with sync_playwright() as p:
     go(page)
     page.locator('#digFoilBox > summary').click(); page.locator('#digBindBox > summary').click(); page.wait_for_timeout(300)
     txt=page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-    for need in ('Number of pages','Number of sets','Lamination','Binding','Lamination type','Matte','Choose the binding type first.','Lamination is available only for coated paper of 250 g and heavier.'):
+    for need in ('Number of pages','Number of sets','Lamination','Binding','Lamination type','With matt film','Choose the binding type first.','Lamination is available only for coated paper of 250 g and heavier.'):
         assert need in txt,(need,txt)
     assert page.locator('#digFoilState').text_content().strip()=='Coated paper 250 g and up only',page.locator('#digFoilState').text_content()   # po rozwinięciu podsumowanie jest ukryte
     assert 'Liczba stron' not in txt and 'Foliowanie' not in txt and 'Ilość kompletów' not in txt and 'Tylko kreda' not in txt
     setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna'); page.wait_for_timeout(300)
-    st=page.locator('#digFoilState').text_content(); assert st.startswith('Satin · +') and 'PLN' in st,st
-    setv(page,'#digFoil','Mat'); page.wait_for_timeout(300); st=page.locator('#digFoilState').text_content(); assert st.startswith('Matte · +') and 'PLN' in st,st
+    st=page.locator('#digFoilState').text_content(); assert st.startswith('With soft-skin film · +') and 'PLN' in st,st
+    setv(page,'#digFoil','Mat'); page.wait_for_timeout(300); st=page.locator('#digFoilState').text_content(); assert st.startswith('With matt film · +') and 'PLN' in st,st
     setv(page,'#digBindType','Bindowanie – spirala metalowa'); page.wait_for_timeout(300)
     st=page.locator('#digBindState').text_content(); assert 'coil' in st.lower() or 'spiral' in st.lower(),st
     assert not errors,errors

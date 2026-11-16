@@ -1,5 +1,5 @@
 """0.26.3: Druk cyfrowy 24h — foliowanie i bindowanie w rozwijanych sekcjach (domyślnie zwiniętych), foliowanie jako jedno pole
-Brak / Satyna / Błysk / Mat tylko dla kredy od 250 g, stałe pozycje kafelków po każdej zmianie wyboru, ceny na kafelkach,
+Brak / Z folią soft skin / Z folią błysk / Z folią mat (0.26.6; w cenniku Satyna / Błysk / Mat) tylko dla kredy od 250 g, stałe pozycje kafelków po każdej zmianie wyboru, ceny na kafelkach,
 brak „skoku” tekstu po zaznaczeniu (0.26.2), podpowiedź „większy nakład” dla kompletów."""
 import json,re
 from pathlib import Path
@@ -71,7 +71,7 @@ with sync_playwright() as p:
         # --- foliowanie: jedno pole, bez podziału na jedno- i dwustronne; ceny na kafelkach (cały koszyk po wyborze danej opcji)
         assert not page.locator('#digFoilField.d24-field-inactive').count()
         pr=prices_on(page,'digFoilField')
-        assert [(n,v) for n,v,_,_ in pr]==[('Brak','115,00 zł'),('Satyna','155,00 zł'),('Błysk','145,00 zł'),('Mat','145,00 zł')],pr   # 100 druk + 15 papier; folia 20 arkuszy × 2 / 1,5 / 1,5
+        assert [(n,v) for n,v,_,_ in pr]==[('Brak','115,00 zł'),('Z folią soft skin','155,00 zł'),('Z folią błysk','145,00 zł'),('Z folią mat','145,00 zł')],pr   # 100 druk + 15 papier; folia 20 arkuszy × 2 / 1,5 / 1,5
         assert [a for *_,a in pr]==['true','false','false','false'] and all(v=='visible' for _,_,v,_ in pr)
         pr=prices_on(page,'digBindTypeField')
         assert [(n,v) for n,v,_,_ in pr]==[('Brak','115,00 zł'),('Oprawa miękka zaciskowa','124,90 zł'),('Bindowanie – spirala plastikowa','121,50 zł'),('Bindowanie – spirala metalowa','122,00 zł')],pr
@@ -142,11 +142,11 @@ with sync_playwright() as p:
         # --- zwinięte sekcje pokazują wybór i cenę (jak na kafelkach)
         page.locator('#digFoilBox > summary').click(); page.locator('#digBindBox > summary').click(); settle(page)
         assert not is_open('digFoilBox') and not is_open('digBindBox')
-        assert page.locator('#digFoilState').text_content().strip()=='Satyna · +40,00 zł',page.locator('#digFoilState').text_content()
+        assert page.locator('#digFoilState').text_content().strip()=='Z folią soft skin · +40,00 zł',page.locator('#digFoilState').text_content()
         assert page.locator('#digBindState').text_content().strip()=='Bindowanie – spirala plastikowa, 25 mm · +10,20 zł',page.locator('#digBindState').text_content()
         assert page.locator('#digFoilState').is_visible() and page.locator('#digBindState').is_visible()
         setv(page,'#digSets','3'); settle(page)
-        assert page.locator('#digFoilState').text_content().strip()=='Satyna · +120,00 zł' and page.locator('#digBindState').text_content().strip().endswith('· +30,60 zł'),(page.locator('#digFoilState').text_content(),page.locator('#digBindState').text_content())
+        assert page.locator('#digFoilState').text_content().strip()=='Z folią soft skin · +120,00 zł' and page.locator('#digBindState').text_content().strip().endswith('· +30,60 zł'),(page.locator('#digFoilState').text_content(),page.locator('#digBindState').text_content())
         setv(page,'#digSets','1')
         # --- tekst kafelka nie „skacze” po zaznaczeniu (odstęp od góry kafelka i zawijanie nazwy takie same wybrany/niewybrany)
         page.locator('#digFoilBox > summary').click(); page.locator('#digBindBox > summary').click(); settle(page)

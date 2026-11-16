@@ -635,6 +635,18 @@
     return Object.keys(table).filter(name => name !== DIGITAL_FOIL_NONE && Number(table[name]) >= 0 && table[name] !== null && table[name] !== "");
   }
 
+  // 0.26.6v: nazwy rodzajów folii widoczne dla klienta („Satyna” w cenniku = folia soft skin); kolejność: soft skin, błysk, mat, potem własne.
+  const DIGITAL_FOIL_LABELS = { "Satyna": "Z folią soft skin", "Błysk": "Z folią błysk", "Mat": "Z folią mat" };
+  const DIGITAL_FOIL_ORDER = ["Satyna", "Błysk", "Mat"];
+  function getDigitalFoilLabel(name) {
+    if (!name || name === DIGITAL_FOIL_NONE) return "Brak";
+    return DIGITAL_FOIL_LABELS[name] || `Z folią ${String(name).toLowerCase()}`;
+  }
+  function sortDigitalFoilTypes(names) {
+    const rank = name => { const index = DIGITAL_FOIL_ORDER.indexOf(name); return index < 0 ? DIGITAL_FOIL_ORDER.length : index; };
+    return [...names].sort((a, b) => rank(a) - rank(b));
+  }
+
   function calculateDigitalPrint(pricesRoot, options = {}) {
     const {
       colorMode, pages, sets = 1, formatName = "A4", paperType = "Standardowy 80 g", sideMode = "Jednostronny",
@@ -943,7 +955,7 @@
     NO_PRINT, DIGITAL_FINISH_KEYS, OFFSET_FINISH_KEYS,
     getBannerPricePerM2, calculateManualCutting, calculateOptionalManualCutting, calculateBanner, calculateBusinessCards, calculateFlyers,
     getStickerPricePerLinearMeter, calculateStickers, calculateNotepads, calculateCatalogProduct,
-    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, isDigitalFoilPaper, getDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
+    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, isDigitalFoilPaper, getDigitalFoilTypes, getDigitalFoilLabel, sortDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
     calculateLamination, getCanvasSuggestions, calculateProportionalCanvasSize, calculateCanvasStandard, calculateCanvasCustom, calculateWedding,
     getQuantityTier, roundUpToStep
   };

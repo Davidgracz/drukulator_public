@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.5v";
+  const VERSION = "0.26.6v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -649,7 +649,7 @@
     else if (normalized.includes("ksero")) service = "Ksero i druk";
     const color = normalized.includes("kolor") ? "Kolorowy" : (normalized.includes("mono") || normalized.includes("czarno") || normalized.includes("cz b")) ? "Czarno-biały" : "Czarno-biały";
     const formatName = requestedFormat && ["A4", "A3"].includes(requestedFormat) ? requestedFormat : "A4";
-    const side = normalized.includes("dwustron") ? "Dwustronny" : "Jednostronny";
+    const side = normalized.includes("jednostron") ? "Jednostronny" : "Dwustronny";   // 0.26.6v: domyślnie dwustronny (jak w formularzu)
     const paperWeight = normalized.match(/\b(130|170|250|300|350)\s*g\b/);
     const paper = paperWeight ? `Papier kredowy ${paperWeight[1]} g` : "Standardowy 80 g";
     const steps = [["digService", service], ["digColor", color]];
@@ -1159,7 +1159,7 @@
         return quoteAssistantQuestion("Kolor czy czarno-biały?", [["Kolor", "kolor"], ["Czarno-biały", "czarno-biały"]], "Kolor lub czarno-biały");
       }
       if (!isScan && !isBookCopy && !normalized.includes("ksero") && !quoteAssistantHasAny(clean, ["jednostron", "dwustron"])) {
-        return quoteAssistantQuestion("Wydruk jednostronny czy dwustronny?", [["Jednostronny", "jednostronny"], ["Dwustronny", "dwustronny"]], "Jednostronny lub dwustronny");
+        return quoteAssistantQuestion("Wydruk dwustronny czy jednostronny?", [["Dwustronny", "dwustronny"], ["Jednostronny", "jednostronny"]], "Dwustronny lub jednostronny");
       }
     }
 
@@ -4271,7 +4271,7 @@
       cena_za_m2: "Cena za m²",
       cena_m2_obrazu: "Cena za m² obrazu",
       doplaty_do_papieru: "Dopłaty do papieru",
-      foliowanie: "Foliowanie wydruków [zł za arkusz A4, A3 = 2 × A4; tylko kreda od 250 g]",
+      foliowanie: "Foliowanie wydruków [zł za arkusz A4, A3 = 2 × A4; tylko kreda od 250 g; Satyna = folia soft skin]",
       mnozniki_formatu: "Mnożniki formatu",
       mnozniki_zadruku: "Mnożniki zadruku",
       progi_cenowe: "Progi cenowe",
@@ -5965,7 +5965,9 @@
     const standardPapers = ["Standardowy 80 g", "Papier kredowy 130 g", "Papier kredowy 170 g", "Papier kredowy 250 g", "Papier kredowy 300 g", "Papier kredowy 350 g"];
     // 0.26.1v: papier kolorowy i etykietowy wycofane — czarno-biały i kolor mają tę samą listę papierów.
     const blackPapers = standardPapers;
-    const foilTypes = C.getDigitalFoilTypes(state.prices);
+    const foilTypes = C.sortDigitalFoilTypes(C.getDigitalFoilTypes(state.prices));
+    // 0.26.6v: w „Druku cyfrowym 24h” dwustronny zadruk jest pierwszą i domyślnie wybraną opcją.
+    const sideModes = Object.keys(root.mnozniki_zadruku).sort((a, b) => (b === "Dwustronny") - (a === "Dwustronny"));
     const bindingTypes = C.getDigitalBindingTypes(state.prices);
     const impositionPapers = imposition.papiery || standardPapers.filter(name => ["130 g", "170 g", "250 g", "300 g"].some(weight => name.includes(weight)));
 
@@ -5984,10 +5986,10 @@
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(Object.keys(root.mnozniki_zadruku))}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
           <div class="field half"><label for="digSets">Ilość kompletów</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div>
           <details class="d24-extra" id="digFoilBox"><summary><span class="d24-extra__title">Foliowanie</span><span class="d24-extra__state" id="digFoilState"></span></summary>
-            <div class="d24-extra__body"><div class="field" id="digFoilField"><label for="digFoil">Rodzaj folii</label><select id="digFoil">${options(["Brak", ...foilTypes])}</select><p class="d24-inactive-note">Foliowanie jest dostępne tylko dla papieru kredowego 250 g i grubszego.</p></div></div></details>
+            <div class="d24-extra__body"><div class="field" id="digFoilField"><label for="digFoil">Rodzaj folii</label><select id="digFoil">${["Brak", ...foilTypes].map(name => `<option value="${esc(name)}">${esc(C.getDigitalFoilLabel(name))}</option>`).join("")}</select><p class="d24-inactive-note">Foliowanie jest dostępne tylko dla papieru kredowego 250 g i grubszego.</p></div></div></details>
           <details class="d24-extra" id="digBindBox"><summary><span class="d24-extra__title">Bindowanie i oprawy</span><span class="d24-extra__state" id="digBindState"></span></summary>
             <div class="d24-extra__body">
               <div class="field half" id="digBindTypeField"><label for="digBindType">Rodzaj oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select></div>
@@ -6057,7 +6059,7 @@
         try { quote = C.calculateDigitalPrint(state.prices, digitalPrintOptionsFromForm()); } catch { quote = null; }
         const plus = amount => ` · +${money(amount)} zł`;
         const eligible = C.isDigitalFoilPaper(paper.value);
-        foilState.textContent = !eligible ? "Tylko kreda od 250 g" : foil.value === "Brak" ? "Brak" : `${foil.value}${quote ? plus(quote.foilTotal) : ""}`;
+        foilState.textContent = !eligible ? "Tylko kreda od 250 g" : foil.value === "Brak" ? "Brak" : `${C.getDigitalFoilLabel(foil.value)}${quote ? plus(quote.foilTotal) : ""}`;
         foilState.classList.toggle("d24-extra__state--on", eligible && foil.value !== "Brak");
         const bound = bindType.value !== "Brak";
         bindState.textContent = !bound ? "Brak" : `${bindType.value}${bindVariant.value ? `, ${bindVariant.value}` : ""}${quote ? plus(quote.bindingTotal) : ""}`;
@@ -6139,8 +6141,8 @@
         details.push(["Liczba arkuszy", result.sheets], ["Format", opts.formatName], ["Zadruk", opts.sideMode], ["Papier", opts.paperType], ["Próg cenowy", result.tier]);
         const extras = [];
         if (result.foilActive) {
-          details.push(["Foliowanie", opts.foilType]);
-          extras.push(`foliowanie ${opts.foilType.toLowerCase()}`);
+          details.push(["Foliowanie", C.getDigitalFoilLabel(opts.foilType)]);
+          extras.push(C.getDigitalFoilLabel(opts.foilType).toLowerCase());
         }
         if (result.bindingActive) {
           details.push(["Bindowanie i oprawy", `${opts.bindingType}, ${opts.bindingVariant} × ${result.bindingCopies} szt.`]);
