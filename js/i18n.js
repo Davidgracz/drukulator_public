@@ -259,6 +259,8 @@
     "Rodzaj ulotki": "Flyer type",
     "Realizacja standardowa: 24h": "Standard turnaround: 24h",
     "Materiał": "Material",
+    "Materiały": "Materials",
+    "Materiały reklamowe": "Advertising materials",
     "Szerokość [cm]": "Width [cm]",
     "Wysokość [cm]": "Height [cm]",
     "Ilość sztuk": "Quantity",
@@ -701,6 +703,244 @@
     "✓ Własna ilość": "✓ Custom quantity",
     "Dostępność wybranego rozmiaru i koloru potwierdzimy po wysłaniu zamówienia.": "We confirm the availability of the selected size and colour after you send the order.",
   }));
+
+  // 0.26.5v: uzupełnienia i poprawki tłumaczenia angielskiego — strona startowa, koszyk i formularz zamówienia, działy katalogowe,
+  // opisy produktów. Brakujące wcześniej teksty wpadały do zamiany pojedynczych słów i wychodziły pomieszane (np. „Zamów printing”).
+  Object.entries({
+    "Koperty, teczki i papier firmowy": "Envelopes, folders and letterhead paper",
+    "Kalendarze": "Calendars",
+    "Banery": "Banners",
+    "Koszulki": "T-shirts",
+    "Naklejki": "Stickers",
+    "PCV i plansze": "PVC and boards",
+    "BEZ AI": "NO AI",
+    "ZAMÓWIENIA ONLINE": "ONLINE ORDERS",
+    "Zamów druk": "Order printing",
+    "Zamów online": "Order online",
+    "Dobierz produkt według zastosowania": "Pick a product by how you will use it",
+    "Dobierz produkt do zastosowania": "Pick a product by how you will use it",
+    "Nie wiem, czego potrzebuję": "I'm not sure what I need",
+    "Uruchom asystenta zamówień": "Start the order assistant",
+    "Albo wpisz wszystko jednym zdaniem": "Or describe everything in one sentence",
+    "Wpisz produkt, np. ulotki, wizytówki, plakaty…": "Enter a product, e.g. flyers, business cards, posters…",
+    "Wpisz produkt lub do czego go potrzebujesz…": "Enter a product or what you need it for…",
+    "Wyszukaj produkt po nazwie. Jeśli nie znasz parametrów, skorzystaj z osobnego asystenta poniżej.": "Search for a product by name. If you are not sure about the options, use the separate assistant below.",
+    "Wybierz produkt, sprawdź cenę i dodaj go do koszyka. Jeśli potrzebujesz pomocy z parametrami, skorzystaj z asystenta.": "Choose a product, check the price and add it to your cart. If you need help with the options, use the assistant.",
+    "Od razu widzisz wyliczoną cenę, do potwierdzenia przez drukarnię": "You see the calculated price right away; the print shop confirms it",
+    "Zamówienie wymaga akceptacji drukarni": "The order needs the print shop's approval",
+    "Przesłanie zamówienia nie jest zakupem ani rozpoczęciem produkcji. Drukarnia potwierdzi cenę i termin realizacji.": "Submitting an order is not a purchase and does not start production. The print shop will confirm the price and lead time.",
+    "Bez obowiązku zapłaty": "No obligation to pay",
+    "Weryfikacja przez drukarnię": "Checked by the print shop",
+    "Ceny brutto": "Gross prices",
+    "Szybki dostęp": "Quick access",
+    "Najważniejsze informacje": "Key information",
+    "W godzinach pracy drukarni": "During print shop opening hours",
+    "Wymaga potwierdzenia drukarni.": "Needs confirmation from the print shop.",
+    "Dla firm": "For business",
+    "Branżowe": "Industry",
+    "Branżowe i wydarzenia": "Industry and events",
+    "Reklama i wielki format": "Advertising and large format",
+    "A4–B0, także wielki format": "A4–B0, including large format",
+    "A6, A5, DL i składane": "A6, A5, DL and folded",
+    "Oprawy kanałowe, miękkie i bindowanie": "Channel, softcover and spiral binding",
+    "Ścienne, listwowane, biuwary i piramidki": "Wall, strip-bound, desk pad and pyramid calendars",
+    "Kalendarze ścienne, listwowane, biuwary i piramidki": "Wall, strip-bound, desk pad and pyramid calendars",
+    "Menu, podkładki, prezentery i notesy": "Menus, tray liners, table presenters and notepads",
+    "Zaproszenia, plany stołów i dekoracje": "Invitations, seating plans and decorations",
+    "Systemy wystawiennicze i wymiana wkładów": "Display systems and replacement graphics",
+    "Komplet materiałów dla biur, agentów i deweloperów": "A full set of materials for offices, agents and developers",
+    "Materiały firmowe, korespondencja i prezentacja ofert": "Company materials, correspondence and presentation of offers",
+    "A4/A3, kolor, mono i arkuszowanie": "A4/A3, colour, mono and sheet layouts",
+    "Notesy klejone, spiralowane i NCR": "Glued and spiral notepads and NCR pads",
+    "Koszulki, polo, bluzy i sam nadruk": "T-shirts, polo shirts, hoodies and print only",
+    "Naklejki, etykiety i magnesy reklamowe": "Stickers, labels and promotional magnets",
+    "Sztywne plansze reklamowe i ekspozycyjne": "Rigid advertising and display boards",
+    "Banery, folie, laminat i OWH": "Banners, films, laminate and OWH",
+    "Tablice PCV, plansze i banery": "PVC boards, display boards and banners",
+    "Gotowe formaty i własny wymiar": "Standard formats and custom size",
+    "Wizytówki cyfrowe i offsetowe": "Digital and offset business cards",
+    "Druk cyfrowy i ksero": "Digital printing and copying",
+    "Folia i OWH": "Film and OWH",
+    "Technologia druku": "Printing technology",
+    "szybko i wygodnie": "quick and convenient",
+    "Obraz na płótnie": "Canvas print",
+    "np. „200 ulotek A5”": "e.g. “200 A5 flyers”",
+    "BRANŻOWE · NIERUCHOMOŚCI": "INDUSTRY · REAL ESTATE",
+    "Wszystko, czego potrzebujesz do prezentacji i oznakowania ofert": "Everything you need to present and promote your listings",
+    "Ta kategoria zbiera w jednym miejscu najczęściej zamawiane materiały dla branży nieruchomości. Ceny są pobierane z tych samych kalkulatorów co w pozostałych częściach Drukulatora.": "This category brings together, in one place, the materials the real-estate industry orders most often. Prices come from the same calculators as in the rest of the Drukulator.",
+    "Dodaj wybrane produkty do jednego zamówienia. Nie tworzę osobnego cennika dla branży nieruchomości — każda pozycja korzysta z aktualnej ceny właściwego kalkulatora.": "Add the selected products to a single order. There is no separate price list for the real-estate industry — every item uses the current price from the relevant calculator.",
+    "Dla agentów, pośredników, biur sprzedaży i deweloperów.": "For agents, brokers, sales offices and developers.",
+    "Oferty mieszkań, inwestycji, dni otwarte, skup i sprzedaż nieruchomości.": "Flat listings, developments, open days, property purchase and sale.",
+    "Oznakowanie ofert, inwestycji, lokali i nieruchomości na sprzedaż lub wynajem.": "Signage for listings, developments, premises and properties for sale or rent.",
+    "Spójna korespondencja firmowa, oferty, pisma i dokumenty dla klientów.": "Consistent company correspondence, offers, letters and client documents.",
+    "Do przekazywania ofert, umów, prezentacji inwestycji i dokumentów klienta.": "For handing over offers, contracts, project presentations and client documents.",
+    "Grafika na witryny biur, szyby i powierzchnie reklamowe.": "Graphics for office windows, glass and advertising surfaces.",
+    "Wybierz teczki": "Choose folders",
+    "Wybierz ulotki": "Choose flyers",
+    "Wybierz wizytówki": "Choose business cards",
+    "Wybierz folię OWH": "Choose OWH film",
+    "Wybierz papier firmowy": "Choose letterhead paper",
+    "✓ Aktualne ceny brutto": "✓ Current gross prices",
+    "✓ Jedno wspólne zamówienie": "✓ One shared order",
+    "✓ Możesz łączyć kilka produktów": "✓ You can combine several products",
+    "Twoje zamówienie": "Your order",
+    "Twoje zamówienie i formularz zapytania": "Your order and enquiry form",
+    "Podsumowanie Twojego zamówienia": "Summary of your order",
+    "Dodaj produkt, aby przygotować zapytanie": "Add a product to prepare your enquiry",
+    "Zobacz koszyk": "View cart",
+    "Przejdź do koszyka": "Go to cart",
+    "Wybrane produkty": "Selected products",
+    "Produkty w zamówieniu": "Products in the order",
+    "Pliki do zapytania": "Files for the enquiry",
+    "Wyczyść zamówienie": "Clear order",
+    "Zapisz na później": "Save for later",
+    "Udostępnij to zamówienie": "Share this order",
+    "Utwórz link do zamówienia": "Create an order link",
+    "Utwórz prywatny link do tej konfiguracji. Link nie zawiera danych kontaktowych ani załączników.": "Create a private link to this configuration. The link does not contain contact details or attachments.",
+    "Nie udało się utworzyć linku do koszyka.": "Could not create a link to the cart.",
+    "Podsumowanie kosztów": "Cost summary",
+    "PODSUMOWANIE ZAMÓWIENIA": "ORDER SUMMARY",
+    "Sprawdź produkty i prześlij zamówienie do drukarni. Realizacja wymaga jej potwierdzenia wraz z terminem.": "Check your products and send the order to the print shop. Production needs its confirmation together with the lead time.",
+    "RAZEM BRUTTO": "TOTAL INCL. VAT",
+    "Aktualna cena brutto": "Current gross price",
+    "Podaj kontakt, żebyśmy mogli potwierdzić termin, dostępność i realizację.": "Give us your contact details so we can confirm the lead time, availability and fulfilment.",
+    "Podaj dane kontaktowe, opcjonalnie dodaj pliki i prześlij zamówienie do Druk24.": "Enter your contact details, optionally add files and send the order to Druk24.",
+    "Na ten adres wyślemy potwierdzenie otrzymania zapytania.": "We will send a confirmation that we received your enquiry to this address.",
+    "np. kontakt@firma.pl": "e.g. contact@company.com",
+    "Ulica, numer budynku/lokalu, Szczecin": "Street, building/flat number, Szczecin",
+    "Adres dostawy w Szczecinie *": "Delivery address in Szczecin *",
+    "Adres dostawy:": "Delivery address:",
+    "Dostawa:": "Delivery:",
+    "Sposób odbioru / dostawy": "Collection / delivery method",
+    "Dostawa na terenie Szczecina": "Delivery within Szczecin",
+    "Dostawa w Szczecinie — GRATIS": "Delivery in Szczecin — FREE",
+    "Wysyłka kurierska (do ustalenia)": "Courier shipping (to be agreed)",
+    "Dostawa na terenie Szczecina: 20 zł, bezpłatnie przy wartości produktów od 300 zł. Wysyłka kurierska możliwa po uzgodnieniu kosztów z drukarnią.": "Delivery within Szczecin: PLN 20, free for products worth PLN 300 or more. Courier shipping is possible once the cost is agreed with the print shop.",
+    "Darmowa dostawa obowiązuje od 300 zł wartości produktów.": "Free delivery applies to products worth PLN 300 or more.",
+    "Cena i termin wymagają potwierdzenia drukarni.": "The price and lead time need confirmation from the print shop.",
+    "Ostateczna cena i termin po potwierdzeniu przez drukarnię.": "The final price and lead time are confirmed by the print shop.",
+    "Termin realizacji do potwierdzenia przez drukarnię.": "Lead time to be confirmed by the print shop.",
+    "To nie jest zakup. Realizacja rozpocznie się dopiero po potwierdzeniu ceny i terminu przez drukarnię oraz Twojej akceptacji.": "This is not a purchase. Production starts only after the print shop confirms the price and lead time and you accept them.",
+    "Samo wysłanie nie powoduje obowiązku zapłaty. Drukarnia potwierdzi cenę i termin przed realizacją.": "Sending the order does not oblige you to pay. The print shop will confirm the price and lead time before production.",
+    "Etapy przesyłania zamówienia": "Order submission steps",
+    "Wykorzystanie limitu załączników": "Attachment limit used",
+    "Wybierz pliki lub przeciągnij je tutaj": "Choose files or drag them here",
+    "lub ZIP. Możesz wybrać kilka plików jednocześnie.": "or ZIP. You can choose several files at once.",
+    "Limit: 5 plików, łącznie do 50 MB. Miniatury i kontrola zdjęć działają lokalnie — wysyłka nastąpi dopiero po kliknięciu „Wyślij zamówienie”.": "Limit: 5 files, 50 MB in total. Thumbnails and image checks run locally — nothing is sent until you click “Send order”.",
+    "Nie dodano plików. Możesz wysłać zapytanie bez załączników i dosłać projekt później.": "No files added. You can send the enquiry without attachments and send your artwork later.",
+    "Możesz dodać projekt, ale nie jest to wymagane do przesłania zamówienia.": "You can add your artwork, but it is not required to submit the order.",
+    "i zgadzam się na kontakt w sprawie tego zamówienia. *": "and I agree to be contacted about this order. *",
+    "Wróć na stronę główną Drukulatora": "Back to the Drukulator home page",
+    "Zamówienie do potwierdzenia — Druk24": "Order for confirmation — Druk24",
+    "przesyłam zamówienie do weryfikacji w drukarni Druk24:": "I am sending an order for verification by the Druk24 print shop:",
+    "PRODUKTY BRUTTO:": "PRODUCTS (GROSS):",
+    "RAZEM Z DOSTAWĄ:": "TOTAL WITH DELIVERY:",
+    "Pobierz CSV": "Download CSV",
+    "Sprawdzanie…": "Checking…",
+    "Opis zamówienia do kreatora zamówienia": "Order description for the order assistant",
+    "Wyślij do kreatora": "Send to the assistant",
+    "Asystent zamówień": "Order assistant",
+    "Cześć! Pomogę Ci zrobić zamówienie.": "Hi! I'll help you put your order together.",
+    "Podobne określenie lub literówka": "Similar term or typo",
+    "Brak dopasowania. Wpisz nazwę produktu albo wybierz kategorię poniżej.": "No match. Enter a product name or choose a category below.",
+    "Gotowe — kliknij przycisk powyżej albo zacznij od nowa.": "Done — click the button above or start over.",
+    "WARTO ROZWAŻYĆ": "WORTH CONSIDERING",
+    "Sprawdź większy nakład": "Check a larger quantity",
+    "Grubszy / inny papier:": "Thicker / different paper:",
+    "Więcej miejsca na treść:": "More room for content:",
+    "Wpisz liczbę plakatów": "Enter the number of posters",
+    "Podaj ilość potrzebnych naklejek lub etykiet.": "Enter how many stickers or labels you need.",
+    "Uzupełnij parametry": "Complete the options",
+    "Zobacz konfigurację": "View configuration",
+    "Wycena szczegółowa · rozwiń konfigurację": "Detailed quote · expand configuration",
+    "Pokaż ten wariant —": "Show this option —",
+    "sprawdź parametry": "check the options",
+    "za całe zamówienie": "for the whole order",
+    "(obecnie ": "(currently ",
+    "Cena jednostkowa spada o około": "The unit price drops by about",
+    "rz. obróconych 90°": "rows rotated 90°",
+    "Wybrany układ:": "Selected layout:",
+    "Własny wymiar jest rozliczany według najbliższego większego formatu z cennika. Przyciski − i + zmieniają wymiar co 10 cm, a w polu możesz wpisać dowolną wartość.": "A custom size is billed as the next larger format in the price list. The − and + buttons change the size in 10 cm steps, and you can type any value in the field.",
+    "Wybierz sposób produkcji. Ceny pochodzą z rzeczywistego cennika; termin potwierdzi drukarnia.": "Choose the production method. Prices come from the actual price list; the print shop will confirm the lead time.",
+    "Maksymalny krótszy bok:": "Maximum shorter side:",
+    "dłuższy: do": "longer side: up to",
+    "(niezależnie od orientacji)": "(regardless of orientation)",
+    "Minimalny krótszy bok baneru:": "Minimum shorter side of the banner:",
+    "W sprawie zlecenia wykraczającego poza kalkulator skontaktuj się z": "For orders outside the scope of the calculator, please contact",
+    "Minimalny wymiar:": "Minimum size:",
+    "Maksymalny wymiar:": "Maximum size:",
+    "Minimalne zamówienie:": "Minimum order:",
+    "Szerokość folii:": "Film width:",
+    "Do wymiaru produkcyjnego dodawane są 3 mm.": "3 mm is added to the production size.",
+    "Papier satynowy 135 g.": "135 gsm satin paper.",
+    "Możesz zamówić już od 1 sztuki; własny nakład od 1 do 30 sztuk.": "You can order from just 1 piece; a custom quantity is available from 1 to 30 pieces.",
+    "Kalendarz trójdzielny z płaską główką.": "Three-panel calendar with a flat head.",
+    "Kalendarz jednodzielny z płaską główką.": "Single-panel calendar with a flat head.",
+    "Kalendarz trójdzielny z główką wypukłą.": "Three-panel calendar with a convex head.",
+    "Kalendarz jednodzielny z główką wypukłą.": "Single-panel calendar with a convex head.",
+    "Foliowanie główki folią matową.": "The head is laminated with matt film.",
+    "Foliowanie główki folią soft skin.": "The head is laminated with soft-skin film.",
+    "Foliowanie główki folią błyszczącą.": "The head is laminated with gloss film.",
+    "Kalendarz listwowany plakatowy.": "Strip-bound poster calendar.",
+    "Kalendarz biurkowy typu piramidka, spiralowany.": "Spiral-bound pyramid desk calendar.",
+    "Koperty DL, C5 lub C6, papier offsetowy 80 g, nadruk jednostronny.": "DL, C5 or C6 envelopes, 80 gsm offset paper, single-sided print.",
+    "Teczki ofertowe jedno- lub dwubigowe, druk 4/0, foliowane.": "Presentation folders, single- or double-crease, 4/0 printing, laminated.",
+    "Teczki ofertowe jedno- lub dwubigowe, druk 4/0.": "Presentation folders, single- or double-crease, 4/0 printing.",
+    "Lakier UV 3D + Soft Touch": "3D UV varnish + Soft Touch",
+    "druk offsetowy": "offset printing",
+    "druk cyfrowy 24h": "digital printing 24h",
+    "druk cyfrowy": "digital printing",
+    "druk wielkoformatowy": "large-format printing",
+    "Przejdź do zamówień online": "Go to online ordering",
+    "NETTO": "NET",
+    "Okruszki": "Breadcrumb",
+    "OSTATNI KROK": "LAST STEP",
+    "NAJKORZYSTNIEJ": "BEST VALUE",
+    "Tworzenie linku…": "Creating link…",
+    "Reklama i ekspozycja": "Advertising and display",
+    "Popularne:": "Popular:",
+    "Pasuje do wyszukiwania": "Matches your search",
+    "Dokumenty od A6 do A3": "Documents from A6 to A3",
+    "Materiały firmowe i korespondencja": "Company materials and correspondence",
+    "Cennik online Druk24": "Druk24 online price list",
+    "Druk dwustronny": "Double-sided printing",
+    "Druk jednostronny": "Single-sided printing",
+    "druk dwustronny": "double-sided printing",
+    "druk jednostronny": "single-sided printing",
+    "Laminowanie dokumentów folią": "Document lamination with film"
+  }).forEach(([pl, en]) => exact.set(pl, en));
+
+  // Szablony zdań z liczbami (liczba mnoga, jednostki) — całe zdanie, bez zamiany pojedynczych słów.
+  const plural = (n, one, many) => Number(n) === 1 ? one : many;
+  const patterns = [
+    [/^(\d+) produkt(?:y|ów)? w zapytaniu$/, (m, n) => `${n} ${plural(n, "product", "products")} in your order`],
+    [/^(\d+) produkt(?:y|ów)?$/, (m, n) => `${n} ${plural(n, "product", "products")}`],
+    [/^(\d+) pozycj(?:a|e|i)( • .+)?$/, (m, n, rest) => `${n} ${plural(n, "item", "items")}${rest ? translateString(rest) : ""}`],
+    [/^(\d+) usług[ia]?$/, (m, n) => `${n} ${plural(n, "service", "services")}`],
+    [/^Wybierz (\d+) szt\.$/, (m, n) => `Choose ${n} pcs`],
+    [/^Wybierz (\d+) egz\.$/, (m, n) => `Choose ${n} ${plural(n, "copy", "copies")}`],
+    [/^(\d+) \/ (\d+) plików$/, (m, a, b) => `${a} / ${b} files`],
+    [/^Laminowanie dokumentów folią (\d+) mikronów$/, (m, n) => `Document lamination with ${n}-micron film`],
+    [/^(\d+) (szt\.|egz\.) za ([\d\s.,]+) zł zamiast (\d+) (szt\.|egz\.) za ([\d\s.,]+) zł$/, (m, n1, u1, p1, n2, u2, p2) => {
+      const unit = (n, u) => u === "egz." ? plural(n, "copy", "copies") : plural(n, "pc", "pcs");
+      return `${n1} ${unit(n1, u1)} for PLN ${p1} instead of ${n2} ${unit(n2, u2)} for PLN ${p2}`;
+    }]
+  ];
+  // Słowa, których nie rozpozna \b (polskie litery) albo które zepsułaby zamiana fragmentów.
+  const wordPatterns = [
+    [/(?<![\p{L}\d])brutto(?![\p{L}])/gu, "gross"],
+    [/(?<![\p{L}\d])netto(?![\p{L}])/gu, "net"],
+    [/(?<![\p{L}\d])plików(?![\p{L}])/gu, "files"],
+    [/(?<![\p{L}\d])pliki(?![\p{L}])/gu, "files"],
+    [/(?<![\p{L}\d])plik(?![\p{L}])/gu, "file"],
+    [/szt\.\/kompletów/g, "pcs/sets"],
+    [/, po (\d+) stron/g, ", $1 pages each"]
+  ];
+  // Liczba pojedyncza po zamianie jednostek: „1 pcs” → „1 pc”.
+  const singulars = [[/(?<![\d.,])1 pcs(?![\w])/g, "1 pc"], [/(?<![\d.,])1 pages(?![\w])/g, "1 page"], [/(?<![\d.,])1 copies(?![\w])/g, "1 copy"],
+    [/(?<![\d.,])1 items(?![\w])/g, "1 item"], [/(?<![\d.,])1 sheets(?![\w])/g, "1 sheet"], [/(?<![\d.,])1 sets(?![\w])/g, "1 set"], [/(?<![\d.,])1 rows(?![\w])/g, "1 row"]];
+  // Tekst, który już jest po angielsku (np. z tr() w kodzie), nie przechodzi przez zamianę polskich słów — „do not” nie może zamienić się w „to not”.
+  const looksEnglish = text => !/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/.test(text) && /\b(the|and|with|for|your|you|not|will|this|that|are|of)\b/i.test(text);
 
   const phrases = [
     ["Ten kod obowiązuje przy wartości produktów od", "This code applies to a product value from"],
@@ -1767,9 +2007,11 @@
     ]
 ].sort((a, b) => b[0].length - a[0].length);
 
+  // 0.26.5v: jednowyrazowe wpisy (np. „Materiał”) nie mogą psuć odmienionych form („Materiały” → „Materialy”) — dopasowanie tylko całego wyrazu
   const compoundExact = [...exact.entries()]
     .filter(([key]) => key.length >= 8 || /[\s,;+\/()–—-]/.test(key))
-    .sort((a, b) => b[0].length - a[0].length);
+    .sort((a, b) => b[0].length - a[0].length)
+    .map(([from, to]) => [from, to, /^\p{L}+$/u.test(from) ? new RegExp(`(?<![\\p{L}\\d])${from}(?![\\p{L}\\d])`, "gu") : null]);
 
   const originalText = new WeakMap();
   const originalAttributes = new WeakMap();
@@ -1792,8 +2034,14 @@
     const core = input.slice(leading.length, input.length - trailing.length || input.length);
     if (!core) return input;
     if (exact.has(core)) return leading + exact.get(core) + trailing;
+    for (const [pattern, build] of patterns) {
+      const match = core.match(pattern);
+      if (match) return leading + build(...match) + trailing;
+    }
+    if (looksEnglish(core)) return input;
     let output = core;
-    for (const [from, to] of compoundExact) output = output.split(from).join(to);
+    for (const [from, to, wholeWord] of compoundExact) output = wholeWord ? output.replace(wholeWord, () => to) : output.split(from).join(to);
+    for (const [pattern, to] of wordPatterns) output = output.replace(pattern, to);
     for (const [from, to] of phrases) output = output.split(from).join(to);
     output = output
       .replace(/\b(\d+)\s+rz\.\b/g, "$1 rows")
@@ -1803,13 +2051,13 @@
       .replace(/\b(\d+)\s+kopii\b/g, "$1 copies")
       .replace(/\b(\d+)\s+arkuszy\b/g, "$1 sheets")
       .replace(/\bCena\b/g, "Price")
-      .replace(/\bIlość\b/g, "Quantity")
+      .replace(/(?<![\p{L}\d])Ilość(?![\p{L}\d])/gu, "Quantity")
       .replace(/\bWariant\b/g, "Variant")
       .replace(/\bPapier\b/g, "Paper")
-      .replace(/\bMateriał\b/g, "Material")
-      .replace(/\bSzerokość\b/g, "Width")
-      .replace(/\bWysokość\b/g, "Height")
-      .replace(/\bŁącznie\b/g, "Total")
+      .replace(/(?<![\p{L}\d])Materiał(?![\p{L}\d])/gu, "Material")
+      .replace(/(?<![\p{L}\d])Szerokość(?![\p{L}\d])/gu, "Width")
+      .replace(/(?<![\p{L}\d])Wysokość(?![\p{L}\d])/gu, "Height")
+      .replace(/(?<![\p{L}\d])Łącznie(?![\p{L}\d])/gu, "Total")
       .replace(/\bDodatkowych\b/g, "Extra")
       .replace(/\bWymiar\b/g, "Size")
       .replace(/\bRozmiar\b/g, "Size")
@@ -1822,7 +2070,7 @@
       .replace(/\bsztuki\b/g, "items")
       .replace(/\bsztuka\b/g, "item")
       .replace(/\bszt\.\b/g, "pcs")
-      .replace(/\bzł\b/g, "PLN")
+      .replace(/(?<![\p{L}\d])zł(?![\p{L}\d])/gu, "PLN")
       .replace(/\bmb\b/g, "linear m")
       .replace(/\bDruk\b/g, "Printing")
       .replace(/\bdruk\b/g, "printing")
@@ -1847,10 +2095,11 @@
       .replace(/\bdwustronne\b/g, "double-sided")
       .replace(/\bNakład\b/g, "Quantity")
       .replace(/\bZadruk\b/g, "Printing sides")
-      .replace(/\bMateriał\b/g, "Material")
-      .replace(/\bŁączna powierzchnia\b/g, "Total area")
+      .replace(/(?<![\p{L}\d])Materiał(?![\p{L}\d])/gu, "Material")
+      .replace(/(?<![\p{L}\d])Łączna powierzchnia(?![\p{L}\d])/gu, "Total area")
       .replace(/\bMinimum zamówienia\b/g, "Minimum order")
       .replace(/\bPróg cenowy\b/g, "Price tier");
+    for (const [pattern, to] of singulars) output = output.replace(pattern, to);
     return leading + output + trailing;
   }
 

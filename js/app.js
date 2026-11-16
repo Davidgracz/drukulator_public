@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.4v";
+  const VERSION = "0.26.5v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -1241,9 +1241,10 @@
       requestAnimationFrame(() => messages.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
     }
 
-    function addBubble(role, text, html = false) {
+    function addBubble(role, text, html = false, keepOriginal = false) {
       const node = document.createElement("div");
       node.className = `quote-assistant__bubble quote-assistant__bubble--${role}`;
+      if (keepOriginal) node.setAttribute("data-no-translate", ""); // 0.26.5v: własnych, wpisanych słów klienta nie tłumaczymy
       node.innerHTML = html ? text : esc(text);
       messages.appendChild(node);
       scrollAssistant();
@@ -1351,14 +1352,14 @@
       else renderNavigation(result);
     }
 
-    function submitAnswer(answer, displayText = answer) {
+    function submitAnswer(answer, displayText = answer, typed = true) {
       const clean = String(answer || "").trim();
       if (!clean) return;
       if (!session.started) {
         session.started = true;
         analyticsTrack("quote_wizard_start");
       }
-      addBubble("user", String(displayText || clean));
+      addBubble("user", String(displayText || clean), false, typed);
       session.parts.push(clean);
       input.value = "";
       choices.innerHTML = "";
@@ -1395,7 +1396,7 @@
       if (query && found) {
         session.parts = [query];
         session.started = true;
-        addBubble("user", query);
+        addBubble("user", query, false, true);
         renderUseCaseRecommendations({ useCase: found });
       } else {
         showUseCaseChoices();
@@ -1452,7 +1453,7 @@
       }
       const answerButton = event.target.closest("[data-assistant-answer]");
       if (answerButton) {
-        submitAnswer(answerButton.dataset.assistantAnswer, answerButton.textContent);
+        submitAnswer(answerButton.dataset.assistantAnswer, answerButton.textContent, false);
         return;
       }
       if (event.target.closest("#quoteAssistantOpenQuote") && session.readyIntent) {

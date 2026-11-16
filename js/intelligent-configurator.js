@@ -26,6 +26,9 @@
     'Restauracje, hotele': ['hospitalityVariant', 'hospitalityFormat'],
     'Śluby, wesela i imprezy': ['weddingVariant', 'weddingFormat']
   };
+  // 0.26.5v: pola, w których cena stoi na kafelku także wtedy, gdy jest tylko jedna opcja (Restauracje, hotele: podkładki, menu A3 —
+  // jeden wariant i jeden format, więc bez tego nie było żadnej ceny przed wyborem nakładu).
+  const singleOptionPrice = new Set(['hospitalityFormat']);
   const papers = [
     [/80\s*g/i, ['Lekki papier', 'Lightweight']],
     [/130\s*g/i, ['Papier o niższej gramaturze', 'Lighter paper']],
@@ -119,7 +122,7 @@
         const amount = prices.get(option.value);
         // 0.24.5: kwota przy formacie zostaje także wtedy, gdy dana ilość jest dostępna tylko w jednym formacie
         // (np. offset A3 × 500 szt. = 575 zł); chodzi o liczbę dostępnych opcji, nie o liczbę policzonych cen.
-        if (amount !== undefined && available.length > 1) {
+        if (amount !== undefined && (available.length > 1 || singleOptionPrice.has(select.id))) {
           const label = document.createElement('span');
           label.className = 'd24-config-price';
           label.textContent = money(amount);

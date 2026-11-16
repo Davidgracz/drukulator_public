@@ -273,7 +273,7 @@ with sync_playwright() as p:
         assert t(page,'#orderPromoBox .d24-promo__label')=='Discount code',t(page,'#orderPromoBox .d24-promo__label')
         assert t(page,'#orderFinalTotalLabel')=='Total incl. VAT',t(page,'#orderFinalTotalLabel')
         assert page.locator('#orderPromoApply').inner_text().strip()=='Apply' and page.locator('#orderPromoInput').get_attribute('placeholder')=='Enter code'
-        assert 'promo' not in page.locator('body').inner_text().lower().replace('promocj','')
+        assert not re.search(r'promo(?!tion)',page.locator('body').inner_text().lower().replace('promocj','')) # „promotional” (np. magnesy reklamowe) jest poprawnym słowem, „promo code” już nie
         assert not errors,errors
         page.close()
     print('PASS promo inline box (0.26.4)',flush=True)
