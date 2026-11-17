@@ -1378,6 +1378,50 @@
       "Błysk": 1.5,
       "Mat": 1.5
     },
+    "oprawy_ceny": {
+      "Oprawa miękka zaciskowa": {
+        "5 mm": 12.5,
+        "10 mm": 14.5,
+        "13 mm": 17.5,
+        "16 mm": 20.5
+      },
+      "Bindowanie – spirala plastikowa": {
+        "14 mm": 10,
+        "19 mm": 12,
+        "25 mm": 15,
+        "32 mm": 17,
+        "38 mm": 20,
+        "51 mm": 23
+      },
+      "Bindowanie – spirala metalowa": {
+        "6,4 mm": 11,
+        "9,5 mm": 13,
+        "12,7 mm": 15,
+        "14,3 mm": 18
+      }
+    },
+    "oprawy_pojemnosc_kartek": {
+      "Oprawa miękka zaciskowa": {
+        "5 mm": 40,
+        "10 mm": 90,
+        "13 mm": 110,
+        "16 mm": 145
+      },
+      "Bindowanie – spirala plastikowa": {
+        "14 mm": 90,
+        "19 mm": 150,
+        "25 mm": 200,
+        "32 mm": 260,
+        "38 mm": 320,
+        "51 mm": 430
+      },
+      "Bindowanie – spirala metalowa": {
+        "6,4 mm": 30,
+        "9,5 mm": 60,
+        "12,7 mm": 90,
+        "14,3 mm": 105
+      }
+    },
     "dla_studentow": {
       "Czarno-biały": {
         "A4": 0.15,

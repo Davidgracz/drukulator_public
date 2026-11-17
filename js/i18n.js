@@ -607,7 +607,7 @@
     "Foliowane błysk lub Soft Touch": "Gloss or Soft Touch laminated",
     "Złocenie lub srebrzenie + Soft Touch": "Gold or silver foil + Soft Touch",
     "Składane": "Folded",
-    "Komplet to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × komplety), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każdy komplet dostaje własną oprawę. Foliowanie i bindowanie rozwijasz poniżej; foliowanie jest dostępne tylko dla papieru kredowego od 250 g. Format A3 kosztuje 2 razy więcej niż A4.": "A set is one copy of the whole document. The print price is based on the total number of pages (pages × sets); double-sided printing puts 2 pages on one sheet. Paper and lamination are based on the number of sheets, and every set gets its own binding. Expand lamination and binding below; lamination is available only for coated paper of 250 g and up. A3 costs twice as much as A4.",
+    "Komplet to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × komplety), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każdy komplet dostaje własną oprawę. Bindowanie i foliowanie rozwijasz poniżej: bindowanie jest dostępne tylko dla papieru 80 g (rozmiar oprawy dobieramy automatycznie do liczby kartek w komplecie), foliowanie tylko dla papieru od 250 g. Format A3 kosztuje 2 razy więcej niż A4.": "A set is one copy of the whole document. The print price is based on the total number of pages (pages × sets); double-sided printing puts 2 pages on one sheet. Paper and lamination are based on the number of sheets, and every set gets its own binding. Expand binding and lamination below: binding is available only for 80 gsm paper (the binding size is chosen automatically from the number of sheets in a set), lamination only for paper from 250 g. A3 costs twice as much as A4.",
     "Ilość kompletów": "Number of sets",
     "Łącznie stron": "Total pages",
     "Komplet to jeden egzemplarz całego dokumentu.": "A set is one copy of the whole document.",
@@ -618,6 +618,12 @@
     "Rodzaj folii": "Lamination type",
     "Mat": "Matte",
     "Tylko kreda od 250 g": "Coated paper 250 g and up only",
+    "Tylko dla papieru od 250 g": "Only for paper from 250 g",
+    "Tylko dla papieru 80 g": "Only for 80 gsm paper",
+    "Foliowanie jest dostępne tylko dla papieru od 250 g.": "Lamination is available only for paper from 250 g.",
+    "Bindowanie i oprawy są dostępne tylko dla papieru 80 g.": "Binding is available only for 80 gsm paper.",
+    "Dostępne tylko dla papieru 80 g.": "Available only for 80 gsm paper.",
+    "Wpisz liczbę stron.": "Enter the number of pages.",
     "Foliowanie jest dostępne tylko dla papieru kredowego 250 g i grubszego.": "Lamination is available only for coated paper of 250 g and heavier.",
     "Satyna": "Satin",
     "Z folią soft skin": "With soft-skin film",
@@ -928,6 +934,9 @@
     [/^Wybierz (\d+) szt\.$/, (m, n) => `Choose ${n} pcs`],
     [/^Wybierz (\d+) egz\.$/, (m, n) => `Choose ${n} ${plural(n, "copy", "copies")}`],
     [/^(\d+) \/ (\d+) plików$/, (m, a, b) => `${a} / ${b} files`],
+    [/^Kartek w jednym komplecie: (\d+)\. Rozmiar oprawy dobieramy automatycznie\.$/, (m, n) => `Sheets in one set: ${n}. The binding size is chosen automatically.`],
+    [/^Kartek w jednym komplecie \((\d+)\) jest więcej niż mieści ta oprawa \(maks\. (\d+)\)\. Wybierz inną oprawę albo skontaktuj się z nami\.$/, (m, n, max) => `There are ${n} sheets in one set, more than this binding holds (max. ${max}). Choose another binding or contact us.`],
+    [/^Liczba kartek w jednym komplecie \((\d+)\) jest większa niż pojemność oprawy „(.+)” \(maks\. (\d+)\)\. Wybierz inną oprawę albo skontaktuj się z nami\.$/, (m, n, type, max) => `The number of sheets in one set (${n}) exceeds the capacity of the binding “${translateString(type)}” (max. ${max}). Choose another binding or contact us.`],
     [/^Laminowanie dokumentów folią (\d+) mikronów$/, (m, n) => `Document lamination with ${n}-micron film`],
     [/^(\d+) (szt\.|egz\.) za ([\d\s.,]+) zł zamiast (\d+) (szt\.|egz\.) za ([\d\s.,]+) zł$/, (m, n1, u1, p1, n2, u2, p2) => {
       const unit = (n, u) => u === "egz." ? plural(n, "copy", "copies") : plural(n, "pc", "pcs");
@@ -942,7 +951,11 @@
     [/(?<![\p{L}\d])pliki(?![\p{L}])/gu, "files"],
     [/(?<![\p{L}\d])plik(?![\p{L}])/gu, "file"],
     [/szt\.\/kompletów/g, "pcs/sets"],
-    [/, po (\d+) stron/g, ", $1 pages each"]
+    [/, po (\d+) stron/g, ", $1 pages each"],
+    [/(?<![\p{L}\d])do (\d+) kartek(?![\p{L}])/gu, "up to $1 sheets"],
+    [/(?<![\p{L}\d])do (\d+),(\d+) mm(?![\p{L}])/gu, "up to $1.$2 mm"],
+    [/(?<![\p{L}\d])do (\d+) mm(?![\p{L}])/gu, "up to $1 mm"],
+    [/, za dużo kartek/g, ", too many sheets"]
   ];
   // Liczba pojedyncza po zamianie jednostek: „1 pcs” → „1 pc”.
   const singulars = [[/(?<![\d.,])1 pcs(?![\w])/g, "1 pc"], [/(?<![\d.,])1 pages(?![\w])/g, "1 page"], [/(?<![\d.,])1 copies(?![\w])/g, "1 copy"],

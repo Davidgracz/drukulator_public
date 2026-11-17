@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.6v";
+  const VERSION = "0.26.7v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2599,6 +2599,23 @@
       for (const [typeName, amount] of Object.entries(defaultFoil)) {
         if (legacyLayout || !(Number(foil[typeName]) >= 0) || foil[typeName] === null || foil[typeName] === "") foil[typeName] = amount;
       }
+      // 0.26.7v: oprawy w druku cyfrowym — własny cennik (zł za oprawę jednego kompletu) i pojemność w kartkach 80 g.
+      // Starsze cenniki (z serwera lub przeglądarki) dostają cały domyślny cennik opraw; już istniejący (własne zmiany) nie jest nadpisywany.
+      const isTable = value => value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0;
+      if (!isTable(digitalRoot.oprawy_ceny)) {
+        digitalRoot.oprawy_ceny = {
+          "Oprawa miękka zaciskowa": { "5 mm": 12.5, "10 mm": 14.5, "13 mm": 17.5, "16 mm": 20.5 },
+          "Bindowanie – spirala plastikowa": { "14 mm": 10, "19 mm": 12, "25 mm": 15, "32 mm": 17, "38 mm": 20, "51 mm": 23 },
+          "Bindowanie – spirala metalowa": { "6,4 mm": 11, "9,5 mm": 13, "12,7 mm": 15, "14,3 mm": 18 }
+        };
+      }
+      if (!isTable(digitalRoot.oprawy_pojemnosc_kartek)) {
+        digitalRoot.oprawy_pojemnosc_kartek = {
+          "Oprawa miękka zaciskowa": { "5 mm": 40, "10 mm": 90, "13 mm": 110, "16 mm": 145 },
+          "Bindowanie – spirala plastikowa": { "14 mm": 90, "19 mm": 150, "25 mm": 200, "32 mm": 260, "38 mm": 320, "51 mm": 430 },
+          "Bindowanie – spirala metalowa": { "6,4 mm": 30, "9,5 mm": 60, "12,7 mm": 90, "14,3 mm": 105 }
+        };
+      }
     }
 
     // 0.26.4v: papier firmowy — nowe ceny A4 (500 – 280 zł, 1000 – 330 zł, 2500 – 460 zł) i nowy format A5 (500 – 190 zł, 1000 – 230 zł, 2500 – 280 zł).
@@ -4271,7 +4288,9 @@
       cena_za_m2: "Cena za m²",
       cena_m2_obrazu: "Cena za m² obrazu",
       doplaty_do_papieru: "Dopłaty do papieru",
-      foliowanie: "Foliowanie wydruków [zł za arkusz A4, A3 = 2 × A4; tylko kreda od 250 g; Satyna = folia soft skin]",
+      foliowanie: "Foliowanie wydruków [zł za arkusz A4, A3 = 2 × A4; tylko dla papieru od 250 g; Satyna = folia soft skin]",
+      oprawy_ceny: "Oprawy w druku cyfrowym — cena [zł za oprawę jednego kompletu; tylko dla papieru 80 g]",
+      oprawy_pojemnosc_kartek: "Oprawy w druku cyfrowym — pojemność [do ilu kartek 80 g; rozmiar dobierany automatycznie]",
       mnozniki_formatu: "Mnożniki formatu",
       mnozniki_zadruku: "Mnożniki zadruku",
       progi_cenowe: "Progi cenowe",
@@ -4681,13 +4700,13 @@
           if (v.digService === "Arkuszowanie 24h") return null;
           if (v.digService === "Druk cyfrowy 24h") {
             // Foliowanie działa tylko na kredzie od 250 g — wybór grubszego papieru zachowuje folię, cieńszego ją zeruje (jak formularz).
-            const foilOn = v.digFoil && v.digFoil !== "Brak" && C.isDigitalFoilPaper(v.digPaper) && C.getDigitalFoilTypes(state.prices).includes(v.digFoil), bindOn = v.digBindType && v.digBindType !== "Brak";
-            const variants = bindOn ? state.prices.oprawa_prac.rodzaje_opraw[v.digBindType] : null;
+            const foilOn = v.digFoil && v.digFoil !== "Brak" && C.isDigitalFoilPaper(v.digPaper) && C.getDigitalFoilTypes(state.prices).includes(v.digFoil), bindOn = v.digBindType && v.digBindType !== "Brak" && C.isDigitalBindingPaper(v.digPaper);
+            // 0.26.7v: rozmiar oprawy dobiera kalkulator (do liczby kartek); kafelek innego rozmiaru niż dobrany nie ma kwoty.
+            if (bindOn && fieldId === "digBindVariant" && candidate !== values.digBindVariant) return null;
             result = C.calculateDigitalPrint(state.prices, {
               colorMode: v.digColor, pages: n("digQty"), sets: n("digSets") || 1, formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
               foilType: foilOn ? v.digFoil : "Brak",
-              // Nowy rodzaj oprawy zachowuje bieżący rozmiar, jeśli istnieje, a jeśli nie — pierwszy z listy (jak formularz).
-              bindingType: bindOn ? v.digBindType : "Brak", bindingVariant: variants ? (v.digBindVariant in variants ? v.digBindVariant : Object.keys(variants)[0]) : ""
+              bindingType: bindOn ? v.digBindType : "Brak", bindingVariant: ""
             });
           } else {
             const svc = v.digService === "Dla studentów 24h" ? "Dla studentów" : v.digService;
@@ -5988,14 +6007,15 @@
       } else if (service.value === "Druk cyfrowy 24h") {
         html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
           <div class="field half"><label for="digSets">Ilość kompletów</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div>
-          <details class="d24-extra" id="digFoilBox"><summary><span class="d24-extra__title">Foliowanie</span><span class="d24-extra__state" id="digFoilState"></span></summary>
-            <div class="d24-extra__body"><div class="field" id="digFoilField"><label for="digFoil">Rodzaj folii</label><select id="digFoil">${["Brak", ...foilTypes].map(name => `<option value="${esc(name)}">${esc(C.getDigitalFoilLabel(name))}</option>`).join("")}</select><p class="d24-inactive-note">Foliowanie jest dostępne tylko dla papieru kredowego 250 g i grubszego.</p></div></div></details>
           <details class="d24-extra" id="digBindBox"><summary><span class="d24-extra__title">Bindowanie i oprawy</span><span class="d24-extra__state" id="digBindState"></span></summary>
             <div class="d24-extra__body">
-              <div class="field half" id="digBindTypeField"><label for="digBindType">Rodzaj oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select></div>
-              <div class="field half" id="digBindVariantField"><label for="digBindVariant">Rozmiar oprawy / spirali</label><select id="digBindVariant"></select><p class="d24-inactive-note">Najpierw wybierz rodzaj oprawy.</p></div>
-            </div></details>`;
-        note = "Komplet to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × komplety), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każdy komplet dostaje własną oprawę. Foliowanie i bindowanie rozwijasz poniżej; foliowanie jest dostępne tylko dla papieru kredowego od 250 g. Format A3 kosztuje 2 razy więcej niż A4.";
+              <div class="field half" id="digBindTypeField"><label for="digBindType">Rodzaj oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select><p class="d24-inactive-note">Bindowanie i oprawy są dostępne tylko dla papieru 80 g.</p></div>
+              <div class="field half" id="digBindVariantField"><label for="digBindVariant">Rozmiar oprawy / spirali</label><select id="digBindVariant"></select><p class="d24-inactive-note" id="digBindNote" aria-live="polite">Najpierw wybierz rodzaj oprawy.</p></div>
+            </div></details>
+          <details class="d24-extra" id="digFoilBox"><summary><span class="d24-extra__title">Foliowanie</span><span class="d24-extra__state" id="digFoilState"></span></summary>
+            <div class="d24-extra__body"><div class="field" id="digFoilField"><label for="digFoil">Rodzaj folii</label><select id="digFoil">${["Brak", ...foilTypes].map(name => `<option value="${esc(name)}">${esc(C.getDigitalFoilLabel(name))}</option>`).join("")}</select><p class="d24-inactive-note">Foliowanie jest dostępne tylko dla papieru od 250 g.</p></div></div></details>
+`;
+        note = "Komplet to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × komplety), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każdy komplet dostaje własną oprawę. Bindowanie i foliowanie rozwijasz poniżej: bindowanie jest dostępne tylko dla papieru 80 g (rozmiar oprawy dobieramy automatycznie do liczby kartek w komplecie), foliowanie tylko dla papieru od 250 g. Format A3 kosztuje 2 razy więcej niż A4.";
       } else if (service.value === "Ksero i druk") {
         html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.ksero_i_druk))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field"><label>Rodzaj papieru</label><select id="digPaper">${options(standardPapers)}</select></div><div class="field"><label>Liczba kopii</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
         note = "Format A3 kosztuje 2 razy więcej niż format A4.";
@@ -6034,8 +6054,8 @@
       const sheetsHint = document.getElementById("digSheetsHint"), setsHint = document.getElementById("digSetsHint");
       const foil = document.getElementById("digFoil"), foilField = document.getElementById("digFoilField"), foilState = document.getElementById("digFoilState");
       const bindType = document.getElementById("digBindType"), bindVariant = document.getElementById("digBindVariant");
-      const bindVariantField = document.getElementById("digBindVariantField"), bindState = document.getElementById("digBindState");
-      const bindings = state.prices.oprawa_prac.rodzaje_opraw;
+      const bindTypeField = document.getElementById("digBindTypeField"), bindVariantField = document.getElementById("digBindVariantField");
+      const bindState = document.getElementById("digBindState"), bindNote = document.getElementById("digBindNote");
       function sheetsText() {
         const pages = Math.floor(Number(qty.value));
         const setCount = Math.floor(Number(sets.value));
@@ -6059,10 +6079,11 @@
         try { quote = C.calculateDigitalPrint(state.prices, digitalPrintOptionsFromForm()); } catch { quote = null; }
         const plus = amount => ` · +${money(amount)} zł`;
         const eligible = C.isDigitalFoilPaper(paper.value);
-        foilState.textContent = !eligible ? "Tylko kreda od 250 g" : foil.value === "Brak" ? "Brak" : `${C.getDigitalFoilLabel(foil.value)}${quote ? plus(quote.foilTotal) : ""}`;
+        foilState.textContent = !eligible ? "Tylko dla papieru od 250 g" : foil.value === "Brak" ? "Brak" : `${C.getDigitalFoilLabel(foil.value)}${quote ? plus(quote.foilTotal) : ""}`;
         foilState.classList.toggle("d24-extra__state--on", eligible && foil.value !== "Brak");
-        const bound = bindType.value !== "Brak";
-        bindState.textContent = !bound ? "Brak" : `${bindType.value}${bindVariant.value ? `, ${bindVariant.value}` : ""}${quote ? plus(quote.bindingTotal) : ""}`;
+        const bindEligible = C.isDigitalBindingPaper(paper.value);
+        const bound = bindEligible && bindType.value !== "Brak";
+        bindState.textContent = !bindEligible ? "Tylko dla papieru 80 g" : !bound ? "Brak" : `${bindType.value}${bindVariant.value ? `, do ${bindVariant.value}` : ", za dużo kartek"}${quote ? plus(quote.bindingTotal) : ""}`;
         bindState.classList.toggle("d24-extra__state--on", bound);
       }
       function setFoil() {
@@ -6071,14 +6092,40 @@
         if (!eligible && foil.value !== "Brak") { foil.value = "Brak"; foil.dispatchEvent(new Event("change", { bubbles: true })); }
         setInactive(foilField, !eligible);
       }
+      // 0.26.7v: kartki w jednym komplecie (kartka = arkusz; druk dwustronny mieści 2 strony na kartce).
+      function sheetsPerSetNow() {
+        const pages = Math.floor(Number(qty.value));
+        return pages > 0 ? Math.ceil(pages / (Number(root.mnozniki_zadruku[side.value]) || 1)) : 0;
+      }
+      // Bindowanie działa tylko dla papieru 80 g (cieńszy lub grubszy papier zeruje wybór, jak przy foliowaniu). Rozmiar oprawy dobiera się
+      // sam: najmniejszy, który mieści kartki jednego kompletu — podświetlony, bez możliwości zmiany (klient nie wybierze „najtańszego”).
       function setBinding() {
-        const known = bindType.value !== "Brak" && bindings[bindType.value];
+        const eligible = C.isDigitalBindingPaper(paper.value);
+        if (!eligible && bindType.value !== "Brak") { bindType.value = "Brak"; bindType.dispatchEvent(new Event("change", { bubbles: true })); }
+        const known = eligible && bindType.value !== "Brak" && C.getDigitalBindingSizes(state.prices, bindType.value).length > 0;
         if (bindVariant.dataset.forType !== bindType.value) {   // rozmiary przebudowujemy tylko po zmianie rodzaju oprawy
-          const previous = bindVariant.value;
-          bindVariant.innerHTML = known ? options(Object.keys(bindings[bindType.value]), previous) : "";
+          const sizes = known ? C.getDigitalBindingSizes(state.prices, bindType.value) : [];
+          bindVariant.innerHTML = sizes.map(item => `<option value="${esc(item.size)}" data-d24-detail="${esc(`do ${item.maxSheets} kartek`)}">${esc(`do ${item.size}`)}</option>`).join("");
           bindVariant.dataset.forType = bindType.value;
+          bindVariant.selectedIndex = -1;
         }
+        const sheets = sheetsPerSetNow();
+        const found = known ? C.findDigitalBinding(state.prices, bindType.value, sheets) : null;
+        const wanted = found?.match?.size || "";
+        if (known && bindVariant.value !== wanted) {
+          if (wanted) bindVariant.value = wanted; else bindVariant.selectedIndex = -1;
+          bindVariant.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        setInactive(bindTypeField, !eligible);
         setInactive(bindVariantField, !known);
+        bindVariantField.classList.toggle("d24-field-locked", known);
+        if (known) bindVariantField.inert = true;   // rozmiaru nie wybiera klient — pole jest tylko podglądem doboru
+        bindNote.classList.toggle("d24-bind-note--warn", known && sheets > 0 && !wanted);
+        bindNote.textContent = !eligible ? "Dostępne tylko dla papieru 80 g."
+          : !known ? "Najpierw wybierz rodzaj oprawy."
+          : !(sheets > 0) ? "Wpisz liczbę stron."
+          : wanted ? `Kartek w jednym komplecie: ${sheets}. Rozmiar oprawy dobieramy automatycznie.`
+          : `Kartek w jednym komplecie (${sheets}) jest więcej niż mieści ta oprawa (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`;
       }
       function sync() { setFoil(); setBinding(); sheetsText(); summaries(); }
       [color, format, side, paper, qty, sets, foil, bindType, bindVariant].forEach(control => {
@@ -6145,8 +6192,8 @@
           extras.push(C.getDigitalFoilLabel(opts.foilType).toLowerCase());
         }
         if (result.bindingActive) {
-          details.push(["Bindowanie i oprawy", `${opts.bindingType}, ${opts.bindingVariant} × ${result.bindingCopies} szt.`]);
-          extras.push(`${opts.bindingType} ${opts.bindingVariant} × ${result.bindingCopies}`);
+          details.push(["Bindowanie i oprawy", `${opts.bindingType}, ${result.bindingVariant} (do ${result.bindingCapacity} kartek) × ${result.bindingCopies} szt.`]);
+          extras.push(`${opts.bindingType} ${result.bindingVariant} × ${result.bindingCopies}`);
         }
         if (result.foilActive || result.bindingActive) {
           details.push(["Druk i papier", `${money(result.printTotal + result.paperTotal)} zł`]);

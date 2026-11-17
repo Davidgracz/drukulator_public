@@ -50,24 +50,27 @@ t('foliowanie liczone od wszystkich arkuszy (wszystkie komplety)',()=>{
   near(r.foilTotal,2*60); // 3 × 20 arkuszy
 });
 
-t('oprawa: jedna na komplet (ceny z „Oprawy prac”)',()=>{
-  for (const [type,variant,unit] of [['Oprawa miękka zaciskowa','5 mm',9.9],['Bindowanie – spirala plastikowa','51 mm',19],['Bindowanie – spirala metalowa','4 mm',7]]) {
-    const r=C.calculateDigitalPrint(prices,{...base,sets:4,bindingType:type,bindingVariant:variant});
-    assert.equal(r.bindingCopies,4); near(r.bindingTotal,unit*4,type);
+const bindBase={...base,paperType:'Standardowy 80 g'};   // 0.26.7: bindowanie tylko dla papieru 80 g; 40 stron dwustronnie = 20 kartek na komplet
+t('oprawa: jedna na komplet (własny cennik opraw druku cyfrowego, rozmiar dobrany do kartek)',()=>{
+  for (const [type,variant,unit] of [['Oprawa miękka zaciskowa','5 mm',12.5],['Bindowanie – spirala plastikowa','14 mm',10],['Bindowanie – spirala metalowa','6,4 mm',11]]) {
+    const r=C.calculateDigitalPrint(prices,{...bindBase,sets:4,bindingType:type});
+    assert.equal(r.bindingCopies,4); assert.equal(r.bindingVariant,variant,type); near(r.bindingTotal,unit*4,type);
   }
-  const none=C.calculateDigitalPrint(prices,{...base,sets:4,bindingType:'Brak'});
+  const none=C.calculateDigitalPrint(prices,{...bindBase,sets:4,bindingType:'Brak'});
   assert.equal(none.bindingActive,false); near(none.bindingTotal,0); assert.equal(none.bindingCopies,0);
 });
 
 t('liczba opraw z opcji jest ignorowana (usunięte pole)',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,sets:2,bindingType:'Oprawa miękka zaciskowa',bindingVariant:'10 mm',bindingCopies:99});
+  const r=C.calculateDigitalPrint(prices,{...bindBase,sets:2,bindingType:'Oprawa miękka zaciskowa',bindingCopies:99});
   assert.equal(r.bindingCopies,2);
 });
 
-t('wszystko razem: 3 komplety',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,paperType:'Papier kredowy 250 g',sets:3,foilType:'Błysk',bindingType:'Bindowanie – spirala metalowa',bindingVariant:'8 mm'});
-  // 120 stron -> 101-500: 2,00 × 120 = 240; papier 60 arkuszy × 0,75 = 45; folia 60 × 1,50 = 90; oprawa 3 × 8 = 24
-  assert.equal(r.tier,'101-500'); near(r.printTotal,240); near(r.paperTotal,45); near(r.foilTotal,90); near(r.bindingTotal,24); near(r.price,399);
+t('wszystko razem: 3 komplety (druk + papier + oprawa; foliowanie osobno)',()=>{
+  const r=C.calculateDigitalPrint(prices,{...bindBase,sets:3,bindingType:'Bindowanie – spirala metalowa'});
+  // 120 stron -> 101-500: 2,00 × 120 = 240; papier 80 g bez dopłaty; oprawa 3 × 11 (20 kartek → do 6,4 mm)
+  assert.equal(r.tier,'101-500'); near(r.printTotal,240); near(r.paperTotal,0); near(r.bindingTotal,33); near(r.price,273);
+  const f=C.calculateDigitalPrint(prices,{...base,paperType:'Papier kredowy 250 g',sets:3,foilType:'Błysk'});
+  near(f.printTotal,240); near(f.paperTotal,45); near(f.foilTotal,90); near(f.price,375);
 });
 
 t('walidacja kompletów: 0, ujemne, ułamek',()=>{

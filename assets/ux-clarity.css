@@ -1,4 +1,4 @@
-/* Drukulator 0.26.6v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
+/* Drukulator 0.26.7v — dodatkowe reguły dla poprawek dodanych po 0.23.27v (odzież: podpowiedź o ilości i rabacie;
    obrazy na płótnie: układ wyboru, siatka formatów, kafelki proponowanych formatów, pola plików; pianki: tabela cen według progów ilościowych). Ogólny wygląd strony pochodzi z 0.23.x i nie jest tu zmieniany. */
 :root { --ux-link: #0369a1; }
 html[data-theme="dark"] { --ux-link: var(--accent); }
@@ -151,3 +151,11 @@ html[data-theme="dark"] { --ux-link: var(--accent); }
 .d24-promo--inline + .order-submit-summary { margin-top: 10px; }
 .order-submit-summary span { font-size: .875rem; font-weight: 650; }
 .order-submit-summary strong { font-size: clamp(1.75rem, 4.2vw, 2.4rem); line-height: 1.1; font-weight: 850; white-space: nowrap; }
+/* 0.26.7v: druk cyfrowy — bindowanie jest nad foliowaniem i działa tylko dla papieru 80 g (jak foliowanie dla papieru od 250 g). Rozmiar oprawy
+   dobiera się sam do liczby kartek: dobrany kafelek jest podświetlony, pozostałe przygaszone i nieklikalne. Komunikaty zajmują stałe miejsce. */
+.content .d24-field-locked .d24-smart-choice { pointer-events: none; cursor: default; }
+.content .d24-field-locked .d24-smart-choice[aria-pressed="false"] { opacity: .45; }
+#digBindTypeField .d24-inactive-note { display: block; visibility: hidden; }
+#digBindTypeField.d24-field-inactive .d24-inactive-note { visibility: visible; }
+.content #digBindNote { display: block; min-height: 1.25em; }
+.content #digBindNote.d24-bind-note--warn { color: var(--danger-text, #b91c1c); font-weight: 650; }

@@ -59,8 +59,8 @@ with sync_playwright() as p:
         assert page.evaluate('document.getElementById("digFoilBox").open')==False and page.evaluate('document.getElementById("digBindBox").open')==False
         assert not page.locator('#digFoilField').is_visible() and not page.locator('#digBindTypeField').is_visible()
         assert page.locator('#digFoilBox > summary').is_visible() and page.locator('#digBindBox > summary').is_visible()
-        assert page.locator('#digFoilState').text_content().strip()=='Tylko kreda od 250 g' and page.locator('#digBindState').text_content().strip()=='Brak'
-        assert inactive(page,'digFoilField')   # domyślny papier (80 g) nie nadaje się do foliowania
+        assert page.locator('#digFoilState').text_content().strip()=='Tylko dla papieru od 250 g' and page.locator('#digBindState').text_content().strip()=='Brak'   # domyślny papier 80 g: bindowanie dostępne, foliowanie nie
+        assert inactive(page,'digFoilField') and not inactive(page,'digBindTypeField')
         types=opts(page,'#digBindType')
         assert types==['Brak','Oprawa miękka zaciskowa','Bindowanie – spirala plastikowa','Bindowanie – spirala metalowa'],types
         assert not any('kanałowa' in t for t in types)
@@ -101,41 +101,47 @@ with sync_playwright() as p:
         assert page.locator('#digFoilState').text_content().strip()=='Z folią soft skin · +40,00 zł',page.locator('#digFoilState').text_content()
         # zmiana papieru na cieńszy zeruje foliowanie
         setv(page,'#digPaper','Papier kredowy 170 g'); assert page.locator('#digFoil').input_value()=='Brak' and inactive(page,'digFoilField')
-        assert page.locator('#digFoilState').text_content().strip()=='Tylko kreda od 250 g'
+        assert page.locator('#digFoilState').text_content().strip()=='Tylko dla papieru od 250 g'
         assert page.locator('#digFoilField .d24-smart-choice[aria-pressed="true"] strong').first.text_content().strip()=='Brak'
         assert price(page)=='110,00 zł'    # 100 + 20 arkuszy × 0,50 (kreda 170 g)
         setv(page,'#digPaper','Papier kredowy 130 g'); setv(page,'#digFoil','Brak'); assert price(page)=='106,00 zł'
-        # --- oprawy
+        # --- oprawy (0.26.7): tylko papier 80 g; rozmiar dobierany automatycznie do liczby kartek w komplecie (tu: 20 kartek)
+        setv(page,'#digPaper','Standardowy 80 g'); assert price(page)=='100,00 zł'
         setv(page,'#digBindType','Bindowanie – spirala plastikowa')
         assert not inactive(page,'digBindVariantField')
-        assert page.locator('#digBindState').text_content().strip().startswith('Bindowanie – spirala plastikowa, 12,5 mm · +')
-        assert opts(page,'#digBindVariant')[0]=='12,5 mm'
-        setv(page,'#digBindVariant','14 mm'); assert price(page)=='113,00 zł'
+        assert page.locator('#digBindState').text_content().strip()=='Bindowanie – spirala plastikowa, do 14 mm · +10,00 zł',page.locator('#digBindState').text_content()
+        assert opts(page,'#digBindVariant')==['14 mm','19 mm','25 mm','32 mm','38 mm','51 mm'] and page.locator('#digBindVariant').input_value()=='14 mm'
+        assert price(page)=='110,00 zł'
         # komplety: oprawa na każdy komplet, druk od wszystkich stron
-        setv(page,'#digSets','2'); assert price(page)=='226,00 zł',price(page)   # 80 stron × 2,50 + 40 arkuszy × 0,30 + 2 × 7
+        setv(page,'#digSets','2'); assert price(page)==f'220,00 zł',price(page)   # 80 stron × 2,50 + 2 × 10
         assert page.locator('#digSheetsHint').inner_text().strip()=='Potrzebne arkusze A4: 40 (20 na komplet)',page.locator('#digSheetsHint').inner_text()
         assert page.locator('#digSetsHint').inner_text().strip()=='Każdy komplet dostaje własną oprawę.'
-        setv(page,'#digBindType','Oprawa miękka zaciskowa'); assert opts(page,'#digBindVariant')==['5 mm','10 mm','13 mm','16 mm']
-        setv(page,'#digBindVariant','10 mm'); got=price(page); assert got=='235,80 zł',got   # 212 + 2 × 11,90
+        setv(page,'#digBindType','Oprawa miękka zaciskowa'); assert opts(page,'#digBindVariant')==['5 mm','10 mm','13 mm','16 mm'] and page.locator('#digBindVariant').input_value()=='5 mm'
+        got=price(page); assert got=='225,00 zł',got   # 200 + 2 × 12,50
         setv(page,'#digBindType','Brak'); assert inactive(page,'digBindVariantField') and opts(page,'#digBindVariant')==[]
         assert page.locator('#digSetsHint').inner_text().strip()=='Komplet to jeden egzemplarz całego dokumentu.'
-        got=price(page); assert got=='212,00 zł',got
+        got=price(page); assert got=='200,00 zł',got
         setv(page,'#digSets','0'); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)
         assert 'Ilość kompletów musi być większa od zera' in quote_text(page),quote_text(page)
         setv(page,'#digSets','1')
         setv(page,'#digQty','0'); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)
         assert 'Liczba stron musi być większa od zera' in quote_text(page),quote_text(page)
         setv(page,'#digQty','40')
-        # --- wszystko razem (3 komplety) + koszyk
-        setv(page,'#digSets','3'); setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna'); setv(page,'#digBindType','Bindowanie – spirala metalowa'); setv(page,'#digBindVariant','8 mm')
-        got=price(page); assert got=='429,00 zł',got   # 120 stron × 2,00 + 60 arkuszy × 0,75 + 60 × 2 + 3 × 8
+        # --- foliowanie z kompletami (kreda 250 g, 3 komplety): bindowania nie da się połączyć z foliowaniem
+        setv(page,'#digSets','3'); setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna')
+        got=price(page); assert got=='405,00 zł',got   # 120 stron × 2,00 + 60 arkuszy × 0,75 + 60 × 2
+        assert page.locator('#digBindType').input_value()=='Brak' and inactive(page,'digBindTypeField')
+        # --- bindowanie z kompletami + koszyk (papier 80 g: 3 komplety po 20 kartek → spirala metalowa do 6,4 mm)
+        setv(page,'#digPaper','Standardowy 80 g'); setv(page,'#digBindType','Bindowanie – spirala metalowa')
+        assert page.locator('#digFoil').input_value()=='Brak' and page.locator('#digBindVariant').input_value()=='6,4 mm'
+        got=price(page); assert got=='273,00 zł',got   # 120 stron × 2,00 + 3 × 11
         q=quote_text(page)
-        assert 'Bindowanie i oprawy' in q and '8 mm' in q and re.search(r'Foliowanie – cena\s*120,00 zł',q) and re.search(r'Oprawa – cena\s*24,00 zł',q),q
+        assert 'Bindowanie i oprawy' in q and '6,4 mm' in q and 'do 30 kartek' in q and 'Foliowanie' not in q and re.search(r'Oprawa – cena\s*33,00 zł',q),q
         assert re.search(r'Ilość kompletów\s*3',q) and re.search(r'Łącznie stron\s*120',q) and re.search(r'Liczba arkuszy\s*60',q),q
         page.locator('#calculate').click(); page.wait_for_timeout(400)   # zaufane kliknięcie = dodanie do koszyka
         cart=json.loads(page.evaluate('localStorage.getItem("drukulator_cart")'))
-        assert len(cart)==1 and abs(cart[0]['price']-429)<0.001,cart
-        d=cart[0]['description']; assert '40 str. × 3 kompl.' in d and 'z folią soft skin' in d and 'dwustronne' not in d.lower() and 'spirala metalowa 8 mm × 3' in d,d
+        assert len(cart)==1 and abs(cart[0]['price']-273)<0.001,cart
+        d=cart[0]['description']; assert '40 str. × 3 kompl.' in d and 'dwustronne' not in d.lower() and 'spirala metalowa 6,4 mm × 3' in d,d
         # --- inne usługi bez zmian
         go(page)
         setv(page,'#digService','Ksero i druk'); assert page.locator('label[for="digQty"], #digQty').count()>=1
@@ -190,15 +196,18 @@ with sync_playwright() as p:
     go(page)
     page.locator('#digFoilBox > summary').click(); page.locator('#digBindBox > summary').click(); page.wait_for_timeout(300)
     txt=page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-    for need in ('Number of pages','Number of sets','Lamination','Binding','Lamination type','With matt film','Choose the binding type first.','Lamination is available only for coated paper of 250 g and heavier.'):
+    for need in ('Number of pages','Number of sets','Lamination','Binding','Lamination type','With matt film','Choose the binding type first.','Lamination is available only for paper from 250 g.'):
         assert need in txt,(need,txt)
-    assert page.locator('#digFoilState').text_content().strip()=='Coated paper 250 g and up only',page.locator('#digFoilState').text_content()   # po rozwinięciu podsumowanie jest ukryte
+    assert page.locator('#digFoilState').text_content().strip()=='Only for paper from 250 g',page.locator('#digFoilState').text_content()   # po rozwinięciu podsumowanie jest ukryte
     assert 'Liczba stron' not in txt and 'Foliowanie' not in txt and 'Ilość kompletów' not in txt and 'Tylko kreda' not in txt
     setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna'); page.wait_for_timeout(300)
     st=page.locator('#digFoilState').text_content(); assert st.startswith('With soft-skin film · +') and 'PLN' in st,st
     setv(page,'#digFoil','Mat'); page.wait_for_timeout(300); st=page.locator('#digFoilState').text_content(); assert st.startswith('With matt film · +') and 'PLN' in st,st
-    setv(page,'#digBindType','Bindowanie – spirala metalowa'); page.wait_for_timeout(300)
-    st=page.locator('#digBindState').text_content(); assert 'coil' in st.lower() or 'spiral' in st.lower(),st
+    st=page.locator('#digBindState').text_content().strip(); assert st=='Only for 80 gsm paper',st      # papier 250 g: bindowanie niedostępne
+    setv(page,'#digPaper','Standardowy 80 g'); setv(page,'#digQty','86'); setv(page,'#digSide','Jednostronny'); setv(page,'#digBindType','Bindowanie – spirala metalowa'); page.wait_for_timeout(300)
+    st=page.locator('#digBindState').text_content(); assert 'coil' in st.lower() and 'up to 12.7 mm' in st and 'PLN' in st,st
+    note=page.locator('#digBindNote').text_content().strip(); assert note=='Sheets in one set: 86. The binding size is chosen automatically.',note
+    setv(page,'#digQty','500'); note=page.locator('#digBindNote').text_content().strip(); assert note.startswith('There are 500 sheets in one set, more than this binding holds (max. 105).'),note
     assert not errors,errors
     page.close()
     browser.close()

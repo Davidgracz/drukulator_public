@@ -619,9 +619,40 @@
   // jest dostępne tylko dla papieru kredowego o gramaturze od 250 g wzwyż.
   const DIGITAL_FOIL_MIN_GRAMS = 250;
 
+  // 0.26.7v: oprawy w druku cyfrowym mają własny cennik (oprawy_ceny) i pojemność w kartkach (oprawy_pojemnosc_kartek).
+  // Rozmiar oprawy dobiera się automatycznie do liczby kartek w jednym komplecie (najmniejszy, który je mieści) — klient go nie wybiera.
+  // Bindowanie jest dostępne tylko dla papieru 80 g (pojemność oprawy podana jest dla kartek 80 g).
+  const DIGITAL_BINDING_GRAMS = 80;
+
+  function isDigitalBindingPaper(paperType) {
+    const name = String(paperType || "");
+    const grams = /(\d+)\s*g\b/i.exec(name);
+    return !/kredow/i.test(name) && Boolean(grams) && Number(grams[1]) === DIGITAL_BINDING_GRAMS;
+  }
+
+  // Rozmiary oprawy danego rodzaju: [{ size, maxSheets, price }] od najmniejszej pojemności; pomijane są pozycje bez ceny lub pojemności.
+  function getDigitalBindingSizes(prices, bindingType) {
+    const root = prices?.druk_cyfrowy_i_ksero || {};
+    const priceTable = root.oprawy_ceny?.[bindingType] || {};
+    const capacityTable = root.oprawy_pojemnosc_kartek?.[bindingType] || {};
+    return Object.keys(priceTable)
+      .map(size => ({ size, maxSheets: Number(capacityTable[size]), price: Number(priceTable[size]) }))
+      .filter(item => Number.isFinite(item.price) && item.price >= 0 && priceTable[item.size] !== null && priceTable[item.size] !== "" && Number.isFinite(item.maxSheets) && item.maxSheets > 0)
+      .sort((a, b) => a.maxSheets - b.maxSheets);
+  }
+
   function getDigitalBindingTypes(prices) {
-    const all = prices?.oprawa_prac?.rodzaje_opraw || {};
-    return Object.keys(all).filter(name => !DIGITAL_BINDING_EXCLUDED.includes(name));
+    const all = prices?.druk_cyfrowy_i_ksero?.oprawy_ceny || {};
+    return Object.keys(all).filter(name => !DIGITAL_BINDING_EXCLUDED.includes(name) && getDigitalBindingSizes(prices, name).length > 0);
+  }
+
+  // Najmniejszy rozmiar oprawy, który mieści podaną liczbę kartek (null = żaden nie mieści); maxSheets = największa pojemność tego rodzaju.
+  function findDigitalBinding(prices, bindingType, sheetsPerSet) {
+    const sizes = getDigitalBindingSizes(prices, bindingType);
+    const maxSheets = sizes.length ? sizes[sizes.length - 1].maxSheets : 0;
+    const sheets = Number(sheetsPerSet);
+    const match = Number.isFinite(sheets) && sheets > 0 ? sizes.find(item => item.maxSheets >= sheets) || null : null;
+    return { match, sizes, maxSheets };
   }
 
   function isDigitalFoilPaper(paperType) {
@@ -685,15 +716,19 @@
       foilTotal = round2(foilUnitPrice * paperUnits);
     }
 
-    let bindingTotal = 0, bindingUnitPrice = 0, bindingCopies = 0;
+    let bindingTotal = 0, bindingUnitPrice = 0, bindingCopies = 0, bindingVariantUsed = "", bindingCapacity = 0;
     const bindingActive = bindingType && bindingType !== DIGITAL_BINDING_NONE;
     if (bindingActive) {
       if (DIGITAL_BINDING_EXCLUDED.includes(bindingType)) throw new Error("Ta oprawa nie jest dostępna przy druku cyfrowym.");
-      const variants = pricesRoot.oprawa_prac?.rodzaje_opraw?.[bindingType];
-      if (!variants) throw new Error("Nieprawidłowy rodzaj oprawy.");
-      if (!(bindingVariant in variants)) throw new Error("Wybierz rozmiar oprawy.");
+      if (!getDigitalBindingTypes(pricesRoot).includes(bindingType)) throw new Error("Nieprawidłowy rodzaj oprawy.");
+      if (!isDigitalBindingPaper(paperType)) throw new Error(`Bindowanie i oprawy są dostępne tylko dla papieru ${DIGITAL_BINDING_GRAMS} g.`);
+      // Rozmiar dobiera kalkulator: przekazany bindingVariant jest ignorowany, żeby nie dało się wybrać mniejszej (tańszej) oprawy, która się nie zmieści.
+      const found = findDigitalBinding(pricesRoot, bindingType, sheetsPerSet);
+      if (!found.match) throw new Error(`Liczba kartek w jednym komplecie (${sheetsPerSet}) jest większa niż pojemność oprawy „${bindingType}” (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`);
       bindingCopies = setCount; // jedna oprawa na komplet
-      bindingUnitPrice = Number(variants[bindingVariant]);
+      bindingVariantUsed = found.match.size;
+      bindingCapacity = found.match.maxSheets;
+      bindingUnitPrice = found.match.price;
       bindingTotal = round2(bindingUnitPrice * bindingCopies);
     }
 
@@ -702,7 +737,7 @@
       price, pages: Number(pages), sets: setCount, totalPages, sheetsPerSet, sheets, printUnits, tier, basePrice, printTotal,
       paperSurcharge, paperUnits, paperTotal,
       foilActive, foilType: foilActive ? foilType : DIGITAL_FOIL_NONE, foilUnitPrice, foilTotal,
-      bindingActive: Boolean(bindingActive), bindingUnitPrice, bindingCopies, bindingTotal
+      bindingActive: Boolean(bindingActive), bindingType: bindingActive ? bindingType : DIGITAL_BINDING_NONE, bindingVariant: bindingVariantUsed, bindingCapacity, bindingUnitPrice, bindingCopies, bindingTotal
     };
   }
 
@@ -955,7 +990,7 @@
     NO_PRINT, DIGITAL_FINISH_KEYS, OFFSET_FINISH_KEYS,
     getBannerPricePerM2, calculateManualCutting, calculateOptionalManualCutting, calculateBanner, calculateBusinessCards, calculateFlyers,
     getStickerPricePerLinearMeter, calculateStickers, calculateNotepads, calculateCatalogProduct,
-    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, isDigitalFoilPaper, getDigitalFoilTypes, getDigitalFoilLabel, sortDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
+    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, isDigitalFoilPaper, isDigitalBindingPaper, getDigitalBindingSizes, findDigitalBinding, getDigitalFoilTypes, getDigitalFoilLabel, sortDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
     calculateLamination, getCanvasSuggestions, calculateProportionalCanvasSize, calculateCanvasStandard, calculateCanvasCustom, calculateWedding,
     getQuantityTier, roundUpToStep
   };

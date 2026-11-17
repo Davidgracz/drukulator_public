@@ -105,21 +105,34 @@ t('oprawa: lista bez oprawy kanałowej',()=>{
   assert.deepEqual(Array.from(types),['Oprawa miękka zaciskowa','Bindowanie – spirala plastikowa','Bindowanie – spirala metalowa']);
 });
 
-t('oprawa: jedna oprawa na komplet, niezależna od liczby stron',()=>{
-  const one=C.calculateDigitalPrint(prices,{...base,bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm'});
-  near(one.bindingTotal,7); near(one.price,113); assert.equal(one.bindingActive,true); assert.equal(one.bindingCopies,1);
-  const three=C.calculateDigitalPrint(prices,{...base,pages:200,sets:3,bindingType:'Oprawa miękka zaciskowa',bindingVariant:'10 mm'});
-  near(three.bindingTotal,35.7); assert.equal(three.bindingCopies,3);
+const bindBase={...base,paperType:'Standardowy 80 g'};   // 0.26.7: bindowanie tylko dla papieru 80 g
+t('oprawa: jedna oprawa na komplet, rozmiar dobrany do liczby kartek',()=>{
+  const none=C.calculateDigitalPrint(prices,bindBase);
+  const one=C.calculateDigitalPrint(prices,{...bindBase,bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'51 mm'});   // przekazany rozmiar jest ignorowany: 20 kartek → do 14 mm
+  assert.equal(one.bindingVariant,'14 mm'); assert.equal(one.bindingCapacity,90);
+  near(one.bindingTotal,10); near(one.price,none.price+10); assert.equal(one.bindingActive,true); assert.equal(one.bindingCopies,1);
+  const three=C.calculateDigitalPrint(prices,{...bindBase,pages:200,sets:3,bindingType:'Oprawa miękka zaciskowa'});   // 100 kartek na komplet → do 13 mm (110)
+  assert.equal(three.bindingVariant,'13 mm'); near(three.bindingTotal,52.5); assert.equal(three.bindingCopies,3);
 });
 
-t('oprawa: kanałowa odrzucona, brak rozmiaru',()=>{
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,bindingType:'Oprawa kanałowa twarda A4',bindingVariant:'5 mm'}),/nie jest dostępna/);
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,bindingType:'Oprawa miękka zaciskowa',bindingVariant:''}),/rozmiar/);
+t('oprawa: kanałowa odrzucona; rozmiar z formularza nie ma znaczenia',()=>{
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...bindBase,bindingType:'Oprawa kanałowa twarda A4',bindingVariant:'5 mm'}),/nie jest dostępna/);
+  const r=C.calculateDigitalPrint(prices,{...bindBase,bindingType:'Oprawa miękka zaciskowa',bindingVariant:''});
+  assert.equal(r.bindingVariant,'5 mm'); near(r.bindingTotal,12.5);
 });
 
-t('wszystko razem: druk + papier + foliowanie + oprawa',()=>{
-  const r=C.calculateDigitalPrint(prices,{...foilBase,foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa',bindingVariant:'14 mm'});
-  near(r.price,100+15+40+7);   // druk 40 × 2,50 + papier 20 × 0,75 + folia 20 × 2 + oprawa 7
+t('oprawa tylko dla papieru 80 g, foliowanie tylko od 250 g — razem się nie łączą',()=>{
+  for (const paper of ['Papier kredowy 130 g','Papier kredowy 250 g','Papier kredowy 350 g']) {
+    assert.throws(()=>C.calculateDigitalPrint(prices,{...bindBase,paperType:paper,bindingType:'Bindowanie – spirala plastikowa'}),/tylko dla papieru 80 g/,paper);
+  }
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...bindBase,foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa'}),/tylko dla papieru kredowego od 250 g/);
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...foilBase,foilType:'Satyna',bindingType:'Bindowanie – spirala plastikowa'}),/tylko dla papieru 80 g/);
+  assert.equal(C.isDigitalBindingPaper('Standardowy 80 g'),true); assert.equal(C.isDigitalBindingPaper('Papier kredowy 130 g'),false); assert.equal(C.isDigitalBindingPaper('Papier kredowy 80 g'),false);
+});
+
+t('foliowanie + komplety bez oprawy',()=>{
+  const r=C.calculateDigitalPrint(prices,{...foilBase,sets:3,foilType:'Satyna'});
+  near(r.price,240+45+120);   // 120 stron × 2,00 + 60 arkuszy × 0,75 + 60 × 2
 });
 
 t('walidacja stron: 0, ujemne, ułamek',()=>{
