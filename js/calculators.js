@@ -587,6 +587,7 @@
     if (service === "Druk cyfrowy" || service === "Ksero i druk") {
       const servicePrices = service === "Druk cyfrowy" ? prices.druk_cyfrowy : prices.ksero_i_druk;
       const sideMultiplier = service === "Druk cyfrowy" ? Number(prices.mnozniki_zadruku[sideMode]) : 1;
+      if (service === "Druk cyfrowy" && Number(quantity) < getDigitalMinPages(sideMode)) throw new Error(digitalMinPagesError(sideMode));
       const formatMultiplier = Number(prices.mnozniki_formatu[formatName]);
       const printUnits = Number(quantity) * sideMultiplier * formatMultiplier;
       const tier = getQuantityTier(printUnits);
@@ -623,6 +624,16 @@
   // Rozmiar oprawy dobiera się automatycznie do liczby kartek w jednym komplecie (najmniejszy, który je mieści) — klient go nie wybiera.
   // Bindowanie jest dostępne tylko dla papieru 80 g (pojemność oprawy podana jest dla kartek 80 g).
   const DIGITAL_BINDING_GRAMS = 80;
+
+  // 0.26.8v: minimalna liczba stron zależy od zadruku — dwustronny (2 strony na kartce) od 2 stron, jednostronny od 1 strony.
+  function getDigitalMinPages(sideMode) {
+    return sideMode === "Dwustronny" ? 2 : 1;
+  }
+  function digitalMinPagesError(sideMode) {
+    return sideMode === "Dwustronny"
+      ? "Przy druku dwustronnym minimalna liczba stron to 2."
+      : "Przy druku jednostronnym minimalna liczba stron to 1.";
+  }
 
   function isDigitalBindingPaper(paperType) {
     const name = String(paperType || "");
@@ -686,6 +697,7 @@
     } = options;
     assertPositive(pages, "Liczba stron");
     if (!Number.isInteger(Number(pages))) throw new Error("Liczba stron musi być liczbą całkowitą.");
+    if (Number(pages) < getDigitalMinPages(sideMode)) throw new Error(digitalMinPagesError(sideMode));
     assertPositive(sets, "Ilość kompletów");
     if (!Number.isInteger(Number(sets))) throw new Error("Ilość kompletów musi być liczbą całkowitą.");
     const prices = pricesRoot.druk_cyfrowy_i_ksero;
@@ -990,7 +1002,7 @@
     NO_PRINT, DIGITAL_FINISH_KEYS, OFFSET_FINISH_KEYS,
     getBannerPricePerM2, calculateManualCutting, calculateOptionalManualCutting, calculateBanner, calculateBusinessCards, calculateFlyers,
     getStickerPricePerLinearMeter, calculateStickers, calculateNotepads, calculateCatalogProduct,
-    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalBindingTypes, isDigitalFoilPaper, isDigitalBindingPaper, getDigitalBindingSizes, findDigitalBinding, getDigitalFoilTypes, getDigitalFoilLabel, sortDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
+    getPosterFormatDimensions, findPosterBillingFormat, calculatePosters, calculatePosterCustom, calculateRollup, calculatePvc, getFoamBoardUnitPrice, findFoamBoardBillingFormat, getQuantityUnitPrice, calculateFoamBoardStandard, calculateFoamBoardCustom, calculateDigital, calculateDigitalPrint, getDigitalMinPages, getDigitalBindingTypes, isDigitalFoilPaper, isDigitalBindingPaper, getDigitalBindingSizes, findDigitalBinding, getDigitalFoilTypes, getDigitalFoilLabel, sortDigitalFoilTypes, calculateDigitalImposition, calculateApparel, calculateWorkBinding,
     calculateLamination, getCanvasSuggestions, calculateProportionalCanvasSize, calculateCanvasStandard, calculateCanvasCustom, calculateWedding,
     getQuantityTier, roundUpToStep
   };

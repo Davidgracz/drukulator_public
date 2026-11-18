@@ -33,9 +33,9 @@ t('dwustronny, nieparzysta liczba stron: 5 stron = 3 arkusze, druk 5 stron',()=>
   assert.equal(r.sheets,3); assert.equal(r.printUnits,5); near(r.price,15); // 5 × 3 zł
 });
 
-t('1 strona dwustronnie = 1 arkusz',()=>{
-  const r=C.calculateDigitalPrint(prices,{...base,pages:1,paperType:'Standardowy 80 g'});
-  assert.equal(r.sheets,1); near(r.price,3);
+t('2 strony dwustronnie = 1 arkusz (0.26.8: dwustronnie minimum to 2 strony)',()=>{
+  const r=C.calculateDigitalPrint(prices,{...base,pages:2,paperType:'Standardowy 80 g'});
+  assert.equal(r.sheets,1); near(r.price,6);   // druk 2 strony × 3 zł
 });
 
 t('próg cenowy liczony od stron × mnożnik formatu (A3)',()=>{

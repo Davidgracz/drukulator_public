@@ -47,7 +47,7 @@ with sync_playwright() as p:
         # --- pola: strony zamiast kartek
         assert page.locator('label[for="digQty"]').inner_text().strip()=='Liczba stron'
         assert 'kartek' not in page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-        assert page.locator('#digQty').input_value()=='1'
+        assert page.locator('#digQty').input_value()=='2'   # 0.26.8: domyślnie dwustronnie, więc początkowo minimum 2 strony
         # --- papiery bez kolorowego i etykietowego (czarno-biały i kolor)
         for color in ('Czarno-biały','Kolorowy'):
             setv(page,'#digColor',color)
@@ -124,7 +124,7 @@ with sync_playwright() as p:
         setv(page,'#digSets','0'); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)
         assert 'Ilość kompletów musi być większa od zera' in quote_text(page),quote_text(page)
         setv(page,'#digSets','1')
-        setv(page,'#digQty','0'); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)
+        setv(page,'#digQty',''); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)   # 0.26.8: 0 jest podnoszone do minimum, puste pole nadal daje błąd
         assert 'Liczba stron musi być większa od zera' in quote_text(page),quote_text(page)
         setv(page,'#digQty','40')
         # --- foliowanie z kompletami (kreda 250 g, 3 komplety): bindowania nie da się połączyć z foliowaniem

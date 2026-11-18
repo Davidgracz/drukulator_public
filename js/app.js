@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.7v";
+  const VERSION = "0.26.8v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -649,7 +649,11 @@
     else if (normalized.includes("ksero")) service = "Ksero i druk";
     const color = normalized.includes("kolor") ? "Kolorowy" : (normalized.includes("mono") || normalized.includes("czarno") || normalized.includes("cz b")) ? "Czarno-biały" : "Czarno-biały";
     const formatName = requestedFormat && ["A4", "A3"].includes(requestedFormat) ? requestedFormat : "A4";
-    const side = normalized.includes("jednostron") ? "Jednostronny" : "Dwustronny";   // 0.26.6v: domyślnie dwustronny (jak w formularzu)
+    // 0.26.6v: domyślnie dwustronny (jak w formularzu). 0.26.8v: dwustronny wymaga min. 2 stron — pojedyncza strona bez słowa „dwustronny” idzie jako jednostronna,
+    // a jawnie zamówiony dwustronny wydruk 1 strony zaokrąglamy do 2 stron (formularz robi to samo).
+    const wantsDouble = normalized.includes("dwustron"), wantsSingle = normalized.includes("jednostron");
+    const side = wantsSingle || (!wantsDouble && quantity < 2) ? "Jednostronny" : "Dwustronny";
+    if (service === "Druk cyfrowy 24h" && side === "Dwustronny") quantity = Math.max(Number(quantity), 2);
     const paperWeight = normalized.match(/\b(130|170|250|300|350)\s*g\b/);
     const paper = paperWeight ? `Papier kredowy ${paperWeight[1]} g` : "Standardowy 80 g";
     const steps = [["digService", service], ["digColor", color]];
@@ -1159,7 +1163,7 @@
         return quoteAssistantQuestion("Kolor czy czarno-biały?", [["Kolor", "kolor"], ["Czarno-biały", "czarno-biały"]], "Kolor lub czarno-biały");
       }
       if (!isScan && !isBookCopy && !normalized.includes("ksero") && !quoteAssistantHasAny(clean, ["jednostron", "dwustron"])) {
-        return quoteAssistantQuestion("Wydruk dwustronny czy jednostronny?", [["Dwustronny", "dwustronny"], ["Jednostronny", "jednostronny"]], "Dwustronny lub jednostronny");
+        return quoteAssistantQuestion("Wydruk jednostronny czy dwustronny?", [["Jednostronny", "jednostronny"], ["Dwustronny", "dwustronny"]], "Jednostronny lub dwustronny");
       }
     }
 
@@ -4703,8 +4707,10 @@
             const foilOn = v.digFoil && v.digFoil !== "Brak" && C.isDigitalFoilPaper(v.digPaper) && C.getDigitalFoilTypes(state.prices).includes(v.digFoil), bindOn = v.digBindType && v.digBindType !== "Brak" && C.isDigitalBindingPaper(v.digPaper);
             // 0.26.7v: rozmiar oprawy dobiera kalkulator (do liczby kartek); kafelek innego rozmiaru niż dobrany nie ma kwoty.
             if (bindOn && fieldId === "digBindVariant" && candidate !== values.digBindVariant) return null;
+            // 0.26.8v: kafelek zadruku pokazuje cenę dla minimalnej liczby stron tego zadruku (wybór dwustronnego podnosi 1 str. do 2).
+            const previewPages = fieldId === "digSide" ? Math.max(n("digQty"), C.getDigitalMinPages(v.digSide)) : n("digQty");
             result = C.calculateDigitalPrint(state.prices, {
-              colorMode: v.digColor, pages: n("digQty"), sets: n("digSets") || 1, formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
+              colorMode: v.digColor, pages: previewPages, sets: n("digSets") || 1, formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
               foilType: foilOn ? v.digFoil : "Brak",
               bindingType: bindOn ? v.digBindType : "Brak", bindingVariant: ""
             });
@@ -5985,8 +5991,9 @@
     // 0.26.1v: papier kolorowy i etykietowy wycofane — czarno-biały i kolor mają tę samą listę papierów.
     const blackPapers = standardPapers;
     const foilTypes = C.sortDigitalFoilTypes(C.getDigitalFoilTypes(state.prices));
-    // 0.26.6v: w „Druku cyfrowym 24h” dwustronny zadruk jest pierwszą i domyślnie wybraną opcją.
-    const sideModes = Object.keys(root.mnozniki_zadruku).sort((a, b) => (b === "Dwustronny") - (a === "Dwustronny"));
+    // 0.26.6v: w „Druku cyfrowym 24h” dwustronny zadruk jest domyślnie wybraną opcją.
+    // 0.26.8v: kolejność opcji zamieniona — najpierw Jednostronny, potem Dwustronny (domyślnie nadal Dwustronny).
+    const sideModes = Object.keys(root.mnozniki_zadruku).sort((a, b) => (b === "Jednostronny") - (a === "Jednostronny"));
     const bindingTypes = C.getDigitalBindingTypes(state.prices);
     const impositionPapers = imposition.papiery || standardPapers.filter(name => ["130 g", "170 g", "250 g", "300 g"].some(weight => name.includes(weight)));
 
@@ -6005,7 +6012,7 @@
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digSheetsHint" aria-live="polite"></small></div>
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="2" step="1" value="2"><small id="digMinHint" aria-live="polite"></small><small id="digSheetsHint" aria-live="polite"></small></div>
           <div class="field half"><label for="digSets">Ilość kompletów</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div>
           <details class="d24-extra" id="digBindBox"><summary><span class="d24-extra__title">Bindowanie i oprawy</span><span class="d24-extra__state" id="digBindState"></span></summary>
             <div class="d24-extra__body">
@@ -6051,11 +6058,26 @@
     function wireDigitalExtras() {
       const qty = document.getElementById("digQty"), sets = document.getElementById("digSets"), side = document.getElementById("digSide"), format = document.getElementById("digFormat");
       const color = document.getElementById("digColor"), paper = document.getElementById("digPaper");
-      const sheetsHint = document.getElementById("digSheetsHint"), setsHint = document.getElementById("digSetsHint");
+      const sheetsHint = document.getElementById("digSheetsHint"), setsHint = document.getElementById("digSetsHint"), minHint = document.getElementById("digMinHint");
       const foil = document.getElementById("digFoil"), foilField = document.getElementById("digFoilField"), foilState = document.getElementById("digFoilState");
       const bindType = document.getElementById("digBindType"), bindVariant = document.getElementById("digBindVariant");
       const bindTypeField = document.getElementById("digBindTypeField"), bindVariantField = document.getElementById("digBindVariantField");
       const bindState = document.getElementById("digBindState"), bindNote = document.getElementById("digBindNote");
+      // 0.26.8v: minimalna liczba stron — dwustronnie 2, jednostronnie 1. Zmiana zadruku albo zatwierdzenie pola (change) podnosi
+      // zbyt małą wartość do minimum; w trakcie pisania (input) nic nie poprawiamy, żeby dało się wpisać np. „12”.
+      function minPagesNow() { return C.getDigitalMinPages(side.value); }
+      function enforceMinPages(event) {
+        const min = minPagesNow();
+        qty.min = String(min);
+        const final = !event || event.type === "change" || event.target === side;
+        const typed = qty.value.trim() !== "" ? Number(qty.value) : NaN;
+        if (final && Number.isFinite(typed) && typed < min) {
+          qty.value = String(min);
+          qty.dispatchEvent(new Event("input", { bubbles: true }));
+          qty.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        minHint.textContent = side.value === "Dwustronny" ? "Druk dwustronny: minimum 2 strony." : "Druk jednostronny: minimum 1 strona.";
+      }
       function sheetsText() {
         const pages = Math.floor(Number(qty.value));
         const setCount = Math.floor(Number(sets.value));
@@ -6127,7 +6149,7 @@
           : wanted ? `Kartek w jednym komplecie: ${sheets}. Rozmiar oprawy dobieramy automatycznie.`
           : `Kartek w jednym komplecie (${sheets}) jest więcej niż mieści ta oprawa (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`;
       }
-      function sync() { setFoil(); setBinding(); sheetsText(); summaries(); }
+      function sync(event) { enforceMinPages(event); setFoil(); setBinding(); sheetsText(); summaries(); }
       [color, format, side, paper, qty, sets, foil, bindType, bindVariant].forEach(control => {
         control.addEventListener("input", sync);
         control.addEventListener("change", sync);

@@ -1,4 +1,4 @@
-"""0.26.6: Druk cyfrowy 24h — dwustronny zadruk jest pierwszy i domyślnie wybrany (kafelki, kolejność, wycena, asystent), a foliowanie ma rodzaje
+"""0.26.6 / 0.26.8: Druk cyfrowy 24h — dwustronny zadruk jest domyślnie wybrany (od 0.26.8 kafelki: najpierw Jednostronny, potem Dwustronny) (kafelki, kolejność, wycena, asystent), a foliowanie ma rodzaje
 „Brak / Z folią soft skin / Z folią błysk / Z folią mat” (nazwy w formularzu, w nagłówku sekcji, w opisie zamówienia i po angielsku);
 w cenniku nadal Satyna / Błysk / Mat, ceny bez zmian."""
 import json,re
@@ -57,11 +57,11 @@ with sync_playwright() as p:
     browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
     for width in (1300,390):
         page,errors=boot(browser,width); go(page)
-        # --- zadruk: dwustronny pierwszy i domyślny
-        assert opts(page,'#digSide')==['Dwustronny','Jednostronny'],opts(page,'#digSide')
+        # --- zadruk (0.26.8): kolejność Jednostronny, Dwustronny; domyślnie wybrany nadal Dwustronny
+        assert opts(page,'#digSide')==['Jednostronny','Dwustronny'],opts(page,'#digSide')
         assert page.locator('#digSide').input_value()=='Dwustronny'
-        t=tiles(page,'digSide'); assert [n for n,_ in t][0].endswith('Dwustronny') or 'Dwustronny' in t[0][0],t
-        assert [sel for _,sel in t]==[True,False],t
+        t=tiles(page,'digSide'); assert 'Jednostronny' in t[0][0] and 'Dwustronny' in t[1][0],t
+        assert [sel for _,sel in t]==[False,True],t
         # wycena na domyślnych ustawieniach = dwustronny (1 strona = 1 arkusz); ręczna zmiana na jednostronny działa
         setv(page,'#digColor','Kolorowy'); setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digQty','10'); settle(page)
         two=price(page); assert 'Zadruk' in quote_text(page) and 'Dwustronny' in quote_text(page),quote_text(page)[:300]
@@ -70,7 +70,7 @@ with sync_playwright() as p:
         setv(page,'#digSide','Dwustronny'); settle(page); assert price(page)==two
         # po przełączeniu usługi i powrocie znów dwustronny jest domyślny
         setv(page,'#digService','Ksero i druk'); setv(page,'#digService','Druk cyfrowy 24h'); settle(page)
-        assert page.locator('#digSide').input_value()=='Dwustronny' and opts(page,'#digSide')[0]=='Dwustronny'
+        assert page.locator('#digSide').input_value()=='Dwustronny' and opts(page,'#digSide')==['Jednostronny','Dwustronny']
         # Arkuszowanie 24h bez zmian (domyślnie jednostronny, jak dotąd)
         setv(page,'#digService','Arkuszowanie 24h'); settle(page); assert page.locator('#digSide').input_value()=='Jednostronny',opts(page,'#digSide')
         assert not errors,errors
@@ -113,17 +113,17 @@ with sync_playwright() as p:
     # --- angielski
     page,errors=boot(browser,1300,lang='en'); go(page)
     assert page.eval_on_selector_all('#digFoil option','o=>o.map(x=>x.textContent.trim())')==['None','With soft-skin film','With gloss film','With matt film']
-    assert opts(page,'#digSide')==['Dwustronny','Jednostronny']
-    names=[n for n,_ in tiles(page,'digSide')]; assert 'Double-sided' in names[0] and 'Single-sided' in names[1],names
+    assert opts(page,'#digSide')==['Jednostronny','Dwustronny']
+    names=[n for n,_ in tiles(page,'digSide')]; assert 'Single-sided' in names[0] and 'Double-sided' in names[1],names
     setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Błysk'); settle(page); price(page)
     assert 'With gloss film' in quote_text(page),quote_text(page)[:400]
     assert not errors,errors; page.close()
-    # --- asystent: pytanie o zadruk wydruku ma dwustronny na pierwszym miejscu; wpisane „jednostronny” zostaje jednostronne
+    # --- asystent (0.26.8): pytanie o zadruk wydruku ma jednostronny na pierwszym miejscu; wpisane „jednostronny” zostaje jednostronne
     page,errors=boot(browser,1300)
     page.fill('#homeProductSearch','wydruk 100 stron A4 kolor'); page.keyboard.press('Enter'); page.wait_for_timeout(1200)
     answers=page.eval_on_selector_all('[data-assistant-answer]','els=>els.map(e=>[e.textContent.trim(),e.dataset.assistantAnswer])')
-    assert answers[:2]==[['Dwustronny','dwustronny'],['Jednostronny','jednostronny']],answers
-    assert 'Wydruk dwustronny czy jednostronny?' in page.locator('body').inner_text()
+    assert answers[:2]==[['Jednostronny','jednostronny'],['Dwustronny','dwustronny']],answers
+    assert 'Wydruk jednostronny czy dwustronny?' in page.locator('body').inner_text()
     assert not errors,errors; page.close()
     page,errors=boot(browser,1300)
     page.fill('#homeProductSearch','wydruk 100 stron A4 kolor jednostronny'); page.keyboard.press('Enter'); page.wait_for_timeout(1200)
