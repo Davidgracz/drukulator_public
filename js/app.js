@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.9v";
+  const VERSION = "0.26.10v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -4721,7 +4721,10 @@
             // 0.26.7v: rozmiar oprawy dobiera kalkulator (do liczby kartek); kafelek innego rozmiaru niż dobrany nie ma kwoty.
             if (bindOn && fieldId === "digBindVariant" && candidate !== values.digBindVariant) return null;
             // 0.26.8v: kafelek zadruku pokazuje cenę dla minimalnej liczby stron tego zadruku (wybór dwustronnego podnosi 1 str. do 2).
-            const previewPages = fieldId === "digSide" ? Math.max(n("digQty"), C.getDigitalMinPages(v.digSide)) : n("digQty");
+            // 0.26.10v: gdy liczba stron nie została wpisana przez klienta, kafelek pokazuje cenę dla minimum tego zadruku (1 albo 2 strony).
+            const qtyEl = document.getElementById("digQty");
+            const pagesAuto = !!qtyEl && qtyEl.dataset.d24Auto !== undefined && qtyEl.dataset.d24Auto !== "" && qtyEl.value === qtyEl.dataset.d24Auto;
+            const previewPages = fieldId === "digSide" ? (pagesAuto ? C.getDigitalMinPages(v.digSide) : Math.max(n("digQty"), C.getDigitalMinPages(v.digSide))) : n("digQty");
             result = C.calculateDigitalPrint(state.prices, {
               colorMode: v.digColor, pages: previewPages, sets: n("digSets") || 1, formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
               foilType: foilOn ? v.digFoil : "Brak",
@@ -6078,10 +6081,26 @@
       const bindState = document.getElementById("digBindState"), bindNote = document.getElementById("digBindNote");
       // 0.26.8v: minimalna liczba stron — dwustronnie 2, jednostronnie 1. Zmiana zadruku albo zatwierdzenie pola (change) podnosi
       // zbyt małą wartość do minimum; w trakcie pisania (input) nic nie poprawiamy, żeby dało się wpisać np. „12”.
+      // 0.26.10v: dopóki klient nie wpisał liczby stron (pole puste albo wartość ustawiona przez kalkulator), zmiana zadruku sama ustawia
+      // minimum: jednostronny 1, dwustronny 2. Liczba wpisana przez klienta (także z gotowego wyniku wyszukiwarki) nie jest zmieniana.
+      let autoPages = qty.value.trim() === "" ? null : qty.value, internalWrite = false;
+      function publishAuto() { qty.dataset.d24Auto = autoPages === null ? "" : autoPages; }
+      function setPagesAuto(value) {
+        internalWrite = true;
+        try {
+          qty.value = String(value);
+          autoPages = String(value); publishAuto();
+          qty.dispatchEvent(new Event("input", { bubbles: true }));
+          qty.dispatchEvent(new Event("change", { bubbles: true }));
+        } finally { internalWrite = false; }
+      }
       function minPagesNow() { return C.getDigitalMinPages(side.value); }
       function enforceMinPages(event) {
         const min = minPagesNow();
         qty.min = String(min);
+        if (event && event.target === qty && !internalWrite) { autoPages = null; publishAuto(); }   // klient (albo preset z wyszukiwarki) ustawił liczbę stron
+        const untouched = qty.value.trim() === "" || (autoPages !== null && qty.value === autoPages);
+        if (event && event.target === side && untouched && qty.value !== String(min)) setPagesAuto(min);
         const final = !event || event.type === "change" || event.target === side;
         const typed = qty.value.trim() !== "" ? Number(qty.value) : NaN;
         if (final && Number.isFinite(typed) && typed < min) {
@@ -6163,6 +6182,7 @@
           : `Kartek w jednym komplecie (${sheets}) jest więcej niż mieści ta oprawa (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`;
       }
       function sync(event) { enforceMinPages(event); setFoil(); setBinding(); sheetsText(); summaries(); }
+      publishAuto();
       [color, format, side, paper, qty, sets, foil, bindType, bindVariant].forEach(control => {
         control.addEventListener("input", sync);
         control.addEventListener("change", sync);
