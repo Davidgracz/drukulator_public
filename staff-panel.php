@@ -35,8 +35,36 @@ if (!$user) {
     /* Operational monitoring, isolated from existing order-management styles. */
     .monitor-intro{margin-bottom:14px;align-items:center}.monitor-intro h2,.monitor-events h3,.monitor-layout h3{margin:0 0 7px}.monitor-intro p,.monitor-events p{margin:0}.monitor-layout{display:grid;grid-template-columns:minmax(260px,0.8fr) minmax(360px,1.2fr);gap:14px;margin:14px 0}.monitor-layout .card{min-width:0}.monitor-layout h3{font-size:16px}.monitor-service{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.monitor-service:last-child{border:0}.monitor-service strong{font-size:12px}.monitor-ok{color:var(--good)}.monitor-error{color:var(--danger)}.monitor-unknown{color:var(--warn)}.monitor-warning{padding:13px 15px;margin-bottom:12px;background:#33200f;color:#ffdf99;border:1px solid #856126;border-radius:12px}.monitor-alert-badge{color:#190806;background:var(--danger);display:inline-block;border-radius:8px;min-width:18px;text-align:center;padding:1px 3px;font-size:11px}.monitor-alert-badge[hidden]{display:none}.monitor-chart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:end;min-height:180px}.monitor-day{min-width:0;text-align:center}.monitor-bars{height:128px;display:flex;gap:4px;align-items:flex-end;justify-content:center;background:#081314;border-bottom:1px solid #254449;padding:0 5px 0}.monitor-bar{min-height:2px;width:29%;border-radius:4px 4px 0 0}.monitor-bar.good{background:#48c8b9}.monitor-bar.bad{background:#ef7777}.monitor-day-label{color:var(--muted);font-size:11px;margin-top:7px}.monitor-day-count{font-size:11px;white-space:nowrap;color:#d4e5e7}.monitor-key{display:flex;gap:15px;font-size:11px;color:var(--muted);margin-top:12px}.monitor-key i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}.monitor-filters{display:grid;grid-template-columns:180px 180px minmax(200px,1fr);gap:10px;margin:14px 0}.monitor-filters input,.monitor-filters select{background:#071011;color:var(--ink);border:1px solid #2b4648;border-radius:9px;padding:10px;font:inherit;min-width:0}.monitor-event-list{max-height:600px;overflow:auto;display:grid;gap:7px}.monitor-event{background:#091314;border:1px solid var(--line);border-radius:10px;padding:12px 13px;display:grid;grid-template-columns:102px minmax(0,1fr) auto;gap:12px;align-items:flex-start}.monitor-event-side{font-size:11px;color:var(--muted)}.monitor-event-title{font-size:13px;font-weight:850}.monitor-event-sub{font-size:11px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}.monitor-event-sub .chip{padding:2px 5px;background:#162b2d;border-radius:5px;color:#d2e4e6}.monitor-event-level{font-size:11px;padding:4px 8px;border-radius:7px;background:#173031;color:#83e2d6}.monitor-event-level.error{background:#471b1b;color:#ffaaaa}.monitor-event-level.warning{background:#4d3916;color:#ffda95}.monitor-link{border:0;color:#a3e6ff;background:transparent;cursor:pointer;text-decoration:underline;padding:0;font-size:12px}.monitor-meta{font-size:11px;color:#b2c5c7;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}.monitor-metric-caption{font-size:11px;color:var(--muted);margin-top:6px}.monitor-time{color:var(--muted);font-size:11px}.monitor-note{margin-top:10px;color:var(--muted);font-size:12px}@media(max-width:1050px){.monitor-layout{grid-template-columns:1fr}}@media(max-width:760px){.monitor-filters{grid-template-columns:1fr}.monitor-event{grid-template-columns:1fr;gap:5px}.monitor-chart{gap:3px}.monitor-bars{padding:0 2px}.monitor-day-label{font-size:9px}}
 
-    /* Analytics v0.22.8 - lightweight aggregate dashboard. */
-    .a28-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.a28-intro h2{font-size:22px;margin:0 0 6px}.a28-intro p{margin:0;color:var(--muted);font-size:13px;max-width:740px;line-height:1.5}.a28-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.a28-tools select{background:#091314;border:1px solid #33565a;color:#f8fafc;border-radius:10px;padding:10px;font:inherit}.a28-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:15px}.a28-metrics--3{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:760px){.a28-metrics--3{grid-template-columns:1fr}}.a28-metric{background:#0b1718;border:1px solid #284448;border-radius:14px;padding:16px;min-width:0}.a28-metric small{display:block;color:#a8c6ca;font-size:12px}.a28-metric strong{display:block;font-size:26px;margin:8px 0 5px;word-break:break-word}.a28-metric em{font-size:11px;font-style:normal;color:#83b1b5}.a28-columns{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin:14px 0}.a28-funnel{display:grid;gap:13px;margin:18px 0 6px}.a28-funnel-row{display:grid;grid-template-columns:minmax(90px,150px) minmax(0,1fr) 70px;gap:10px;align-items:center}.a28-funnel-row span{font-size:12px;color:#dbe9eb}.a28-track{height:15px;background:#15292b;border-radius:20px;overflow:hidden}.a28-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#5493d0,#1ed5cb);min-width:0}.a28-funnel-row strong{font-size:12px;text-align:right}.a28-chart{display:grid;grid-template-columns:repeat(var(--a28-bars,7),minmax(0,1fr));height:175px;gap:6px;align-items:end;padding:12px 0 0}.a28-day{display:grid;gap:5px;justify-items:center;min-width:0}.a28-bars{display:flex;align-items:flex-end;gap:3px;height:115px}.a28-bar{min-width:5px;width:9px;border-radius:3px 3px 0 0;background:#5493d0}.a28-bar.order{background:#1ed5cb}.a28-day-label{font-size:10px;color:#a3bec1;white-space:nowrap}.a28-day-values{font-size:10px;color:#b9d8da}.a28-key{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#a3bdc0;margin-top:8px}.a28-key span:before{content:' ';display:inline-block;width:10px;height:10px;margin-right:5px;border-radius:2px;background:#5493d0}.a28-key .a28-key-orders:before{background:#1ed5cb}.a28-list{display:grid;gap:10px;margin:12px 0 0}.a28-line{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #203536;padding:8px 0;font-size:13px}.a28-line span{overflow-wrap:anywhere}.a28-line b{white-space:nowrap}.a28-note{font-size:12px;line-height:1.6;color:#9ebfc2;margin:12px 0 0}.a28-empty{color:#89afb1;font-size:13px;padding:18px 2px}.a28-positive{color:#7ef0ce}.a28-alert{color:#fbbf24}.a28-rate{font-size:12px;color:#a6bec0}.a28-card h3{font-size:16px;margin:0 0 7px}.a28-card{min-width:0}@media(max-width:1220px){.a28-metrics{grid-template-columns:repeat(3,1fr)}}@media(max-width:760px){.a28-metrics{grid-template-columns:1fr 1fr}.a28-columns{grid-template-columns:1fr}.a28-funnel-row{grid-template-columns:90px 1fr 50px}.a28-metric strong{font-size:21px}.a28-chart{gap:2px}}
+    /* Analityka 0.26.9v — przeprojektowany widok: okres z porównaniem, zakładki (Przegląd / Lejek / Produkty / Ruch / Dni), wykres SVG, tabele, mapa godzin. */
+    .an9-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+    .an9-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin-bottom:14px}.an9-title h2{margin:0 0 6px;font-size:24px;letter-spacing:-.02em}.an9-sub{margin:0;color:var(--muted);font-size:13px;line-height:1.55;max-width:760px}.an9-sub b{color:#dbe9eb;font-weight:800}
+    .an9-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.an9-seg{display:inline-flex;background:#091314;border:1px solid #2b4648;border-radius:11px;padding:3px;gap:2px;max-width:100%;overflow-x:auto}.an9-seg button{border:0;background:transparent;color:#cfe0e1;font:inherit;font-weight:800;font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}.an9-seg button:hover{background:#12292b}.an9-seg button[aria-pressed=true]{background:linear-gradient(90deg,var(--accent),var(--turq));color:#041011}
+    .an9-check{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:#cfe0e1;cursor:pointer;user-select:none}.an9-check input{accent-color:var(--turq);width:16px;height:16px}
+    .an9-export{display:flex;gap:6px;flex-wrap:wrap}.an9-export .btn,.an9-controls .btn{padding:9px 12px;font-size:13px}
+    .an9-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 16px;overflow-x:auto}.an9-tabs button{border:0;background:transparent;color:#b9cfd1;font:inherit;font-weight:800;font-size:14px;padding:11px 16px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}.an9-tabs button:hover{color:#fff}.an9-tabs button[aria-selected=true]{color:#fff;border-bottom-color:var(--turq)}
+    .an9-tabs button:focus-visible,.an9-seg button:focus-visible,.an9-chip:focus-visible,.an9-sort:focus-visible,.an9-chart:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
+    .an9-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}.an9-kpi{background:#0b1718;border:1px solid #284448;border-radius:14px;padding:14px 14px 10px;min-width:0;display:flex;flex-direction:column;gap:4px}.an9-kpi__top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#a8c6ca;font-size:12px;font-weight:700}.an9-kpi strong{display:block;font-size:27px;line-height:1.1;letter-spacing:-.02em;word-break:break-word}.an9-kpi__meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:20px}.an9-kpi__meta small{color:#86b0b4;font-size:11px}.an9-kpi svg{width:100%;height:28px;display:block;margin-top:4px;color:#5493d0}.an9-kpi.is-orders svg{color:#1ed5cb}.an9-kpi.is-warn svg{color:#fbbf24}
+    .an9-help{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1px solid #3a6064;color:#9fd3d6;font-size:10px;font-weight:900;cursor:help;position:relative;flex:none}.an9-help:hover:after,.an9-help:focus:after{content:attr(data-tip);position:absolute;z-index:20;right:-4px;top:22px;width:230px;background:#e6fffb;color:#083b38;padding:9px 11px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.45;box-shadow:0 12px 40px rgba(0,0,0,.4);text-align:left}
+    .an9-delta{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:850;white-space:nowrap;background:#16282a;color:#b3cdd0}.an9-delta.good{background:rgba(54,211,153,.14);color:#6ee7b7}.an9-delta.bad{background:rgba(248,113,113,.14);color:#fca5a5}.an9-delta.new{background:rgba(84,147,208,.18);color:#93c5fd}
+    .an9-grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px;margin-bottom:14px}.an9-grid2--even{grid-template-columns:repeat(2,minmax(0,1fr))}.an9-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px}
+    .an9-card{min-width:0}.an9-card h3{margin:0 0 4px;font-size:16px}.an9-card__sub{margin:0 0 12px;color:#8fb2b5;font-size:12px;line-height:1.5}.an9-card--flush{padding:0;overflow:hidden}.an9-card--flush>h3,.an9-card--flush>.an9-card__sub{padding:16px 18px 0}.an9-card--flush>.an9-card__sub{padding-bottom:10px}
+    .an9-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}.an9-chip{border:1px solid #2f5256;background:#0a1a1c;color:#d5e6e8;border-radius:999px;font:inherit;font-size:12px;font-weight:800;padding:6px 11px;cursor:pointer}.an9-chip[aria-pressed=true]{background:#17383b;border-color:var(--turq);color:#fff}
+    .an9-chart{position:relative;outline:none;border-radius:10px}.an9-chart svg{width:100%;height:auto;display:block;overflow:visible}.an9-chart text{fill:#8fb2b5;font-size:11px;font-family:inherit}.an9-grid-line{stroke:#1d3638;stroke-width:1}.an9-axis{stroke:#2a4a4d;stroke-width:1}.an9-line{fill:none;stroke:#5493d0;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}.an9-area{fill:url(#an9Grad);stroke:none}.an9-prev{fill:none;stroke:#9db7ba;stroke-width:1.8;stroke-dasharray:5 4;stroke-linejoin:round}.an9-bar{fill:#5493d0}.an9-bar.is-peak{fill:#1ed5cb}.an9-dot{fill:#5493d0;stroke:#0b1718;stroke-width:2}.an9-hover{stroke:#6aa6a9;stroke-width:1;stroke-dasharray:3 3}
+    .an9-tip{position:absolute;z-index:5;pointer-events:none;background:#e6fffb;color:#083b38;border-radius:9px;padding:8px 10px;font-size:12px;line-height:1.45;box-shadow:0 12px 36px rgba(0,0,0,.45);white-space:nowrap;transform:translate(-50%,-100%);margin-top:-10px}.an9-tip b{display:block;font-size:12px}.an9-tip[hidden]{display:none}
+    .an9-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#a3bdc0;margin-top:8px}.an9-legend i{display:inline-block;width:18px;height:0;border-top:3px solid #5493d0;margin-right:6px;vertical-align:middle}.an9-legend i.dash{border-top:2px dashed #9db7ba}
+    .an9-insights{list-style:none;margin:0;padding:0;display:grid;gap:9px}.an9-insights li{display:grid;grid-template-columns:10px 1fr;gap:10px;font-size:13px;line-height:1.5;color:#e1eeef;padding:10px 11px;border-radius:11px;background:#091314;border:1px solid #1f3a3c}.an9-insights li:before{content:'';width:9px;height:9px;border-radius:50%;margin-top:6px;background:#5493d0}.an9-insights li.good:before{background:var(--good)}.an9-insights li.warn:before{background:var(--warn)}.an9-insights li.bad:before{background:var(--danger)}.an9-insights b{color:#fff}
+    .an9-steps{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:11px}.an9-step{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) minmax(110px,150px);gap:6px 14px;align-items:center}.an9-step__label{font-size:13px;font-weight:750;color:#e6f1f2;display:flex;flex-direction:column;gap:3px}.an9-step__label small{font-weight:500;color:#86b0b4;font-size:11px}.an9-step__bar{height:18px;background:#13282a;border-radius:999px;overflow:hidden}.an9-step__bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5493d0,#1ed5cb);min-width:3px}.an9-step.is-final .an9-step__bar i{background:linear-gradient(90deg,#1ed5cb,#36d399)}.an9-step__num{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}.an9-step__num strong{font-size:16px}.an9-step__num small{font-size:11px;color:#86b0b4}.an9-loss{display:inline-flex;gap:5px;align-items:center;font-size:11px;color:#fbbf24;font-weight:800}.an9-tag{align-self:flex-start;font-style:normal;font-size:10px;font-weight:850;color:#251a02;background:var(--warn);padding:2px 7px;border-radius:999px}.an9-stack{display:grid;gap:14px}
+    .an9-note{font-size:12px;line-height:1.6;color:#9ebfc2;margin:12px 0 0}.an9-empty{color:#89afb1;font-size:13px;padding:18px 2px}.an9-warn{background:#2a2108;border:1px solid #5d4a10;color:#fde68a;border-radius:11px;padding:10px 12px;font-size:12px;line-height:1.55;margin:0 0 12px}
+    .an9-table-wrap{overflow:auto;max-width:100%;max-height:640px}.an9-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}.an9-table caption{text-align:left}.an9-table th,.an9-table td{padding:9px 12px;text-align:right;border-bottom:1px solid #1b3032;white-space:nowrap}.an9-table th:first-child,.an9-table td:first-child{text-align:left}.an9-table thead th{position:sticky;top:0;background:#0f1f21;z-index:2;color:#bcd3d5;font-size:12px;font-weight:800;border-bottom:1px solid #2a4a4d;white-space:normal;vertical-align:bottom;line-height:1.3}.an9-table tbody th{font-weight:700;color:#e6f1f2}.an9-table tbody tr:hover td,.an9-table tbody tr:hover th{background:#0f2022}.an9-table tfoot td,.an9-table tfoot th{font-weight:900;color:#fff;border-top:2px solid #2a4a4d;background:#0d1c1e;position:sticky;bottom:0}.an9-table .is-best{color:#7ef0ce;font-weight:850}.an9-table .dim{color:#6f9094}.an9-table td.an9-bar-cell{min-width:140px}.an9-bar-cell{position:relative}.an9-bar-cell i{position:absolute;left:0;top:6px;bottom:6px;background:rgba(30,213,203,.13);border-radius:0 6px 6px 0;max-width:100%}.an9-bar-cell span{position:relative}
+    .an9-sort{border:0;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:5px}.an9-sort:after{content:'↕';opacity:.35;font-size:11px}th[aria-sort=ascending] .an9-sort:after{content:'▲';opacity:1;color:var(--turq)}th[aria-sort=descending] .an9-sort:after{content:'▼';opacity:1;color:var(--turq)}
+    .an9-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:0 18px 12px}.an9-tools input{background:#071011;color:var(--ink);border:1px solid #2b4648;border-radius:10px;padding:9px 12px;font:inherit;font-size:13px;min-width:220px;outline:none}.an9-tools input:focus{border-color:var(--turq)}
+    .an9-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.an9-tile{background:#0b1718;border:1px solid #284448;border-radius:14px;padding:14px}.an9-tile small{display:block;color:#a8c6ca;font-size:12px;font-weight:700}.an9-tile strong{display:block;font-size:19px;margin:6px 0 3px;overflow-wrap:anywhere}.an9-tile em{font-style:normal;font-size:12px;color:#86b0b4}
+    .an9-list{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px}.an9-row{display:grid;grid-template-columns:minmax(90px,1.2fr) minmax(50px,1.5fr) 118px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #182f31;font-size:13px}.an9-row:last-child{border-bottom:0}.an9-row__name{overflow-wrap:anywhere;color:#e6f1f2}.an9-row__bar{height:8px;border-radius:999px;background:#13282a;overflow:hidden}.an9-row__bar i{display:block;height:100%;background:#5493d0;border-radius:999px;min-width:2px}.an9-row__val{display:flex;flex-direction:column;align-items:flex-end;line-height:1.25;white-space:nowrap}.an9-row__val b{font-weight:850}.an9-row__val small{color:#86b0b4;font-weight:600;font-size:11px}
+    .an9-heat-wrap{overflow-x:auto;padding-bottom:4px}.an9-heat{display:grid;grid-template-columns:34px repeat(24,minmax(0,1fr));gap:2px;min-width:420px;font-size:10px;color:#86b0b4}.an9-heat b{font-weight:600;text-align:right;padding-right:6px;align-self:center}.an9-heat i{display:block;height:22px;border-radius:4px;background:rgba(30,213,203,var(--v,0));border:1px solid #17302f}.an9-heat i.is-zero{background:#0d1c1e}.an9-heat span{text-align:center;font-size:9px;color:#6f9094}
+    .an9-defs{margin-top:16px}.an9-defs summary{cursor:pointer;font-weight:800;color:#cfe0e1;font-size:14px}.an9-defs dl{display:grid;grid-template-columns:minmax(150px,230px) 1fr;gap:8px 16px;margin:12px 0 0;font-size:13px;line-height:1.55}.an9-defs dt{font-weight:800;color:#e6f1f2}.an9-defs dd{margin:0;color:#a6c0c3}
+    @media(max-width:1220px){.an9-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.an9-grid2{grid-template-columns:1fr}.an9-grid3{grid-template-columns:1fr}}
+    @media(max-width:760px){.an9-title h2{font-size:21px}.an9-controls{justify-content:flex-start}.an9-kpis{grid-template-columns:1fr 1fr}.an9-kpi strong{font-size:21px}.an9-grid2--even,.an9-tiles{grid-template-columns:1fr}.an9-step{grid-template-columns:1fr auto;grid-template-areas:"label num" "bar bar"}.an9-step__label{grid-area:label}.an9-step__num{grid-area:num}.an9-step__bar{grid-area:bar}.an9-defs dl{grid-template-columns:1fr}.an9-defs dt{margin-top:6px}.an9-row{grid-template-columns:minmax(80px,1fr) minmax(0,1fr) auto}.an9-table th,.an9-table td{padding:8px 9px}.an9-tools input{min-width:0;width:100%}}
+    @media(max-width:420px){.an9-kpi{padding:12px 11px 8px}.an9-kpi strong{font-size:18px}.an9-kpi__meta small{font-size:10px}}
     /* Production management — 0.22.9v */
     .p29-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}.p29-header h2{font-size:24px;margin:0 0 8px}.p29-header p{max-width:750px;font-size:13px;line-height:1.5}
     .p29-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:14px}.p29-stat{border:1px solid var(--line);border-radius:14px;padding:13px;background:#101e20}.p29-stat small{display:block;color:#afc2c5;font-size:12px}.p29-stat strong{display:block;font-size:26px;margin-top:5px}.p29-stat.warn strong{color:#fbbf24}.p29-stat.danger strong{color:#fca5a5}
@@ -62,7 +90,7 @@ if (!$user) {
       <button data-tab="orders">Zlecenia</button>
       <button data-tab="production">Produkcja</button>
       <?php if (!empty($user['is_admin'])): ?><button data-tab="monitoring">Monitoring <span id="monitorNavAlert" class="monitor-alert-badge" hidden>!</span></button><?php endif; ?>
-      <button data-tab="analytics">Analytics</button>
+      <button data-tab="analytics">Analityka</button>
       <?php if (d24_staff_can('promo_manage')): ?><button data-tab="promo">Kody rabatowe</button><?php endif; ?>
       <?php if (!empty($user['is_admin'])): ?><button data-tab="staff">Pracownicy</button><button data-tab="settings">Ustawienia</button><?php endif; ?>
     </nav>
@@ -251,73 +279,417 @@ if (!$user) {
     });
     $('#saveInternalNote')?.addEventListener('click',async()=>{try{await api({action:'order_note',order_id:o.order_id,internal_note:$('#internalNote').value});toast('Zapisano notatkę');await load(true)}catch(e){toast(e.message)}});
   }
-  function a28RankedEntries(values){ return Object.entries(values||{}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,8); }
-  function a28Ranking(values, units=''){
-    const entries=a28RankedEntries(values);
-    return entries.length?`<div class="a28-list">${entries.map(([name,value])=>`<div class="a28-line"><span>${esc(name)}</span><b>${Number(value).toLocaleString('pl-PL')}${units}</b></div>`).join('')}</div>`:'<div class="a28-empty">Brak danych w wybranym okresie.</div>';
+  /* ===== Analityka 0.26.9v =====
+     Widok analityczny: okres z porównaniem do poprzedniego, zakładki Przegląd / Lejek / Produkty / Ruch / Dni.
+     Dane zbiorcze z staff-api.php?action=analytics (bez IP, nazwisk i adresów e-mail). */
+  const AN_VIEWS=[['overview','Przegląd'],['funnel','Lejek'],['products','Produkty'],['traffic','Ruch'],['days','Dni']];
+  const AN_PERIODS=[[1,'Dziś'],[7,'7 dni'],[14,'14 dni'],[30,'30 dni'],[90,'90 dni']];
+  const AN_SOURCE={direct:'Wejścia bezpośrednie',search:'Wyszukiwarki',social:'Social media',referral:'Inne strony',unknown:'Brak danych (starsze sesje)'};
+  const AN_DEVICE={mobile:'Telefon',tablet:'Tablet',desktop:'Komputer',unknown:'Nieznane (starsze sesje)'};
+  const AN_LANG={pl:'Polski',en:'Angielski',other:'Inne wersje językowe',unknown:'Nieznany (starsze sesje)'};
+  const AN_ERROR={stale_item:'Pozycja ze starszej wersji kalkulatora',limit:'Przekroczony limit (wymiar, nakład, wartość)',validation:'Niepełny formularz (imię, e-mail, zgoda)',files:'Problem z plikami',network:'Błąd połączenia',server:'Inny błąd serwera'};
+  const AN_WEEKDAYS=['Pon','Wt','Śr','Czw','Pt','Sob','Nd'];
+  const AN_WEEKDAYS_LONG=['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela'];
+  const AN_METRICS=[['sessions','Sesje',false],['prices','Cena po konfiguracji',false],['quotes','Wyceny',false],['carts','Koszyki',false],['orders','Przyjęte zapytania',false],['value_cents','Wartość zapytań',true]];
+  const an={view:'overview',metric:'sessions',compare:true,error:'',key:'',loadingDays:0,hourSpec:null,prodSort:['value','desc'],daySort:['day','desc'],prodFilter:''};
+  try{ const v=sessionStorage.getItem('d24_an_view'); if(AN_VIEWS.some(x=>x[0]===v)) an.view=v; const d=Number(localStorage.getItem('d24_an_days')); if(AN_PERIODS.some(x=>x[0]===d)) analyticsDays=d; if(localStorage.getItem('d24_an_compare')==='0') an.compare=false; }catch{}
+
+  const anN=v=>Number(v||0).toLocaleString('pl-PL');
+  const anP=(v,d=1)=>Number.isFinite(v)?(v*100).toLocaleString('pl-PL',{maximumFractionDigits:d})+'%':'—';
+  const anZl=cents=>money(Number(cents||0)/100)+' zł';
+  const anDay=day=>{const m=String(day).split('-');return m.length===3?m[2]+'.'+m[1]:String(day);};
+  const anDayFull=day=>{const m=String(day).split('-');return m.length===3?m[2]+'.'+m[1]+'.'+m[0]:String(day);};
+  const anWd=day=>AN_WEEKDAYS[(new Date(day+'T12:00:00').getDay()+6)%7];
+  const anRatio=(a,b)=>Number(b)>0?Number(a)/Number(b):NaN;
+  const anSum=list=>(list||[]).reduce((s,x)=>s+(Number(x)||0),0);
+  const anEntries=(obj)=>Object.entries(obj||{}).map(([k,v])=>[k,Number(v)||0]).sort((a,b)=>b[1]-a[1]);
+  const anPrevLabel=()=>analyticsDays===1?'wczoraj':'poprzednie '+analyticsDays+' dni';
+  const anHasPrev=a=>an.compare&&a?.previous&&a.previous.totals&&Object.keys(a.previous.totals).length>0;
+
+  // Zmiana względem poprzedniego okresu. inverse = spadek jest korzystny (porzucone koszyki, błędy); pp = różnica w punktach procentowych (współczynniki).
+  function anDelta(a,cur,prev,{inverse=false,pp=false}={}){
+    if(!anHasPrev(a)) return '';
+    const title='Poprzedni okres ('+anPrevLabel()+'): '+(pp?anP(prev):anN(prev));
+    if(pp){
+      if(!Number.isFinite(cur)||!Number.isFinite(prev)) return '';
+      const d=(cur-prev)*100;
+      if(Math.abs(d)<0.05) return `<span class="an9-delta" title="${esc(title)}">bez zmian</span>`;
+      return `<span class="an9-delta ${(d>0)!==inverse?'good':'bad'}" title="${esc(title)}">${d>0?'▲':'▼'} ${Math.abs(d).toLocaleString('pl-PL',{maximumFractionDigits:1})} p.p.</span>`;
+    }
+    if(!prev&&!cur) return `<span class="an9-delta" title="${esc(title)}">bez zmian</span>`;
+    if(!prev) return `<span class="an9-delta new" title="${esc(title)}">nowe</span>`;
+    const ch=(cur-prev)/prev;
+    if(Math.abs(ch)<0.005) return `<span class="an9-delta" title="${esc(title)}">bez zmian</span>`;
+    return `<span class="an9-delta ${(ch>0)!==inverse?'good':'bad'}" title="${esc(title)}">${ch>0?'▲':'▼'} ${Math.abs(ch*100).toLocaleString('pl-PL',{maximumFractionDigits:Math.abs(ch)>=1?0:1})}%</span>`;
   }
+  function anSpark(values){
+    const v=(values||[]).map(x=>Number(x)||0);
+    if(v.length<2||Math.max(...v)<=0) return '';
+    const max=Math.max(...v),step=100/(v.length-1);
+    const pts=v.map((x,i)=>(i*step).toFixed(1)+','+(26-x/max*24).toFixed(1)).join(' ');
+    return `<svg viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  }
+  const anKpi=({label,value,sub,delta,spark,cls,help})=>`<div class="an9-kpi ${cls||''}"><div class="an9-kpi__top"><span>${label}</span>${help?`<span class="an9-help" tabindex="0" role="img" aria-label="${esc(label+': '+help)}" data-tip="${esc(help)}">?</span>`:''}</div><strong>${value}</strong><div class="an9-kpi__meta">${delta||''}${sub?`<small>${sub}</small>`:''}</div>${spark||''}</div>`;
+
+  // --- skala osi i wykres SVG (słupki dla godzin, linia z obszarem dla dni; opcjonalnie linia przerywana = poprzedni okres)
+  function anTicks(max,isInt){
+    if(!(max>0)) return {top:4,step:1,n:4};
+    let step=max/4; const exp=Math.pow(10,Math.floor(Math.log10(step))); const f=step/exp;
+    step=(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*exp;
+    if(isInt&&step<1) step=1;
+    const n=Math.max(1,Math.ceil(max/step-1e-9));
+    return {top:n*step,step,n};
+  }
+  function anChart(o){
+    const W=o.W||820,H=o.H||270,L=46,R=12,T=14,B=30,iw=W-L-R,ih=H-T-B,len=o.cur.length;
+    const all=[...o.cur,...(o.prev||[])]; const {top,step,n}=anTicks(Math.max(0,...all),!o.money);
+    const x=i=>o.bar?L+(i+.5)*iw/len:L+(len===1?iw/2:i*iw/(len-1));
+    const y=v=>T+ih-(Math.max(0,v)/top)*ih;
+    const yfmt=v=>o.money?Number(v).toLocaleString('pl-PL',{maximumFractionDigits:0}):Number(v).toLocaleString('pl-PL',{maximumFractionDigits:2});
+    let g='';
+    for(let i=0;i<=n;i++){const val=i*step,yy=y(val);g+=`<line class="${i===0?'an9-axis':'an9-grid-line'}" x1="${L}" x2="${W-R}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text x="${L-8}" y="${(yy+4).toFixed(1)}" text-anchor="end">${esc(yfmt(val))}</text>`;}
+    const every=Math.max(1,Math.ceil(len/Math.max(2,Math.floor(iw/(o.bar?30:56)))));
+    for(let i=0;i<len;i++) if(i%every===0||i===len-1) g+=`<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle">${esc(o.xlabel(i))}</text>`;
+    let marks='';
+    const peak=o.cur.indexOf(Math.max(...o.cur));
+    if(o.bar){
+      const bw=Math.max(3,Math.min(26,iw/len*.62));
+      marks=o.cur.map((v,i)=>`<rect class="an9-bar${i===peak&&v>0?' is-peak':''}" x="${(x(i)-bw/2).toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,T+ih-y(v)).toFixed(1)}" rx="2"/>`).join('');
+    }else{
+      const pts=o.cur.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1));
+      marks=`<path class="an9-area" d="M${x(0).toFixed(1)},${(T+ih).toFixed(1)} L${pts.join(' L')} L${x(len-1).toFixed(1)},${(T+ih).toFixed(1)} Z"/><polyline class="an9-line" points="${pts.join(' ')}"/>`;
+      if(len<=31) marks+=o.cur.map((v,i)=>`<circle class="an9-dot" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.4"/>`).join('');
+    }
+    const prev=o.prev&&o.prev.length===len?`<polyline class="an9-prev" points="${o.prev.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ')}"/>`:'';
+    o.yFn=y;
+    const label=o.ariaLabel||'Wykres';
+    return `<div class="an9-chart" tabindex="0" role="group" aria-label="${esc(label)}. Strzałkami w lewo i w prawo przechodzisz po punktach." data-chart>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"><defs><linearGradient id="an9Grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5493d0" stop-opacity=".38"/><stop offset="1" stop-color="#5493d0" stop-opacity="0"/></linearGradient></defs>${g}${marks}${prev}<line class="an9-hover" data-hover x1="0" x2="0" y1="${T}" y2="${T+ih}" style="display:none"/></svg>
+      <div class="an9-tip" data-tip-box hidden></div></div>`;
+  }
+  function anChartBind(root,o){
+    const box=root.querySelector('[data-chart]'); if(!box) return;
+    const svg=box.querySelector('svg'),hover=box.querySelector('[data-hover]'),tip=box.querySelector('[data-tip-box]');
+    const W=o.W||820,L=46,R=12,iw=W-L-R,len=o.cur.length; let idx=-1;
+    const xAt=i=>o.bar?L+(i+.5)*iw/len:L+(len===1?iw/2:i*iw/(len-1));
+    function show(i){
+      i=Math.max(0,Math.min(len-1,i)); idx=i;
+      const rect=svg.getBoundingClientRect(),scale=rect.width/W,px=xAt(i)*scale;
+      hover.setAttribute('x1',xAt(i)); hover.setAttribute('x2',xAt(i)); hover.style.display='';
+      tip.innerHTML=o.tip(i); tip.hidden=false;
+      const half=tip.offsetWidth/2,vals=[o.cur[i]].concat(o.prev?[o.prev[i]]:[]),py=(o.yFn?Math.min(...vals.map(v=>o.yFn(v))):20)*scale;
+      tip.style.left=Math.max(half,Math.min(rect.width-half,px))+'px'; tip.style.top=py+'px';
+      const above=py-tip.offsetHeight-12>=0; tip.style.transform=above?'':'translate(-50%,0)'; tip.style.marginTop=above?'':'14px';
+    }
+    function hide(){ idx=-1; hover.style.display='none'; tip.hidden=true; }
+    svg.addEventListener('pointermove',e=>{const rect=svg.getBoundingClientRect(),vx=(e.clientX-rect.left)/rect.width*W;show(o.bar?Math.floor((vx-L)/iw*len):Math.round((vx-L)/iw*(len-1)));});
+    svg.addEventListener('pointerleave',hide);
+    box.addEventListener('blur',hide);
+    box.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){e.preventDefault();show(idx<0?0:idx+1);} else if(e.key==='ArrowLeft'){e.preventDefault();show(idx<0?len-1:idx-1);} else if(e.key==='Escape') hide(); });
+  }
+
+  // --- dane pochodne
+  function anSteps(t){ t=t||{}; return [['Sesje',+t.sessions||0,'Unikalne sesje przeglądarki.'],['Cena po konfiguracji',+t.stage_price||0,'Sesje, w których klient zmienił parametry i zobaczył cenę (nie liczy ceny domyślnej po samym wejściu).'],['Wyceny',+t.stage_quote||0,'Sesje, w których wyświetlono wycenę.'],['Koszyki',+t.stage_cart||0,'Sesje, w których dodano pozycję do koszyka.'],['Formularz zamówienia',+t.stage_checkout||0,'Sesje, które otworzyły formularz wysłania zapytania.'],['Przyjęte zapytania',+t.orders_verified||0,'Zapytania przyjęte przez serwer (wysłany e-mail), nie płatności.']]; }
+  function anProductRows(a){
+    const keys=new Set([...Object.keys(a.pages||{}),...Object.keys(a.price_products||{}),...Object.keys(a.cart_products||{}),...Object.keys(a.ordered_products||{}),...Object.keys(a.ordered_value_cents||{})]);
+    keys.delete('Strona główna');
+    return [...keys].map(name=>{const views=+a.pages?.[name]||0,price=+a.price_products?.[name]||0,cart=+a.cart_products?.[name]||0,ordered=+a.ordered_products?.[name]||0,value=(+a.ordered_value_cents?.[name]||0)/100;
+      return {name,views,price,cart,ordered,value,cartRate:anRatio(cart,price),orderRate:anRatio(ordered,cart)};});
+  }
+  function anSortRows(rows,[key,dir]){
+    const m=dir==='asc'?1:-1;
+    return rows.slice().sort((p,q)=>{const x=p[key],y=q[key];
+      if(typeof x==='string'||typeof y==='string') return m*String(x).localeCompare(String(y),'pl');
+      const xn=Number.isFinite(x),yn=Number.isFinite(y); if(!xn&&!yn) return String(p.name||p.day).localeCompare(String(q.name||q.day),'pl'); if(!xn) return 1; if(!yn) return -1;
+      return m*(x-y)||String(p.name||'').localeCompare(String(q.name||''),'pl');});
+  }
+  function anInsights(a){
+    const t=a.totals||{},out=[],series=a.series||[],sessions=+t.sessions||0;
+    if(!sessions) return [{tone:'warn',text:'W wybranym okresie nie zarejestrowano żadnych sesji.'}];
+    if(series.length>1){
+      const best=series.reduce((m,x)=>x.sessions>m.sessions?x:m,series[0]);
+      if(best.sessions>0) out.push({tone:'info',text:`Najwięcej ruchu: <b>${esc(anWd(best.day))} ${esc(anDay(best.day))}</b> — ${anN(best.sessions)} sesji.`});
+      const bestOrder=series.reduce((m,x)=>x.orders>m.orders?x:m,series[0]);
+      if(bestOrder.orders>0) out.push({tone:'good',text:`Najwięcej zapytań: <b>${esc(anWd(bestOrder.day))} ${esc(anDay(bestOrder.day))}</b> — ${anN(bestOrder.orders)} (${esc(anZl(bestOrder.value_cents))}).`});
+    }
+    const steps=anSteps(t); let worst=null;
+    for(let i=1;i<steps.length;i++){const prev=steps[i-1][1],cur=steps[i][1],loss=Math.max(0,prev-cur); if(prev>=5&&loss>0&&(!worst||loss>worst.loss)) worst={from:steps[i-1][0],to:steps[i][0],loss,share:loss/prev};}
+    if(worst) out.push({tone:'warn',text:`Największa strata w lejku: z etapu „${esc(worst.from)}” do „${esc(worst.to)}” — odpada <b>${anN(worst.loss)}</b> sesji (${esc(anP(worst.share,0))}).`});
+    const abandoned=+a.abandoned||0,carts=+t.stage_cart||0;
+    if(abandoned>0&&carts>0) out.push({tone:'warn',text:`<b>${anN(abandoned)}</b> sesji porzuciło koszyk (${esc(anP(abandoned/carts,0))} sesji z koszykiem) — warto sprawdzić, na jakim etapie klienci rezygnują.`});
+    const topCart=anEntries(a.cart_products)[0]; if(topCart&&topCart[1]>0) out.push({tone:'info',text:`Najczęściej dodawane do koszyka: <b>${esc(topCart[0])}</b> (${anN(topCart[1])}).`});
+    const topValue=anEntries(a.ordered_value_cents)[0]; const valueSum=anSum(Object.values(a.ordered_value_cents||{}));
+    if(topValue&&valueSum>0) out.push({tone:'good',text:`Największa wartość zapytań: <b>${esc(topValue[0])}</b> — ${esc(anZl(topValue[1]))} (${esc(anP(topValue[1]/valueSum,0))} wartości).`});
+    const errors=+t.order_error||0; if(errors>0){const top=anEntries(a.order_errors)[0]; out.push({tone:'bad',text:`Błędy wysyłki zamówienia: <b>${anN(errors)}</b>${top?` — najczęstszy: ${esc(AN_ERROR[top[0]]||top[0])}`:''}.`});}
+    const search=+t.search||0,miss=+t.search_miss||0; if(search>=5&&miss/search>=0.2) out.push({tone:'warn',text:`${esc(anP(miss/search,0))} wyszukiwań w kalkulatorze nie dało wyników (${anN(miss)} z ${anN(search)}) — zajrzyj do zakładki Ruch, jakich haseł szukają klienci.`});
+    const hours=a.hours||[],hs=anSum(hours); if(hs>=10){const h=hours.indexOf(Math.max(...hours)); out.push({tone:'info',text:`Najwięcej wejść o godz. <b>${String(h).padStart(2,'0')}:00–${String(h).padStart(2,'0')}:59</b>.`});}
+    const rank={bad:0,warn:1,good:2,info:3};   // najpierw to, co wymaga reakcji
+    return out.map((x,i)=>[x,i]).sort((p,q)=>rank[p[0].tone]-rank[q[0].tone]||p[1]-q[1]).map(x=>x[0]).slice(0,8);
+  }
+
+  // --- widoki
+  function anOverview(a){
+    const t=a.totals||{},p=a.previous?.totals||{},series=a.series||[];
+    const sessions=+t.sessions||0,orders=+t.orders_verified||0,carts=+t.stage_cart||0,value=(+t.orders_value_cents||0)/100,errors=+t.order_error||0;
+    const pSessions=+p.sessions||0,pOrders=+p.orders_verified||0,pCarts=+p.stage_cart||0,pValue=(+p.orders_value_cents||0)/100,pErrors=+p.order_error||0;
+    const conv=anRatio(orders,sessions),pConv=anRatio(pOrders,pSessions),avg=anRatio(value,orders),pAvg=anRatio(pValue,pOrders);
+    const abandoned=+a.abandoned||0;
+    const kpis=[
+      anKpi({label:'Sesje',value:anN(sessions),delta:anDelta(a,sessions,pSessions),sub:'unikalne sesje',spark:anSpark(series.map(x=>x.sessions)),help:'Liczba unikalnych sesji przeglądarki (jedna osoba może mieć kilka sesji). Bez adresów IP.'}),
+      anKpi({label:'Sesje z koszykiem',value:anN(carts),delta:anDelta(a,carts,pCarts),sub:sessions?anP(carts/sessions,1)+' sesji':'',spark:anSpark(series.map(x=>x.carts)),help:'Sesje, w których dodano co najmniej jedną pozycję do koszyka.'}),
+      anKpi({label:'Przyjęte zapytania',value:anN(orders),delta:anDelta(a,orders,pOrders),sub:'potwierdzone przez serwer',spark:anSpark(series.map(x=>x.orders)),cls:'is-orders',help:'Zapytania, które serwer przyjął i wysłał jako e-mail do drukarni. To nie są płatności ani zrealizowana sprzedaż.'}),
+      anKpi({label:'Konwersja',value:anP(conv,2),delta:anDelta(a,conv,pConv,{pp:true}),sub:'zapytania ÷ sesje',help:'Przyjęte zapytania podzielone przez liczbę sesji w okresie. To nie jest analiza tej samej grupy klientów.'}),
+      anKpi({label:'Wartość zapytań',value:anZl(value*100),delta:anDelta(a,value,pValue),sub:'nieopłacona, tylko wyceny',spark:anSpark(series.map(x=>x.value_cents)),cls:'is-orders',help:'Suma wartości przyjętych zapytań (brutto z kalkulatora). Zapytanie nie jest równoznaczne z zamówieniem zapłaconym.'}),
+      anKpi({label:'Średnia wartość zapytania',value:Number.isFinite(avg)?money(avg)+' zł':'—',delta:anDelta(a,avg,pAvg),sub:orders?'z '+anN(orders)+' zapytań':'brak zapytań',help:'Wartość zapytań podzielona przez liczbę przyjętych zapytań.'}),
+      anKpi({label:'Koszyki porzucone',value:anN(abandoned),sub:carts?anP(abandoned/carts,0)+' sesji z koszykiem':'—',cls:'is-warn',help:a.abandoned_definition||'Sesje z koszykiem, bez zapytania, nieaktywne co najmniej 24 godziny.'}),
+      anKpi({label:'Błędy wysyłki',value:anN(errors),delta:anDelta(a,errors,pErrors,{inverse:true}),sub:orders+errors?anP(errors/(orders+errors),0)+' prób wysłania':'—',cls:'is-warn',help:'Próby wysłania zamówienia, które się nie powiodły (np. limit, brak zgody, błąd połączenia).'})
+    ].join('');
+    const hourly=Number(a.period_days)===1;
+    const chartHtml=hourly?`<h3 id="an9ChartTitle">Sesje wg godziny — dziś</h3><p class="an9-card__sub">Godzina wejścia na stronę (czas strony). ${anHasPrev(a)?'Linia przerywana — wczoraj.':''}</p>`:`<h3 id="an9ChartTitle">Dzień po dniu</h3><p class="an9-card__sub">Wybierz wskaźnik. ${anHasPrev(a)?'Linia przerywana — poprzedni okres ('+esc(anPrevLabel())+').':''}</p><div class="an9-chips" role="group" aria-label="Wskaźnik na wykresie">${AN_METRICS.map(([key,label])=>`<button type="button" class="an9-chip" data-an-metric="${key}" aria-pressed="${an.metric===key}">${esc(label)}</button>`).join('')}</div>`;
+    const insights=anInsights(a);
+    return `<div class="an9-kpis">${kpis}</div>
+      <section class="card an9-card" aria-labelledby="an9ChartTitle" style="margin-bottom:14px"><div id="an9ChartHost">${chartHtml}<div id="an9ChartBox"></div><div class="an9-legend" id="an9Legend"></div></div></section>
+      <div class="an9-grid2 an9-grid2--even"><section class="card an9-card"><h3>Lejek w skrócie</h3><p class="an9-card__sub">Ilu sesjom udaje się przejść do kolejnego etapu.</p>${anFunnelList(a,true)}</section>
+      <section class="card an9-card"><h3>Najważniejsze wnioski</h3><p class="an9-card__sub">Wyliczone automatycznie z danych tego okresu; najpierw to, co wymaga reakcji.</p><ul class="an9-insights">${insights.map(i=>`<li class="${esc(i.tone)}"><span>${i.text}</span></li>`).join('')}</ul></section></div>
+      <div class="an9-grid2 an9-grid2--even"><section class="card an9-card"><h3>Najlepsze kategorie</h3><p class="an9-card__sub">Według wartości przyjętych zapytań, a gdy jej brak — według dodań do koszyka.</p>${anTopCategories(a)}</section>
+      <section class="card an9-card"><h3>Źródła ruchu</h3><p class="an9-card__sub">Skąd klienci wchodzą na stronę (szczegóły w zakładce Ruch).</p>${anShareList(a.sources,AN_SOURCE,+a.totals?.sessions||0,a.segments?.source)}</section></div>`;
+  }
+  function anChartSpec(a){
+    const series=a.series||[],prevSeries=a.previous?.series||[],comparing=anHasPrev(a);
+    if(Number(a.period_days)===1){
+      const cur=(a.hours||[]).map(Number),prev=comparing?(a.previous?.hours||[]).map(Number):null;
+      return {bar:true,cur,prev,money:false,xlabel:i=>String(i).padStart(2,'0'),ariaLabel:'Sesje według godziny wejścia — dziś',
+        tip:i=>`<b>${String(i).padStart(2,'0')}:00–${String(i).padStart(2,'0')}:59</b>Dziś: ${anN(cur[i])} sesji${prev?`<br>Wczoraj: ${anN(prev[i])} sesji`:''}`,legend:[['','Dziś'],comparing?['dash','Wczoraj']:null]};
+    }
+    const metric=AN_METRICS.find(m=>m[0]===an.metric)||AN_METRICS[0],key=metric[0],isMoney=metric[2];
+    const conv=v=>isMoney?(Number(v)||0)/100:(Number(v)||0);
+    const cur=series.map(x=>conv(x[key])),prev=comparing&&prevSeries.length===series.length?prevSeries.map(x=>conv(x[key])):null;
+    const fmt=v=>isMoney?money(v)+' zł':anN(v);
+    return {bar:false,cur,prev,money:isMoney,xlabel:i=>anDay(series[i].day),ariaLabel:metric[1]+' — dzień po dniu',
+      tip:i=>`<b>${esc(anWd(series[i].day))} ${esc(anDayFull(series[i].day))}</b>${esc(metric[1])}: ${esc(fmt(cur[i]))}${prev?`<br>Poprzedni okres (${esc(anDay(prevSeries[i].day))}): ${esc(fmt(prev[i]))}`:''}`,legend:[['',metric[1]],prev?['dash','Poprzedni okres']:null]};
+  }
+  function anFunnelList(a,compact){
+    const steps=anSteps(a.totals),prevSteps=anHasPrev(a)?anSteps(a.previous.totals):null,base=steps[0][1];
+    if(!base) return '<div class="an9-empty">Brak sesji w wybranym okresie.</div>';
+    let worst=-1,worstLoss=0;
+    steps.forEach((s,i)=>{ if(i>0){const loss=Math.max(0,steps[i-1][1]-s[1]); if(steps[i-1][1]>=5&&loss>worstLoss){worstLoss=loss;worst=i;}} });
+    return `<ol class="an9-steps">${steps.map(([name,n,help],i)=>{
+      const prev=i>0?steps[i-1][1]:0,through=i>0&&prev>0?Math.min(1,n/prev):NaN,loss=i>0?Math.max(0,prev-n):0;
+      const sub=i===0?(compact?'':esc(help)):`${Number.isFinite(through)?`przechodzi dalej: ${esc(anP(through,0))}`:'—'}${loss>0&&!compact?` · odpada ${anN(loss)}`:''}`;
+      return `<li class="an9-step${i===steps.length-1?' is-final':''}${i===worst&&!compact?' is-worst':''}"><div class="an9-step__label"><span>${esc(name)}</span><small>${sub}</small>${i===worst&&!compact?'<em class="an9-tag">największa strata</em>':''}</div><div class="an9-step__bar" role="img" aria-label="${esc(name)}: ${anN(n)} (${esc(anP(base?n/base:NaN,1))} sesji)"><i style="width:${Math.max(0,Math.min(100,base?n/base*100:0)).toFixed(1)}%"></i></div><div class="an9-step__num"><strong>${anN(n)}</strong><small>${esc(anP(base?n/base:NaN,1))} sesji</small>${prevSteps?anDelta(a,n,prevSteps[i][1]):''}</div></li>`;}).join('')}</ol>`;
+  }
+  function anTopCategories(a){
+    const rows=anProductRows(a),hasValue=rows.some(r=>r.value>0);
+    const sorted=rows.slice().sort((p,q)=>hasValue?(q.value-p.value||q.cart-p.cart):(q.cart-p.cart||q.price-p.price)).filter(r=>hasValue?r.value>0:r.cart>0).slice(0,6);
+    if(!sorted.length) return '<div class="an9-empty">Brak danych o kategoriach w wybranym okresie.</div>';
+    const max=Math.max(...sorted.map(r=>hasValue?r.value:r.cart));
+    return `<ul class="an9-list">${sorted.map(r=>{const v=hasValue?r.value:r.cart;return `<li class="an9-row"><span class="an9-row__name">${esc(r.name)}</span><span class="an9-row__bar"><i style="width:${(v/max*100).toFixed(1)}%"></i></span><span class="an9-row__val">${hasValue?esc(money(r.value))+' zł':anN(r.cart)}<small>${hasValue?anN(r.ordered)+' poz.':'w koszykach'}</small></span></li>`;}).join('')}</ul>`;
+  }
+  function anSegTable(title,seg,labels,note){
+    const rows=Object.entries(seg||{}).sort((p,q)=>q[1].sessions-p[1].sessions);
+    if(!rows.length) return `<section class="card an9-card an9-card--flush"><h3>${esc(title)}</h3><p class="an9-card__sub">Brak danych w wybranym okresie.</p></section>`;
+    return `<section class="card an9-card an9-card--flush"><h3>${esc(title)}</h3><p class="an9-card__sub">${esc(note)}</p><div class="an9-table-wrap"><table class="an9-table"><caption class="an9-sr">${esc(title)}</caption><thead><tr><th scope="col">Segment</th><th scope="col">Sesje</th><th scope="col">Cena</th><th scope="col">Wycena</th><th scope="col">Koszyk</th><th scope="col">Formularz</th><th scope="col">Zapytanie</th><th scope="col">Konwersja</th></tr></thead><tbody>${rows.map(([key,v])=>`<tr><th scope="row">${esc(labels[key]||key)}</th><td>${anN(v.sessions)}</td><td>${anN(v.price)}</td><td>${anN(v.quote)}</td><td>${anN(v.cart)}</td><td>${anN(v.checkout)}</td><td>${anN(v.orders)}</td><td class="${v.orders>0?'is-best':'dim'}">${esc(anP(anRatio(v.orders,v.sessions),2))}</td></tr>`).join('')}</tbody></table></div></section>`;
+  }
+  function anFunnel(a){
+    const t=a.totals||{},errors=+t.order_error||0,orders=+t.orders_verified||0,seg=a.segments||{},win=+a.segment_window_days||0,abandoned=+a.abandoned||0,carts=+t.stage_cart||0;
+    const windowNote=`Dane sesji z ostatnich ${win} dni (sesje są przechowywane 45 dni).`;
+    const errRows=anEntries(a.order_errors).map(([k,n])=>`<li class="an9-row"><span class="an9-row__name">${esc(AN_ERROR[k]||k)}</span><span class="an9-row__bar"><i style="width:${(n/Math.max(1,errors)*100).toFixed(1)}%"></i></span><span class="an9-row__val">${anN(n)}<small>${esc(anP(n/Math.max(1,errors),0))}</small></span></li>`).join('');
+    return `<section class="card an9-card" style="margin-bottom:14px"><h3>Lejek sprzedaży</h3><p class="an9-card__sub">Każdy etap liczy sesję najwyżej raz. Procent „przechodzi dalej” pokazuje, jaka część sesji z poprzedniego etapu dotarła do tego. Etapy są liczone niezależnie, więc gdy późniejszy etap wyjdzie większy od wcześniejszego, pokazujemy 100%.</p>${anFunnelList(a,false)}<p class="an9-note">Krok „cena po konfiguracji” liczy się dopiero po zmianie parametrów przez klienta albo kliknięciu „Dodaj do koszyka · cena”; cena domyślna widoczna po samym wejściu na stronę się nie liczy. Przyjęte zapytania liczy serwer, nie przeglądarka.</p></section>
+      <div class="an9-grid2 an9-grid2--even"><section class="card an9-card"><h3>Koszyki porzucone</h3><p class="an9-card__sub">${esc(a.abandoned_definition||'')}</p><div class="an9-kpis" style="grid-template-columns:1fr 1fr;margin:0">${anKpi({label:'Porzucone',value:anN(abandoned),cls:'is-warn',sub:'sesji'})}${anKpi({label:'Udział',value:carts?esc(anP(abandoned/carts,0)):'—',cls:'is-warn',sub:'sesji z koszykiem'})}</div><p class="an9-note">Sesje są przechowywane do 45 dni, więc dla okresu 90 dni miara obejmuje ostatnie 45 dni.</p></section>
+      <section class="card an9-card"><h3>Błędy wysyłki zamówienia</h3><p class="an9-card__sub">${errors?`Nieudane próby: ${anN(errors)} (${esc(anP(errors/Math.max(1,orders+errors),0))} wszystkich prób wysłania).`:'W tym okresie nie zanotowano nieudanych prób wysłania.'}</p>${errRows?`<ul class="an9-list">${errRows}</ul>`:''}<p class="an9-note">„Pozycja ze starszej wersji kalkulatora” oznacza stary koszyk zapisany w przeglądarce klienta.</p></section></div>
+      <div class="an9-stack">${anSegTable('Lejek wg urządzenia',seg.device,AN_DEVICE,windowNote+' Urządzenie zbieramy od wersji 0.26.9v.')}${anSegTable('Lejek wg źródła ruchu',seg.source,AN_SOURCE,windowNote)}${anSegTable('Lejek wg języka strony',seg.lang,AN_LANG,windowNote+' Język zbieramy od wersji 0.26.9v.')}<section class="card an9-card"><h3>Jak czytać lejek</h3><ul class="an9-insights" style="margin-top:10px"><li><span><b>Duża strata przed „Ceną po konfiguracji”</b> — klienci wchodzą, ale nie ruszają parametrów (zbyt skomplikowany formularz albo przypadkowe wejścia).</span></li><li><span><b>Strata między „Wycenami” a „Koszykami”</b> — cena jest widoczna, ale klient się waha (cena, brak informacji o terminie).</span></li><li><span><b>Strata między „Koszykiem” a „Formularzem” i „Zapytaniem”</b> — problem z finalizacją (wymagane dane, pliki, błędy wysyłki).</span></li></ul></section></div>`;
+  }
+  function anProductsTable(a){
+    const all=anProductRows(a),q=an.prodFilter.trim().toLowerCase();
+    const rows=anSortRows(all.filter(r=>!q||r.name.toLowerCase().includes(q)),an.prodSort);
+    const maxValue=Math.max(1,...all.map(r=>r.value));
+    const cols=[['name','Kategoria'],['views','Oglądane'],['price','Cena po konfiguracji'],['cart','Do koszyka'],['ordered','W zapytaniach (poz.)'],['value','Wartość zapytań'],['cartRate','Koszyk ÷ cena'],['orderRate','Zapytanie ÷ koszyk']];
+    const [sk,sd]=an.prodSort;
+    const head=cols.map(([k,l])=>`<th scope="col" aria-sort="${sk===k?(sd==='asc'?'ascending':'descending'):'none'}"><button type="button" class="an9-sort" data-an-sort-products="${k}">${esc(l)}</button></th>`).join('');
+    const body=rows.length?rows.map(r=>`<tr><th scope="row">${esc(r.name)}</th><td>${anN(r.views)}</td><td>${anN(r.price)}</td><td>${anN(r.cart)}</td><td>${anN(r.ordered)}</td><td class="an9-bar-cell"><i style="width:${(r.value/maxValue*100).toFixed(1)}%"></i><span>${r.value>0?esc(money(r.value))+' zł':'<span class="dim">—</span>'}</span></td><td class="${Number.isFinite(r.cartRate)?'':'dim'}">${esc(anP(r.cartRate,0))}</td><td class="${Number.isFinite(r.orderRate)?'':'dim'}">${esc(anP(r.orderRate,0))}</td></tr>`).join(''):`<tr><td colspan="8" class="dim" style="text-align:center;padding:24px">Brak kategorii pasujących do filtra.</td></tr>`;
+    const tot=all.reduce((s,r)=>({views:s.views+r.views,price:s.price+r.price,cart:s.cart+r.cart,ordered:s.ordered+r.ordered,value:s.value+r.value}),{views:0,price:0,cart:0,ordered:0,value:0});
+    return `<table class="an9-table"><caption class="an9-sr">Kategorie produktów — oglądane, ceny, koszyki i zapytania</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody><tfoot><tr><th scope="row">Razem (wszystkie kategorie)</th><td>${anN(tot.views)}</td><td>${anN(tot.price)}</td><td>${anN(tot.cart)}</td><td>${anN(tot.ordered)}</td><td>${tot.value>0?esc(money(tot.value))+' zł':'—'}</td><td>${esc(anP(anRatio(tot.cart,tot.price),0))}</td><td>${esc(anP(anRatio(tot.ordered,tot.cart),0))}</td></tr></tfoot></table>`;
+  }
+  function anProducts(a){
+    const all=anProductRows(a);
+    const top=(key,fmt)=>{const r=all.slice().sort((p,q)=>q[key]-p[key])[0];return r&&r[key]>0?[r.name,fmt(r[key])]:['—','brak danych'];};
+    const v=top('views',n=>anN(n)+' wyświetleń'),c=top('cart',n=>anN(n)+' dodań do koszyka'),m=top('value',n=>money(n)+' zł w zapytaniach');
+    const valueSum=all.reduce((s,r)=>s+r.value,0),orders=+a.totals?.orders_verified||0;
+    return `<div class="an9-tiles"><div class="an9-tile"><small>Najczęściej oglądana</small><strong>${esc(v[0])}</strong><em>${esc(v[1])}</em></div><div class="an9-tile"><small>Najczęściej w koszykach</small><strong>${esc(c[0])}</strong><em>${esc(c[1])}</em></div><div class="an9-tile"><small>Największa wartość zapytań</small><strong>${esc(m[0])}</strong><em>${esc(m[1])}</em></div></div>
+      <section class="card an9-card an9-card--flush"><h3>Produkty i kategorie</h3><p class="an9-card__sub">Kliknij nagłówek kolumny, aby posortować. „Koszyk ÷ cena” i „Zapytanie ÷ koszyk” to orientacyjne współczynniki zamiany (liczone na zdarzeniach, nie na tych samych sesjach).</p>${orders>0&&valueSum===0?'<p class="an9-warn" style="margin:0 18px 12px">Wartość zapytań wg kategorii jest zapisywana od wersji 0.26.9v, więc dla starszych zapytań w kolumnie „Wartość zapytań” jest „—”.</p>':''}<div class="an9-tools"><label class="an9-sr" for="an9ProdFilter">Filtruj kategorie</label><input id="an9ProdFilter" type="search" placeholder="Filtruj kategorie…" value="${esc(an.prodFilter)}" autocomplete="off"></div><div class="an9-table-wrap" id="an9ProdWrap">${anProductsTable(a)}</div></section>`;
+  }
+  function anShareList(map,labels,total,segments){
+    const entries=anEntries(map); if(!entries.length) return '<div class="an9-empty">Brak danych w wybranym okresie.</div>';
+    const max=Math.max(...entries.map(e=>e[1]),1);
+    return `<ul class="an9-list">${entries.map(([k,n])=>{const seg=segments?.[k],conv=seg?anRatio(seg.orders,seg.sessions):NaN;return `<li class="an9-row"><span class="an9-row__name">${esc(labels[k]||k)}</span><span class="an9-row__bar"><i style="width:${(n/max*100).toFixed(1)}%"></i></span><span class="an9-row__val"><b>${anN(n)}</b><small>${esc(anP(total?n/total:NaN,0))}${Number.isFinite(conv)&&seg.orders>0?' · konw. '+esc(anP(conv,1)):''}</small></span></li>`;}).join('')}</ul>`;
+  }
+  function anHeat(a){
+    const m=a.weekday_hours||[],max=Math.max(0,...m.flat().map(Number)); if(!(max>0)) return '<div class="an9-empty">Brak danych o godzinach wejść. Zbieramy je od wersji 0.26.9v.</div>';
+    let best=[0,0,0]; m.forEach((row,d)=>row.forEach((v,h)=>{if(v>best[2]) best=[d,h,v];}));
+    const cells=m.map((row,d)=>`<b>${AN_WEEKDAYS[d]}</b>${row.map((v,h)=>`<i class="${v?'':'is-zero'}" style="--v:${v?(0.18+0.82*v/max).toFixed(2):0}" title="${esc(AN_WEEKDAYS[d]+' '+String(h).padStart(2,'0')+':00 — '+anN(v)+' sesji')}"></i>`).join('')}`).join('');
+    const axis='<b></b>'+Array.from({length:24},(_,h)=>`<span>${h%3===0?String(h).padStart(2,'0'):''}</span>`).join('');
+    return `<div class="an9-heat-wrap"><div class="an9-heat" role="img" aria-label="Mapa wejść: dzień tygodnia i godzina. Najwięcej: ${esc(AN_WEEKDAYS_LONG[best[0]])} ${String(best[1]).padStart(2,'0')}:00, ${best[2]} sesji.">${cells}${axis}</div></div><p class="an9-note">Najruchliwszy termin: <b>${esc(AN_WEEKDAYS_LONG[best[0]])}, ${String(best[1]).padStart(2,'0')}:00–${String(best[1]).padStart(2,'0')}:59</b> (${anN(best[2])} sesji). Im jaśniejsze pole, tym więcej wejść.</p>`;
+  }
+  function anTraffic(a){
+    const t=a.totals||{},sessions=+t.sessions||0,seg=a.segments||{},search=a.search||{};
+    const deviceKnown=anSum(Object.values(a.devices||{})),langKnown=anSum(Object.values(a.langs||{})),hourKnown=anSum(a.hours);
+    const devices={...(a.devices||{})}; if(sessions>deviceKnown) devices.unknown=sessions-deviceKnown;
+    const langs={...(a.langs||{})}; if(sessions>langKnown) langs.unknown=sessions-langKnown;
+    const partial=sessions>0&&(deviceKnown<sessions||hourKnown<sessions);
+    const hours=(a.hours||[]).map(Number);
+    an.hourSpec={bar:true,cur:hours,prev:null,money:false,xlabel:i=>String(i).padStart(2,'0'),ariaLabel:'Sesje według godziny wejścia',tip:i=>`<b>${String(i).padStart(2,'0')}:00–${String(i).padStart(2,'0')}:59</b>${anN(hours[i])} sesji`};
+    const hourChart='<div id="an9HourBox"></div>';
+    const terms=anEntries(search.terms),misses=anEntries(search.misses);
+    const termList=(list,empty)=>list.length?`<ul class="an9-list">${list.map(([name,n])=>`<li class="an9-row"><span class="an9-row__name">${esc(name)}</span><span class="an9-row__bar"><i style="width:${(n/Math.max(1,list[0][1])*100).toFixed(1)}%"></i></span><span class="an9-row__val">${anN(n)}</span></li>`).join('')}</ul>`:`<div class="an9-empty">${esc(empty)}</div>`;
+    return `${partial?`<p class="an9-warn">Urządzenia, język i godziny wejść zbieramy od wersji 0.26.9v, więc dla starszych dni tych danych brakuje (urządzenie znane dla ${anN(deviceKnown)} z ${anN(sessions)} sesji, godzina dla ${anN(hourKnown)} z ${anN(sessions)}). Z czasem udział „nieznanych” spadnie.</p>`:''}
+      <div class="an9-grid3"><section class="card an9-card"><h3>Źródła ruchu</h3><p class="an9-card__sub">Skąd klienci wchodzą na stronę.</p>${anShareList(a.sources,AN_SOURCE,sessions,seg.source)}</section>
+      <section class="card an9-card"><h3>Urządzenia</h3><p class="an9-card__sub">Telefon, tablet czy komputer.</p>${anShareList(devices,AN_DEVICE,sessions,seg.device)}</section>
+      <section class="card an9-card"><h3>Język strony</h3><p class="an9-card__sub">W jakiej wersji klient zaczął sesję.</p>${anShareList(langs,AN_LANG,sessions,seg.lang)}</section></div>
+      <div class="an9-grid2 an9-grid2--even"><section class="card an9-card"><h3>Wejścia wg godziny</h3><p class="an9-card__sub">Godzina rozpoczęcia sesji (czas strony). Najjaśniejszy słupek — godzina szczytu.</p>${hourChart}</section>
+      <section class="card an9-card"><h3>Mapa: dzień tygodnia × godzina</h3><p class="an9-card__sub">Kiedy klienci odwiedzają kalkulator.</p>${anHeat(a)}</section></div>
+      <div class="an9-grid2 an9-grid2--even"><section class="card an9-card"><h3>Oglądane kategorie</h3><p class="an9-card__sub">Liczba wyświetleń kategorii (strona główna osobno).</p>${anShareList(a.pages,{},anSum(Object.values(a.pages||{})))}</section>
+      <section class="card an9-card"><h3>Wyszukiwanie w kalkulatorze</h3><p class="an9-card__sub">W tym okresie: <b>${anN(t.search)}</b> wyszukiwań, w tym <b>${anN(t.search_miss)}</b> bez wyników${(+t.search>0)?` (${esc(anP((+t.search_miss||0)/(+t.search),0))})`:''}.</p><h3 style="font-size:14px;margin-top:14px">Najczęstsze hasła</h3>${termList(terms.slice(0,8),'Brak zapisanych haseł.')}<h3 style="font-size:14px;margin-top:14px">Hasła bez wyników</h3>${termList(misses.slice(0,8),'Brak haseł bez wyników.')}<p class="an9-note">Listy haseł pochodzą ze starszego licznika i sumują wyszukiwania ${search.since?'od '+esc(anDayFull(search.since)):'od początku zbierania'} (nie zależą od wybranego okresu). Hasła z adresami e-mail i numerami telefonu nie są zapisywane.</p></section></div>`;
+  }
+  function anDaysTable(a){
+    const series=a.series||[];
+    const rows=series.map(x=>({day:x.day,wd:anWd(x.day),sessions:+x.sessions||0,prices:+x.prices||0,quotes:+x.quotes||0,carts:+x.carts||0,checkouts:+x.checkouts||0,orders:+x.orders||0,conv:anRatio(x.orders,x.sessions),value:(+x.value_cents||0)/100,errors:+x.order_errors||0}));
+    const sorted=anSortRows(rows,an.daySort);
+    const best={};['sessions','carts','orders','value'].forEach(k=>{best[k]=Math.max(...rows.map(r=>r[k]));});
+    const cols=[['day','Dzień'],['sessions','Sesje'],['prices','Cena'],['quotes','Wycena'],['carts','Koszyk'],['checkouts','Formularz'],['orders','Zapytania'],['conv','Konwersja'],['value','Wartość zapytań'],['errors','Błędy wysyłki']];
+    const [sk,sd]=an.daySort;
+    const head=cols.map(([k,l])=>`<th scope="col" aria-sort="${sk===k?(sd==='asc'?'ascending':'descending'):'none'}"><button type="button" class="an9-sort" data-an-sort-days="${k}">${esc(l)}</button></th>`).join('');
+    const cell=(r,k,txt)=>`<td class="${best[k]>0&&r[k]===best[k]?'is-best':''}">${txt}</td>`;
+    const body=sorted.map(r=>`<tr><th scope="row">${esc(r.wd)} ${esc(anDay(r.day))}<span class="dim"> ${esc(r.day.slice(0,4))}</span></th>${cell(r,'sessions',anN(r.sessions))}<td>${anN(r.prices)}</td><td>${anN(r.quotes)}</td>${cell(r,'carts',anN(r.carts))}<td>${anN(r.checkouts)}</td>${cell(r,'orders',anN(r.orders))}<td class="${Number.isFinite(r.conv)?'':'dim'}">${esc(anP(r.conv,2))}</td>${cell(r,'value',r.value>0?esc(money(r.value))+' zł':'—')}<td class="${r.errors?'':'dim'}">${anN(r.errors)}</td></tr>`).join('');
+    const t=rows.reduce((s,r)=>({sessions:s.sessions+r.sessions,prices:s.prices+r.prices,quotes:s.quotes+r.quotes,carts:s.carts+r.carts,checkouts:s.checkouts+r.checkouts,orders:s.orders+r.orders,value:s.value+r.value,errors:s.errors+r.errors}),{sessions:0,prices:0,quotes:0,carts:0,checkouts:0,orders:0,value:0,errors:0});
+    return `<table class="an9-table"><caption class="an9-sr">Dane dzień po dniu</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody><tfoot><tr><th scope="row">Razem</th><td>${anN(t.sessions)}</td><td>${anN(t.prices)}</td><td>${anN(t.quotes)}</td><td>${anN(t.carts)}</td><td>${anN(t.checkouts)}</td><td>${anN(t.orders)}</td><td>${esc(anP(anRatio(t.orders,t.sessions),2))}</td><td>${t.value>0?esc(money(t.value))+' zł':'—'}</td><td>${anN(t.errors)}</td></tr></tfoot></table>`;
+  }
+  function anDays(a){
+    return `<section class="card an9-card an9-card--flush"><h3>Dzień po dniu</h3><p class="an9-card__sub">Pogrubione na zielono — najlepszy dzień w danej kolumnie. Kliknij nagłówek, aby posortować. Wiersz „Razem” sumuje cały okres.</p><div class="an9-table-wrap">${anDaysTable(a)}</div></section>`;
+  }
+  function anFoot(a){
+    return `<details class="an9-defs card"><summary>Jak liczymy te dane</summary><dl>
+      <dt>Sesja</dt><dd>Unikalna sesja przeglądarki (losowy token, na serwerze tylko jego skrót, przechowywany do 45 dni). Brak identyfikacji osób i urządzeń między wizytami.</dd>
+      <dt>Etapy lejka</dt><dd>Każdy etap liczy sesję najwyżej raz: cena po konfiguracji, wycena, koszyk, formularz. Etapy są niezależne od siebie.</dd>
+      <dt>Przyjęte zapytanie</dt><dd>Liczone po stronie serwera dopiero, gdy WordPress przyjął e-mail. Wysłanie e-maila nie jest potwierdzeniem jego doręczenia ani płatności.</dd>
+      <dt>Wartość zapytań</dt><dd>Suma brutto z kalkulatora dla przyjętych zapytań (pojedyncza pozycja do 5 000 zł). Nie jest to sprzedaż zrealizowana.</dd>
+      <dt>Koszyk porzucony</dt><dd>${esc(a.abandoned_definition||'')}</dd>
+      <dt>Porównanie</dt><dd>Zmiana względem poprzedniego okresu o tej samej długości (${esc(anDayFull(a.previous?.start||''))} – ${esc(anDayFull(a.previous?.end||''))}). „nowe” = w poprzednim okresie było 0. Dla współczynników podajemy różnicę w punktach procentowych.</dd>
+      <dt>Urządzenie, język, godzina</dt><dd>Ogólna klasa urządzenia (telefon / tablet / komputer), język strony i godzina wejścia — zbierane od wersji 0.26.9v, bez User-Agenta i adresów IP.</dd>
+      <dt>Ograniczenia</dt><dd>Przeglądarka może blokować telemetrię, więc wartości są orientacyjne. Raport: ${esc(anDayFull(a.data_start))} – ${esc(anDayFull(a.data_end))}.</dd></dl></details>`;
+  }
+  function anHeader(a){
+    const stamp=a?.generated_at?new Date(a.generated_at):null,time=stamp&&!isNaN(stamp)?stamp.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}):'';
+    const range=a?.ready?(analyticsDays===1?`<b>dziś, ${esc(anDayFull(a.data_end))}</b>`:`<b>${esc(anDayFull(a.data_start))} – ${esc(anDayFull(a.data_end))}</b>`):'';
+    const prev=a?.ready&&anHasPrev(a)?` · porównanie: ${esc(anPrevLabel())} (${esc(anDay(a.previous.start))}${a.previous.start!==a.previous.end?' – '+esc(anDay(a.previous.end)):''})`:'';
+    return `<div class="an9-head"><div class="an9-title"><h2>Analityka Drukulatora</h2><p class="an9-sub">${range?`Okres: ${range}${prev}${time?` · zaktualizowano ${esc(time)}`:''}. `:''}Ruch, wyceny, koszyki i zapytania. Bez adresów IP, danych klientów i treści plików.</p></div>
+      <div class="an9-controls"><div class="an9-seg" role="group" aria-label="Zakres raportu">${AN_PERIODS.map(([d,l])=>`<button type="button" data-an-days="${d}" aria-pressed="${analyticsDays===d}">${esc(l)}</button>`).join('')}</div>
+      <label class="an9-check"><input type="checkbox" id="an9Compare" ${an.compare?'checked':''}> Porównaj z poprzednim okresem</label>
+      <button type="button" class="btn secondary" id="a28Refresh">⟳ Odśwież</button>
+      <div class="an9-export"><button type="button" class="btn secondary" id="a28Export" ${!a?.ready?'disabled':''}>↓ CSV (dni)</button><button type="button" class="btn secondary" id="a28ExportProducts" ${!a?.ready?'disabled':''}>↓ CSV (produkty)</button><button type="button" class="btn secondary" id="a28ExportDetails" ${!a?.ready?'disabled':''}>↓ CSV (szczegóły)</button></div></div></div>
+      <div class="an9-tabs" role="tablist" aria-label="Widok analityki">${AN_VIEWS.map(([k,l])=>`<button type="button" role="tab" id="an9Tab-${k}" data-an-view="${k}" aria-selected="${an.view===k}" aria-controls="an9Panel">${esc(l)}</button>`).join('')}</div>`;
+  }
+
+  // --- pobieranie i eksport
   async function fetchAnalytics(silent=true){
-    if(analyticsLoading || !can('analytics_view')) return;
+    if(!can('analytics_view') || an.loadingDays===analyticsDays) return;
     if(silent && analyticsV2 && Date.now()-analyticsFetchedAt < 60000) return;
-    analyticsLoading=true;
+    const days=analyticsDays; an.loadingDays=days; analyticsLoading=true;
     try{
-      const r=await fetch('staff-api.php?action=analytics&days='+analyticsDays,{credentials:'same-origin',cache:'no-store'});
+      const r=await fetch('staff-api.php?action=analytics&days='+days,{credentials:'same-origin',cache:'no-store'});
       const j=await r.json();
       if(!r.ok||!j.success)throw new Error(j.message||'Błąd odczytu statystyk');
-      analyticsV2=j.analytics_v2;analyticsFetchedAt=Date.now();renderAnalytics();
-    }catch(e){ if(!silent)toast(e.message); }
-    finally{analyticsLoading=false;}
+      if(days!==analyticsDays) return;   // w trakcie pobierania zmieniono okres — ta odpowiedź jest nieaktualna
+      const key=JSON.stringify({...j.analytics_v2,generated_at:0});
+      analyticsFetchedAt=Date.now(); an.error='';
+      if(silent && key===an.key && analyticsV2) return;   // dane bez zmian — nie przerysowujemy (zachowuje fokus, filtr i przewijanie)
+      const typing=document.activeElement&&$('#analyticsPanel')?.contains(document.activeElement)&&document.activeElement.matches('input[type=search],input[type=text]');
+      if(silent && typing && analyticsV2) return;   // nie przerysowujemy w trakcie wpisywania w filtrze — kolejne odświeżenie nadrobi zmiany
+      an.key=key; analyticsV2=j.analytics_v2; renderAnalytics();
+    }catch(e){ if(an.loadingDays===days){an.loadingDays=0;analyticsLoading=false;} if(days===analyticsDays){ an.error=e.message||'Błąd odczytu statystyk'; if(!silent){toast(an.error);} if(!analyticsV2) renderAnalytics(); } }
+    finally{ if(an.loadingDays===days){an.loadingDays=0;analyticsLoading=false;} if(days!==analyticsDays&&can('analytics_view')) fetchAnalytics(false); }
   }
+  const anCsvLine=cols=>cols.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';');
+  function anDownload(rows,name){
+    const url=URL.createObjectURL(new Blob(['﻿'+rows.map(anCsvLine).join('\r\n')],{type:'text/csv;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download=name;link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }
+  const anCents=v=>(Number(v||0)/100).toFixed(2).replace('.',',');
   function a28Csv(){
     if(!analyticsV2?.ready)return;
     const a=analyticsV2, header=['Dzień','Sesje','Wyceny','Koszyki','Zapytania potwierdzone','Wartość zapytań PLN','Cena po konfiguracji','Formularz','Pozycje w koszykach','Wartość pozycji w koszykach PLN','Błędy wysyłki'];
-    const text=[header,...(a.series||[]).map(x=>[x.day, x.sessions,x.quotes,x.carts,x.orders, (Number(x.value_cents||0)/100).toFixed(2).replace('.',','), x.prices||0, x.checkouts||0, x.cart_items||0, (Number(x.cart_value_cents||0)/100).toFixed(2).replace('.',','), x.order_errors||0])]
-      .map(cols=>cols.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
-    const url=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));
-    const link=document.createElement('a');link.href=url;link.download='drukulator-analityka-'+a.period_days+'dni.csv';link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    anDownload([header,...(a.series||[]).map(x=>[x.day,x.sessions,x.quotes,x.carts,x.orders,anCents(x.value_cents),x.prices||0,x.checkouts||0,x.cart_items||0,anCents(x.cart_value_cents),x.order_errors||0])],'drukulator-analityka-'+a.period_days+'dni.csv');
   }
-  const a28SourceLabels={direct:'Wejścia bezpośrednie',search:'Wyszukiwarki',social:'Social media',referral:'Inne strony'};
-  const a28ErrorLabels={stale_item:'Pozycja ze starszej wersji kalkulatora',limit:'Przekroczony limit (wymiar, nakład, wartość)',validation:'Niepełny formularz (imię, e-mail, zgoda)',files:'Problem z plikami',network:'Błąd połączenia',server:'Inny błąd serwera'};
+  function a28CsvProducts(){
+    if(!analyticsV2?.ready)return;
+    const a=analyticsV2;
+    anDownload([['Kategoria','Oglądane','Cena po konfiguracji','Dodane do koszyka','Pozycje w zapytaniach','Wartość zapytań PLN','Koszyk / cena %','Zapytanie / koszyk %'],...anSortRows(anProductRows(a),['value','desc']).map(r=>[r.name,r.views,r.price,r.cart,r.ordered,money(r.value),Number.isFinite(r.cartRate)?(r.cartRate*100).toFixed(1).replace('.',','):'',Number.isFinite(r.orderRate)?(r.orderRate*100).toFixed(1).replace('.',','):''])],'drukulator-analityka-produkty-'+a.period_days+'dni.csv');
+  }
   function a28CsvDetails(){
     if(!analyticsV2?.ready)return;
     const a=analyticsV2, rows=[['Sekcja','Pozycja','Wartość']];
     const add=(section,values,labels={})=>Object.entries(values||{}).forEach(([name,n])=>rows.push([section,labels[name]||name,n]));
     add('Kategoria — oglądane',a.pages); add('Kategoria — cena po konfiguracji',a.price_products); add('Kategoria — dodane do koszyka',a.cart_products);
-    add('Kategoria — w przyjętych zapytaniach',a.ordered_products); add('Źródło ruchu — sesje',a.sources,a28SourceLabels); add('Błąd wysyłki — liczba',a.order_errors,a28ErrorLabels);
+    add('Kategoria — w przyjętych zapytaniach',a.ordered_products); add('Źródło ruchu — sesje',a.sources,AN_SOURCE); add('Błąd wysyłki — liczba',a.order_errors,AN_ERROR);
+    Object.entries(a.ordered_value_cents||{}).forEach(([name,c])=>rows.push(['Kategoria — wartość zapytań PLN',name,anCents(c)]));
+    add('Urządzenie — sesje',a.devices,AN_DEVICE); add('Język — sesje',a.langs,AN_LANG);
+    (a.hours||[]).forEach((n,h)=>rows.push(['Godzina wejścia — sesje',String(h).padStart(2,'0')+':00',n]));
     const t=a.totals||{};
-    rows.push(['Podsumowanie','Sesje',t.sessions||0],['Podsumowanie','Cena po konfiguracji (sesje)',t.stage_price||0],['Podsumowanie','Wyceny (sesje)',t.stage_quote||0],['Podsumowanie','Koszyki (sesje)',t.stage_cart||0],['Podsumowanie','Formularz (sesje)',t.stage_checkout||0],['Podsumowanie','Przyjęte zapytania',t.orders_verified||0],['Podsumowanie','Pozycje w koszykach (z poprawną kwotą)',t.cart_items||0],['Podsumowanie','Wartość pozycji w koszykach PLN',(Number(t.cart_value_cents||0)/100).toFixed(2).replace('.',',')],['Podsumowanie','Błędy wysyłki',t.order_error||0]);
-    const text=rows.map(cols=>cols.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
-    const url=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));
-    const link=document.createElement('a');link.href=url;link.download='drukulator-analityka-szczegoly-'+a.period_days+'dni.csv';link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    rows.push(['Podsumowanie','Sesje',t.sessions||0],['Podsumowanie','Cena po konfiguracji (sesje)',t.stage_price||0],['Podsumowanie','Wyceny (sesje)',t.stage_quote||0],['Podsumowanie','Koszyki (sesje)',t.stage_cart||0],['Podsumowanie','Formularz (sesje)',t.stage_checkout||0],['Podsumowanie','Przyjęte zapytania',t.orders_verified||0],['Podsumowanie','Pozycje w koszykach (z poprawną kwotą)',t.cart_items||0],['Podsumowanie','Wartość pozycji w koszykach PLN',anCents(t.cart_value_cents)],['Podsumowanie','Błędy wysyłki',t.order_error||0]);
+    const p=a.previous?.totals||{};
+    if(Object.keys(p).length) rows.push(['Poprzedni okres','Sesje',p.sessions||0],['Poprzedni okres','Przyjęte zapytania',p.orders_verified||0],['Poprzedni okres','Wartość zapytań PLN',anCents(p.orders_value_cents)]);
+    anDownload(rows,'drukulator-analityka-szczegoly-'+a.period_days+'dni.csv');
   }
+
+  // --- render + zdarzenia
+  // Wykres rysujemy w rzeczywistej szerokości kontenera (viewBox = piksele), dzięki czemu opisy osi mają stały, czytelny rozmiar także na telefonie.
+  function anMountChart(host,spec){
+    if(!host) return;
+    const w=Math.max(280,Math.round(host.clientWidth||host.parentElement?.clientWidth||820));
+    spec.W=w; spec.H=w<480?230:w<820?260:300;
+    host.innerHTML=anChart(spec); anChartBind(host,spec);
+  }
+  function anRenderChart(){
+    const a=analyticsV2,host=$('#an9ChartBox'); if(!a?.ready||!host) return;
+    const spec=anChartSpec(a); anMountChart(host,spec);
+    const legend=$('#an9Legend'); if(legend) legend.innerHTML=(spec.legend||[]).filter(Boolean).map(([cls,label])=>`<span><i class="${cls}"></i>${esc(label)}</span>`).join('');
+  }
+  function anMountAll(){
+    if(!analyticsV2?.ready) return;
+    if(an.view==='overview') anRenderChart();
+    if(an.view==='traffic'&&an.hourSpec) anMountChart($('#an9HourBox'),an.hourSpec);
+  }
+  let anResizeTimer=0,anResizeWidth=0;
+  window.addEventListener('resize',()=>{ clearTimeout(anResizeTimer); anResizeTimer=setTimeout(()=>{ const w=$('#analyticsPanel')?.clientWidth||0; if(currentTab==='analytics'&&w&&Math.abs(w-anResizeWidth)>8){anResizeWidth=w;anMountAll();} },150); });
   function renderAnalytics(){
     const box=$('#analyticsPanel');if(!box)return;
     if(!can('analytics_view')){box.innerHTML='<div class="card empty">Nie masz uprawnień do analityki.</div>';return;}
-    const a=analyticsV2||{},t=a.totals||{},sessions=Number(t.sessions||0),quotes=Number(t.stage_quote||0),carts=Number(t.stage_cart||0),checkout=Number(t.stage_checkout||0),orders=Number(t.orders_verified||0);
-    const value=Number(t.orders_value_cents||0)/100, abandonment=Number(a.abandoned||0),conversion=sessions?orders/sessions*100:0;
-    const metric=(label,note,value,extra='')=>`<div class="a28-metric"><small>${label}</small><strong>${value}</strong><em>${extra||note}</em></div>`;
-    const priceSeen=Number(t.stage_price||0),cartItems=Number(t.cart_items||0),cartValue=Number(t.cart_value_cents||0)/100,orderErrors=Number(t.order_error||0),funnel=[['Sesje',sessions],['Cena po konfiguracji*',priceSeen],['Wyceny',quotes],['Koszyki',carts],['Formularz',checkout],['Wysłane zapytania',orders]];
-    const chart=(a.series||[]), max=Math.max(1,...chart.map(x=>Math.max(Number(x.sessions||0),Number(x.orders||0))));
-    const dayChart=chart.map(x=>{let hs=Math.round(Number(x.sessions||0)/max*110),ho=Math.round(Number(x.orders||0)/max*110);return `<div class="a28-day" title="${esc(x.day)} · sesje ${Number(x.sessions)||0} · zapytania ${Number(x.orders)||0}"><div class="a28-bars"><div class="a28-bar" style="height:${hs}px"></div><div class="a28-bar order" style="height:${ho}px"></div></div><div class="a28-day-label">${esc(x.day.slice(5))}</div></div>`;}).join('');
-    const sourceEntries=Object.fromEntries(Object.entries(a.sources||{}).map(([key,v])=>[a28SourceLabels[key]||key,v]));
-    const errorEntries=Object.fromEntries(Object.entries(a.order_errors||{}).map(([key,v])=>[a28ErrorLabels[key]||key,v]));
-    box.innerHTML=`<div class="a28-intro"><div><h2>Analityka Drukulatora <span class="pill">0.25.5v</span></h2><p>Ruch, wyceny, koszyki i zapytania. Zamówienia zliczane są dopiero po akceptacji e-maila przez WordPress. Bez IP, adresów klientów i treści plików.</p></div><div class="a28-tools"><select id="a28Period" aria-label="Zakres raportu"><option value="1" ${analyticsDays===1?'selected':''}>Dzisiaj</option><option value="7" ${analyticsDays===7?'selected':''}>7 dni</option><option value="30" ${analyticsDays===30?'selected':''}>30 dni</option></select><button type="button" class="btn secondary" id="a28Refresh">⟳ Odśwież</button><button type="button" class="btn secondary" id="a28Export" ${!a.ready?'disabled':''}>↓ CSV (dni)</button><button type="button" class="btn secondary" id="a28ExportDetails" ${!a.ready?'disabled':''}>↓ CSV (szczegóły)</button></div></div>
-      ${!a.ready?'<div class="card a28-empty">Ładowanie danych lub oczekiwanie na utworzenie tabel statystyk…</div>':`
-      <div class="a28-metrics">${metric('Sesje','',''+sessions,'Unikalne sesje przeglądarki')}${metric('Wyświetlone wyceny','',''+quotes,'Sesje z wyceną')}${metric('Dodania do koszyka','',''+carts,'Sesje z koszykiem')}${metric('Przyjęte zapytania','',''+orders,'Potwierdzone przez serwer')}${metric('Wartość zapytań','',''+money(value)+' zł','Nieopłacona sprzedaż, tylko wyceny')}</div>
-      <div class="a28-metrics a28-metrics--3">${metric('Cena po konfiguracji','',''+priceSeen,'Sesje, w których klient zmienił parametry i zobaczył cenę*')}${metric('Średnia pozycja w koszyku','',cartItems?money(cartValue/cartItems)+' zł':'—','Z '+cartItems.toLocaleString('pl-PL')+' pozycji z poprawną kwotą')}${metric('Błędy wysyłki','',''+orderErrors,'Próby wysłania zamówienia, które się nie powiodły')}</div>
-      <div class="a28-columns"><div class="card a28-card"><h3>Lejek wyceny</h3><div class="a28-rate">Współczynnik zapytań: <strong class="a28-positive">${conversion.toLocaleString('pl-PL',{maximumFractionDigits:1})}%</strong> względem sesji z okresu (nie jest to analiza tej samej kohorty)</div><div class="a28-funnel">${funnel.map(([name,n])=>`<div class="a28-funnel-row"><span>${esc(name)}</span><div class="a28-track"><div class="a28-fill" style="width:${Math.max(0,Math.min(100,sessions?n/sessions*100:0))}%"></div></div><strong>${n.toLocaleString('pl-PL')}</strong></div>`).join('')}</div><p class="a28-note">Każdy etap poza wysłanym zapytaniem liczy sesję najwyżej raz. Wysłane zapytania liczy serwer, a nie przeglądarka.</p><p class="a28-note">* Krok „cena po konfiguracji” liczony od wersji 0.25.5v (wcześniej brak danych). Liczy się dopiero zmiana parametrów przez klienta lub kliknięcie „Dodaj do koszyka · cena” — cena domyślna widoczna po samym wejściu na stronę nie. Przycisk „Dodaj do koszyka · cena” zapisuje jednocześnie wycenę i koszyk, więc te dwa kroki są teraz prawie równe.</p></div><div class="card a28-card"><h3>Koszyki porzucone</h3><div class="a28-metric" style="margin-top:14px"><small>Nieaktywne co najmniej 24 h</small><strong class="a28-alert">${abandonment}</strong><em>Szacunkowa liczba sesji</em></div><p class="a28-note">${esc(a.abandoned_definition||'')}</p><p class="a28-note">Sesje są przechowywane przez maksymalnie 45 dni, więc raport 30-dniowy jest pełnym horyzontem dla tej miary. Dane od momentu aktualizacji.</p></div></div>
-      <div class="card a28-card"><h3>Sesje i zapytania dzień po dniu</h3><div class="a28-chart" style="--a28-bars:${Math.max(1,chart.length)}">${dayChart}</div><div class="a28-key"><span>Sesje</span><span class="a28-key-orders">Przyjęte zapytania</span></div></div>
-      <div class="a28-columns"><div class="card a28-card"><h3>Produkty dodawane do koszyka</h3>${a28Ranking(a.cart_products)}</div><div class="card a28-card"><h3>Produkty w przyjętych zapytaniach</h3>${a28Ranking(a.ordered_products)}</div></div>
-      <div class="a28-columns"><div class="card a28-card"><h3>Kategorie z ceną po konfiguracji*</h3>${a28Ranking(a.price_products)}</div><div class="card a28-card"><h3>Błędy wysyłki zamówienia</h3>${a28Ranking(errorEntries)}<p class="a28-note">Liczone od 0.25.5v. „Pozycja ze starszej wersji kalkulatora” oznacza stary koszyk zapisany w przeglądarce klienta.</p></div></div>
-      <div class="a28-columns"><div class="card a28-card"><h3>Źródła ruchu</h3>${a28Ranking(sourceEntries)}</div><div class="card a28-card"><h3>Oglądane kategorie</h3>${a28Ranking(a.pages)}</div></div>
-      <div class="card a28-card"><h3>Wyszukiwanie w kalkulatorze</h3><div class="a28-rate">Zapytania: <strong>${Number(t.search||0).toLocaleString('pl-PL')}</strong> · Bez wyników: <strong>${Number(t.search_miss||0).toLocaleString('pl-PL')}</strong></div><p class="a28-note">Dane zbiorcze bez zapisu wpisanych haseł w nowym module. Raport nie uwzględnia ruchu sprzed 0.22.8v.</p></div>
-      <p class="a28-note">Raport: ${esc(a.data_start)} – ${esc(a.data_end)} · Brak identyfikacji użytkowników między urządzeniami. Przeglądarka może blokować telemetrię; wartości są orientacyjne. Wysyłka maila ≠ potwierdzenie jego doręczenia.</p>`}`;
-    $('#a28Period').addEventListener('change',e=>{analyticsDays=Number(e.target.value)||7;analyticsV2=null;renderAnalytics();fetchAnalytics(false);});
-    $('#a28Refresh').addEventListener('click',()=>fetchAnalytics(false));
+    const a=analyticsV2;
+    let body;
+    if(!a?.ready&&an.error&&!an.loadingDays) body=`<div class="card an9-card"><p class="an9-warn">Nie udało się wczytać statystyk: ${esc(an.error)}</p><button type="button" class="btn secondary" id="an9Retry">Spróbuj ponownie</button></div>`;
+    else if(!a?.ready) body='<div class="card an9-card an9-empty" role="status">Ładowanie danych lub oczekiwanie na utworzenie tabel statystyk…</div>';
+    else body={overview:anOverview,funnel:anFunnel,products:anProducts,traffic:anTraffic,days:anDays}[an.view](a);
+    box.innerHTML=anHeader(a)+`<div id="an9Panel" role="tabpanel" aria-labelledby="an9Tab-${an.view}" tabindex="-1">${body}</div>`+(a?.ready?anFoot(a):'');
+    anBind(box);
+    anResizeWidth=box.clientWidth; anMountAll();
+  }
+  function anBind(box){
+    box.querySelectorAll('[data-an-days]').forEach(b=>b.addEventListener('click',()=>{const d=Number(b.dataset.anDays); if(d===analyticsDays)return; analyticsDays=d; try{localStorage.setItem('d24_an_days',String(d));}catch{} analyticsV2=null; an.key=''; an.error=''; renderAnalytics(); fetchAnalytics(false);}));
+    box.querySelectorAll('[data-an-view]').forEach(b=>b.addEventListener('click',()=>{an.view=b.dataset.anView; try{sessionStorage.setItem('d24_an_view',an.view);}catch{} renderAnalytics(); $('#analyticsPanel [role=tab][aria-selected=true]')?.focus();}));
+    box.querySelectorAll('[data-an-view]').forEach(b=>b.addEventListener('keydown',e=>{ if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return; e.preventDefault(); const i=AN_VIEWS.findIndex(v=>v[0]===an.view),n=(i+(e.key==='ArrowRight'?1:AN_VIEWS.length-1))%AN_VIEWS.length; an.view=AN_VIEWS[n][0]; try{sessionStorage.setItem('d24_an_view',an.view);}catch{} renderAnalytics(); $('#analyticsPanel [role=tab][aria-selected=true]')?.focus(); }));
+    box.querySelectorAll('[data-an-metric]').forEach(b=>b.addEventListener('click',()=>{an.metric=b.dataset.anMetric; box.querySelectorAll('[data-an-metric]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); anRenderChart();}));
+    $('#an9Compare')?.addEventListener('change',e=>{an.compare=e.target.checked; try{localStorage.setItem('d24_an_compare',an.compare?'1':'0');}catch{} renderAnalytics();});
+    $('#a28Refresh')?.addEventListener('click',()=>{an.key=''; fetchAnalytics(false);});
+    $('#an9Retry')?.addEventListener('click',()=>{an.error=''; renderAnalytics(); fetchAnalytics(false);});
     $('#a28Export')?.addEventListener('click',a28Csv);
+    $('#a28ExportProducts')?.addEventListener('click',a28CsvProducts);
     $('#a28ExportDetails')?.addEventListener('click',a28CsvDetails);
+    anBindSorts(box);
+    $('#an9ProdFilter')?.addEventListener('input',e=>{an.prodFilter=e.target.value; const wrap=$('#an9ProdWrap'); wrap.innerHTML=anProductsTable(analyticsV2); anBindSorts(wrap);});
+  }
+  function anBindSorts(root){
+    root.querySelectorAll('[data-an-sort-products]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.anSortProducts; an.prodSort=[k,an.prodSort[0]===k&&an.prodSort[1]==='desc'?'asc':(k==='name'&&an.prodSort[0]!==k?'asc':'desc')]; const wrap=$('#an9ProdWrap'); wrap.innerHTML=anProductsTable(analyticsV2); anBindSorts(wrap); wrap.querySelector(`[data-an-sort-products="${k}"]`)?.focus();}));
+    root.querySelectorAll('[data-an-sort-days]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.anSortDays; an.daySort=[k,an.daySort[0]===k&&an.daySort[1]==='desc'?'asc':(k==='day'&&an.daySort[0]!==k?'asc':'desc')]; const wrap=b.closest('.an9-table-wrap'); wrap.innerHTML=anDaysTable(analyticsV2); anBindSorts(wrap); wrap.querySelector(`[data-an-sort-days="${k}"]`)?.focus();}));
   }
 
   function permissionChecks(target, selected=[]){ target.innerHTML=Object.entries(payload.permissions_catalog||{}).map(([key,label])=>`<label><input type="checkbox" value="${esc(key)}" ${selected.includes(key)?'checked':''}><span>${esc(label)}</span></label>`).join(''); }
@@ -500,7 +872,7 @@ if (!$user) {
     });
     promoReset();
   }
-  function renderAll(){ renderFilters(); renderOrderList(); renderOrderDetail(); renderProduction(); renderAnalytics(); renderPromo(); if(payload.user.is_admin){renderStaff();renderMonitoring();} if(!can('analytics_view')) document.querySelector('[data-tab=analytics]')?.setAttribute('hidden',''); if(!can('orders_view')) document.querySelector('[data-tab=production]')?.setAttribute('hidden',''); if(!can('orders_view') && currentTab==='orders' && can('analytics_view'))switchTab('analytics'); }
+  function renderAll(){ renderFilters(); renderOrderList(); renderOrderDetail(); renderProduction(); if(!$('#analyticsPanel').firstElementChild) renderAnalytics(); renderPromo(); if(payload.user.is_admin){renderStaff();renderMonitoring();} if(!can('analytics_view')) document.querySelector('[data-tab=analytics]')?.setAttribute('hidden',''); if(!can('orders_view')) document.querySelector('[data-tab=production]')?.setAttribute('hidden',''); if(!can('orders_view') && currentTab==='orders' && can('analytics_view'))switchTab('analytics'); }
   ['prodSearch','prodPriority','prodDue','prodAssigned'].forEach(id=>$('#'+id)?.addEventListener(id==='prodSearch'?'input':'change',renderProduction));
   $('#prodRefresh')?.addEventListener('click',()=>load(false));
   ['orderSearch','statusFilter','assignmentFilter'].forEach(id=>$('#'+id)?.addEventListener(id==='orderSearch'?'input':'change',renderOrderList));

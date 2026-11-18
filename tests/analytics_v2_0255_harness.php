@@ -88,7 +88,7 @@ if ($mode === 'upgrade') {
 }
 
 ok(d24_analytics_install(), 'install');
-eq(get_option('d24_analytics_db_version'), '2.1', 'wersja bazy 2.1');
+eq(get_option('d24_analytics_db_version'), '2.2', 'wersja bazy 2.2 (0.26.9; kolumny price_seen z 2.1 zostają)');
 $A = d24_h('a'); $B = d24_h('b'); $C = d24_h('c');
 // Sesja A: konfiguracja → cena → wycena → koszyk → kasa → błąd wysyłki
 d24_analytics_browser_event('page_view', array('page' => 'Plakaty 24h', 'source' => 'search'), $A);

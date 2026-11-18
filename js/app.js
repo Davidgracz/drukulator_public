@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.8v";
+  const VERSION = "0.26.9v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2959,9 +2959,22 @@
       return "referral";
     } catch { return "direct"; }
   }
+  // 0.26.9: ogólna klasa urządzenia (telefon / tablet / komputer) i język strony — do panelu pracowniczego. Nie wysyłamy User-Agenta ani dokładnych rozmiarów.
+  function analyticsDevice() {
+    try {
+      const width = window.innerWidth || 0, shortSide = Math.min(width, window.innerHeight || width);
+      const coarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+      if (coarse) return shortSide < 600 ? "mobile" : "tablet";
+      if (typeof matchMedia === "function") return "desktop";
+      return width <= 700 ? "mobile" : width <= 1100 ? "tablet" : "desktop";
+    } catch { return ""; }
+  }
+  function analyticsLang() {
+    try { return String(window.DrukulatorI18n?.getLanguage?.() || document.documentElement.lang || "").toLowerCase().slice(0, 12); } catch { return ""; }
+  }
   function analyticsTrack(event, data = {}) {
     if (!event || ADMIN_PAGE_NAMES.has(state.page)) return;
-    const payload = JSON.stringify({ event, data: { ...data, source: analyticsSource() }, session: analyticsSession() });
+    const payload = JSON.stringify({ event, data: { ...data, source: analyticsSource(), device: analyticsDevice(), lang: analyticsLang() }, session: analyticsSession() });
     try {
       if (navigator.sendBeacon) {
         const blob = new Blob([payload], { type: "application/json" });

@@ -1,10 +1,12 @@
 <?php
-/** Druk24 0.22.8 (0.25.5: krok „cena po konfiguracji”, wartość koszyków, błędy wysyłki) - aggregate analytics; no IP addresses, names or email addresses. */
+/** Druk24 0.22.8 (0.25.5: krok „cena po konfiguracji”, wartość koszyków, błędy wysyłki; 0.26.9: porównanie okresów, godziny, urządzenia, język, wartość zapytań wg kategorii) - aggregate analytics; no IP addresses, names or email addresses. */
 declare(strict_types=1);
 if (!defined('ABSPATH')) { exit; }
 
 // 0.25.5: wersja 2.1 dodaje do tabeli sesji kolumnę price_seen (dbDelta uzupełnia ją w istniejącej tabeli).
-const D24_ANALYTICS_DB_VERSION = '2.1';
+// 0.26.9: wersja 2.2 dodaje do tabeli sesji kolumny device (klasa urządzenia) i lang (język strony) — tylko ogólne kategorie, bez User-Agenta i IP.
+const D24_ANALYTICS_DB_VERSION = '2.2';
+const D24_ANALYTICS_PERIODS = array(1, 7, 14, 30, 90);
 const D24_ANALYTICS_SESSION_RETENTION_DAYS = 45;
 const D24_ANALYTICS_TOTAL_RETENTION_DAYS = 180;
 
@@ -33,6 +35,8 @@ function d24_analytics_install(): bool {
         started_at datetime NOT NULL,
         last_seen datetime NOT NULL,
         source varchar(16) NOT NULL DEFAULT 'direct',
+        device varchar(8) NOT NULL DEFAULT '',
+        lang varchar(4) NOT NULL DEFAULT '',
         price_seen tinyint(1) NOT NULL DEFAULT 0,
         quote_seen tinyint(1) NOT NULL DEFAULT 0,
         cart_seen tinyint(1) NOT NULL DEFAULT 0,
@@ -106,6 +110,17 @@ function d24_analytics_source($source): string {
     $source = (string) $source;
     return in_array($source, array('direct','search','social','referral'), true) ? $source : 'direct';
 }
+/** 0.26.9: klasa urządzenia z szerokości ekranu (liczona w przeglądarce); nic poza trzema wartościami nie jest zapisywane. */
+function d24_analytics_device($device): string {
+    $device = (string) $device;
+    return in_array($device, array('mobile','tablet','desktop'), true) ? $device : '';
+}
+/** 0.26.9: język strony w chwili wejścia (pl / en); inne wartości (np. żartobliwe wersje językowe) trafiają do „other”. */
+function d24_analytics_lang($lang): string {
+    $lang = (string) $lang;
+    if ($lang === '') return '';
+    return in_array($lang, array('pl','en'), true) ? $lang : 'other';
+}
 function d24_analytics_add(string $metric, string $dimension = '', int $delta = 1): void {
     if ($delta <= 0 || $delta > 50000000) return;
     global $wpdb;
@@ -116,20 +131,26 @@ function d24_analytics_add(string $metric, string $dimension = '', int $delta = 
     ));
 }
 /** Insert anonymous browser-session identity once; returns hash or '' if analytics unavailable. */
-function d24_analytics_touch($token, $source = 'direct'): string {
+function d24_analytics_touch($token, $source = 'direct', $device = '', $lang = ''): string {
     $hash = d24_analytics_token_hash($token);
     if ($hash === '' || !d24_analytics_install()) return '';
     global $wpdb;
     $table = d24_analytics_session_table();
     $now = current_time('mysql', true);
     $source = d24_analytics_source($source);
+    $device = d24_analytics_device($device);
+    $lang = d24_analytics_lang($lang);
     $inserted = $wpdb->query($wpdb->prepare(
-        "INSERT IGNORE INTO {$table} (session_hash,started_at,last_seen,source) VALUES (%s,%s,%s,%s)",
-        $hash, $now, $now, $source
+        "INSERT IGNORE INTO {$table} (session_hash,started_at,last_seen,source,device,lang) VALUES (%s,%s,%s,%s,%s,%s)",
+        $hash, $now, $now, $source, $device, $lang
     ));
     if ($inserted === 1) {
         d24_analytics_add('sessions');
         d24_analytics_add('source', $source);
+        // 0.26.9: godzina wejścia (czas strony), urządzenie i język — tylko liczniki zbiorcze.
+        d24_analytics_add('hour', wp_date('H'));
+        if ($device !== '') d24_analytics_add('device', $device);
+        if ($lang !== '') d24_analytics_add('lang', $lang);
     } else {
         $wpdb->query($wpdb->prepare("UPDATE {$table} SET last_seen=%s WHERE session_hash=%s", $now, $hash));
     }
@@ -150,7 +171,7 @@ function d24_analytics_stage(string $hash, string $stage): void {
 }
 function d24_analytics_browser_event(string $event, array $data, $session): void {
     try {
-        $hash = d24_analytics_touch($session, $data['source'] ?? 'direct');
+        $hash = d24_analytics_touch($session, $data['source'] ?? 'direct', $data['device'] ?? '', $data['lang'] ?? '');
         if ($hash === '') return;
         if ($event === 'quote_view') d24_analytics_stage($hash, 'quote');
         // 0.25.5: klient zmienił parametry i zobaczył cenę (sama cena domyślna po wejściu na stronę się nie liczy).
@@ -201,6 +222,10 @@ function d24_analytics_verified_order(string $order_id, float $gross, array $car
             if (!is_array($item)) continue;
             $product = d24_analytics_product_bucket($item['title'] ?? '');
             d24_analytics_add('product_order', $product);
+            // 0.26.9: wartość pozycji w przyjętym zapytaniu, w podziale na kategorię (do tabeli produktów w panelu).
+            $itemPrice = isset($item['price']) && is_numeric($item['price']) ? (float) $item['price'] : 0.0;
+            $itemCents = (int) round(max(0.0, min(5000.0, $itemPrice)) * 100);
+            if ($itemCents > 0) d24_analytics_add('product_order_value', $product, $itemCents);
         }
         $sessionHash = d24_analytics_touch($session);
         if ($sessionHash !== '') d24_analytics_stage($sessionHash, 'order');
@@ -217,47 +242,106 @@ function d24_analytics_prune(): void {
     $wpdb->query($wpdb->prepare('DELETE FROM ' . d24_analytics_counts_table() . ' WHERE day < %s', $totalCutoff));
     $wpdb->query($wpdb->prepare('DELETE FROM ' . d24_analytics_sales_table() . ' WHERE day < %s', $totalCutoff));
 }
+/** 0.26.9: hasła wyszukiwania ze starszego licznika v1 (zbiorczo od początku jego zbierania, bez podziału na dni; hasła z adresami e-mail i numerami są już odfiltrowane przy zapisie). */
+function d24_analytics_search_terms(int $limit = 12): array {
+    $v1 = get_option('drukulator_analytics_v1', array());
+    if (!is_array($v1)) $v1 = array();
+    $clean = function ($values) use ($limit) {
+        $values = is_array($values) ? $values : array();
+        arsort($values, SORT_NUMERIC);
+        $out = array();
+        foreach (array_slice($values, 0, $limit, true) as $term => $count) {
+            $term = d24_analytics_clean_dimension((string) $term, 60);
+            if ($term !== '') $out[$term] = max(0, (int) $count);
+        }
+        return $out;
+    };
+    return array(
+        'since' => isset($v1['started_at']) ? substr((string) $v1['started_at'], 0, 10) : '',
+        'terms' => $clean($v1['search_terms'] ?? array()),
+        'misses' => $clean($v1['search_terms_no_results'] ?? array()),
+    );
+}
+function d24_analytics_total_keys(): array {
+    return array('sessions','stage_price','stage_quote','stage_cart','stage_checkout','stage_order',
+        'orders_verified','orders_value_cents','search','search_miss','cart_items','cart_value_cents','order_error');
+}
+function d24_analytics_series_row(string $date): array {
+    return array('day' => $date, 'sessions' => 0, 'prices' => 0, 'quotes' => 0,
+        'carts' => 0, 'checkouts' => 0, 'orders' => 0, 'value_cents' => 0,
+        'cart_items' => 0, 'cart_value_cents' => 0, 'order_errors' => 0);
+}
 /** Aggregated dashboard for staff with analytics permission. */
 function d24_analytics_dashboard(int $days = 7): array {
-    $days = in_array($days, array(1,7,30), true) ? $days : 7;
+    $days = in_array($days, D24_ANALYTICS_PERIODS, true) ? $days : 7;
     $base = array('period_days' => $days, 'ready' => false, 'totals' => array(), 'series' => array(),
         'sources' => array(), 'pages' => array(), 'price_products' => array(), 'cart_products' => array(), 'ordered_products' => array(),
+        'ordered_value_cents' => array(), 'devices' => array(), 'langs' => array(),
+        'hours' => array_fill(0, 24, 0), 'weekday_hours' => array_fill(0, 7, array_fill(0, 24, 0)),
+        'segments' => array('source' => array(), 'device' => array(), 'lang' => array()), 'segment_window_days' => 0,
+        'previous' => array('totals' => array(), 'series' => array(), 'hours' => array_fill(0, 24, 0), 'start' => '', 'end' => ''),
+        'search' => array('since' => '', 'terms' => array(), 'misses' => array()),
         'order_errors' => array(),
         'abandoned' => 0, 'abandoned_definition' => 'Sesje z koszykiem, bez potwierdzonego zapytania, nieaktywne przez minimum 24 godziny.',
-        'data_start' => wp_date('Y-m-d'), 'data_end' => wp_date('Y-m-d'),
+        'data_start' => wp_date('Y-m-d'), 'data_end' => wp_date('Y-m-d'), 'generated_at' => wp_date('c'),
         'note' => 'Dane dostępne od wdrożenia 0.22.8v; nie są płatnościami ani sprzedażą zrealizowaną.');
     if (!d24_analytics_install()) return $base;
     global $wpdb;
     $today = new DateTimeImmutable('today', wp_timezone());
     $start = $today->modify('-' . ($days - 1) . ' days')->format('Y-m-d');
     $end = $today->format('Y-m-d');
+    // 0.26.9: okres poprzedni o tej samej długości (do porównań „vs poprzednie 7 dni”); liczniki są trzymane 180 dni, więc 2 × 90 dni się mieści.
+    $prevStart = $today->modify('-' . (2 * $days - 1) . ' days')->format('Y-m-d');
+    $prevEnd = $today->modify('-' . $days . ' days')->format('Y-m-d');
     $table = d24_analytics_counts_table();
     $rows = $wpdb->get_results($wpdb->prepare(
-        "SELECT day,metric,dimension,total FROM {$table} WHERE day >= %s AND day <= %s", $start, $end
+        "SELECT day,metric,dimension,total FROM {$table} WHERE day >= %s AND day <= %s", $prevStart, $end
     ), ARRAY_A);
-    $totals = array_fill_keys(array('sessions','stage_price','stage_quote','stage_cart','stage_checkout','stage_order',
-        'orders_verified','orders_value_cents','search','search_miss','cart_items','cart_value_cents','order_error'), 0);
-    $series = array();
+    $totals = array_fill_keys(d24_analytics_total_keys(), 0);
+    $prevTotals = $totals;
+    $series = array(); $prevSeries = array();
     for ($i = $days - 1; $i >= 0; $i--) {
         $date = $today->modify('-' . $i . ' days')->format('Y-m-d');
-        $series[$date] = array('day' => $date, 'sessions' => 0, 'prices' => 0, 'quotes' => 0,
-            'carts' => 0, 'checkouts' => 0, 'orders' => 0, 'value_cents' => 0,
-            'cart_items' => 0, 'cart_value_cents' => 0, 'order_errors' => 0);
+        $series[$date] = d24_analytics_series_row($date);
+        $prevDate = $today->modify('-' . ($i + $days) . ' days')->format('Y-m-d');
+        $prevSeries[$prevDate] = d24_analytics_series_row($prevDate);
     }
-    $grouped = array('source'=>array(), 'page'=>array(), 'product_price'=>array(), 'product_cart'=>array(), 'product_order'=>array(), 'order_error'=>array());
+    $grouped = array('source'=>array(), 'page'=>array(), 'product_price'=>array(), 'product_cart'=>array(), 'product_order'=>array(),
+        'product_order_value'=>array(), 'order_error'=>array(), 'device'=>array(), 'lang'=>array());
+    $hours = array_fill(0, 24, 0); $prevHours = array_fill(0, 24, 0);
+    $weekdayHours = array_fill(0, 7, array_fill(0, 24, 0));
+    $map = array('sessions'=>'sessions','stage_price'=>'prices','stage_quote'=>'quotes','stage_cart'=>'carts',
+        'stage_checkout'=>'checkouts','orders_verified'=>'orders','orders_value_cents'=>'value_cents',
+        'cart_items'=>'cart_items','cart_value_cents'=>'cart_value_cents','order_error'=>'order_errors');
     foreach ((array) $rows as $r) {
         $metric = (string) $r['metric'];
         $dimension = (string) $r['dimension'];
         $value = max(0, (int) $r['total']);
         $day = (string) $r['day'];
+        $isCurrent = $day >= $start && $day <= $end;
+        $isPrevious = $day >= $prevStart && $day <= $prevEnd;
+        if (!$isCurrent && !$isPrevious) continue;
+        if ($metric === 'hour') {
+            $hour = (int) $dimension;
+            if (preg_match('/^\d{1,2}$/', $dimension) && $hour >= 0 && $hour <= 23) {
+                if ($isCurrent) {
+                    $hours[$hour] += $value;
+                    $weekday = (int) (new DateTimeImmutable($day))->format('N') - 1;   // 0 = poniedziałek … 6 = niedziela
+                    $weekdayHours[$weekday][$hour] += $value;
+                } else {
+                    $prevHours[$hour] += $value;
+                }
+            }
+            continue;
+        }
+        if ($isPrevious) {
+            if (array_key_exists($metric, $prevTotals)) $prevTotals[$metric] += $value;
+            if (isset($map[$metric], $prevSeries[$day])) $prevSeries[$day][$map[$metric]] += $value;
+            continue;
+        }
         if (array_key_exists($metric, $totals)) $totals[$metric] += $value;
         if (isset($grouped[$metric])) $grouped[$metric][$dimension] = ($grouped[$metric][$dimension] ?? 0) + $value;
-        if (isset($series[$day])) {
-            $map = array('sessions'=>'sessions','stage_price'=>'prices','stage_quote'=>'quotes','stage_cart'=>'carts',
-                'stage_checkout'=>'checkouts','orders_verified'=>'orders','orders_value_cents'=>'value_cents',
-                'cart_items'=>'cart_items','cart_value_cents'=>'cart_value_cents','order_error'=>'order_errors');
-            if (isset($map[$metric])) $series[$day][$map[$metric]] += $value;
-        }
+        if (isset($series[$day], $map[$metric])) $series[$day][$map[$metric]] += $value;
     }
     // 0.25.5: kategorie produktów to stały, krótki zestaw — do eksportu potrzebna jest pełna lista, nie tylko 12 pierwszych.
     foreach ($grouped as &$values) { arsort($values, SORT_NUMERIC); $values = array_slice($values, 0, 40, true); }
@@ -272,9 +356,30 @@ function d24_analytics_dashboard(int $days = 7): array {
         "SELECT COUNT(*) FROM {$sessionTable} WHERE cart_seen=1 AND order_seen=0 AND started_at >= %s AND started_at < %s AND last_seen < %s",
         $fromUtc, $toUtc, gmdate('Y-m-d H:i:s', time() - DAY_IN_SECONDS)
     ));
+    // 0.26.9: lejek sesji w podziale na źródło, urządzenie i język. Sesje są trzymane 45 dni, więc dla okresów dłuższych okno to 45 dni.
+    $segmentWindow = min($days, D24_ANALYTICS_SESSION_RETENTION_DAYS);
+    $segFromUtc = $today->modify('-' . ($segmentWindow - 1) . ' days')->setTimezone($utcZone)->format('Y-m-d H:i:s');
+    $segments = array('source' => array(), 'device' => array(), 'lang' => array());
+    foreach (array('source', 'device', 'lang') as $column) {   // nazwy kolumn z twardej listy
+        $segRows = $wpdb->get_results($wpdb->prepare(
+            "SELECT {$column} AS segment, COUNT(*) AS sessions, SUM(price_seen) AS price, SUM(quote_seen) AS quote, SUM(cart_seen) AS cart, SUM(checkout_seen) AS checkout, SUM(order_seen) AS orders FROM {$sessionTable} WHERE started_at >= %s AND started_at < %s GROUP BY {$column}",
+            $segFromUtc, $toUtc
+        ), ARRAY_A);
+        foreach ((array) $segRows as $row) {
+            $key = (string) $row['segment'];
+            $segments[$column][$key === '' ? 'unknown' : $key] = array(
+                'sessions' => (int) $row['sessions'], 'price' => (int) $row['price'], 'quote' => (int) $row['quote'],
+                'cart' => (int) $row['cart'], 'checkout' => (int) $row['checkout'], 'orders' => (int) $row['orders'],
+            );
+        }
+    }
     return array_merge($base, array('ready'=>true,'totals'=>$totals,'series'=>array_values($series),
         'sources'=>$grouped['source'], 'pages'=>$grouped['page'],
         'price_products'=>$grouped['product_price'], 'order_errors'=>$grouped['order_error'],
         'cart_products'=>$grouped['product_cart'], 'ordered_products'=>$grouped['product_order'],
-        'abandoned'=>$abandoned, 'data_start'=>$start,'data_end'=>$end));
+        'ordered_value_cents'=>$grouped['product_order_value'], 'devices'=>$grouped['device'], 'langs'=>$grouped['lang'],
+        'hours'=>$hours, 'weekday_hours'=>$weekdayHours, 'segments'=>$segments, 'segment_window_days'=>$segmentWindow,
+        'previous'=>array('totals'=>$prevTotals, 'series'=>array_values($prevSeries), 'hours'=>$prevHours, 'start'=>$prevStart, 'end'=>$prevEnd),
+        'search'=>d24_analytics_search_terms(),
+        'abandoned'=>$abandoned, 'data_start'=>$start,'data_end'=>$end, 'generated_at'=>wp_date('c')));
 }
