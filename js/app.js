@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.10v";
+  const VERSION = "0.26.11v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -710,7 +710,7 @@
     const multiplier = dimensions.unit === "cm" ? 10 : dimensions.unit === "m" ? 1000 : 1;
     const width = Math.round(dimensions.width * multiplier);
     const height = Math.round(dimensions.height * multiplier);
-    if (width < 30 || width > 500 || height < 30 || height > 500) return null;
+    if (width < 20 || width > 500 || height < 20 || height > 500) return null;   // 0.26.11v: minimum 20 mm
     return { pageName: "Naklejki, etykiety i magnesy", summary: `${quantity} szt. • ${width} × ${height} mm • ${productName.toLowerCase()}`, steps: [["stickProduct", productName], ["stickWidth", String(width)], ["stickHeight", String(height)], ["stickQty", String(quantity)]] };
   }
 
@@ -1134,7 +1134,7 @@
         "Jakie mają być wymiary jednej sztuki?",
         [["50 × 50 mm", "50x50 mm"], ["100 × 100 mm", "100x100 mm"], ["50 × 100 mm", "50x100 mm"]],
         "Np. 70x40 mm",
-        "W kalkulatorze przyjmujemy wymiary od 30 × 30 do 500 × 500 mm."
+        "W kalkulatorze przyjmujemy wymiary od 20 × 20 do 500 × 500 mm."
       );
     }
 
@@ -4894,8 +4894,8 @@
     content.innerHTML = `${header("Naklejki, etykiety i magnesy")}<div class="card"><div class="form-grid">
       <div class="field"><label>Rodzaj produktu</label><select id="stickProduct">${options(products)}</select></div>
       <div id="stickSurfaceFields" class="field" style="display:contents">
-        <div class="field third"><label>Szerokość jednej sztuki [mm]</label><input id="stickWidth" type="number" min="30" max="500" step="1" value="100"></div>
-        <div class="field third"><label>Wysokość jednej sztuki [mm]</label><input id="stickHeight" type="number" min="30" max="500" step="1" value="100"></div>
+        <div class="field third"><label>Szerokość jednej sztuki [mm]</label><input id="stickWidth" type="number" min="20" max="500" step="1" value="100"></div>
+        <div class="field third"><label>Wysokość jednej sztuki [mm]</label><input id="stickHeight" type="number" min="20" max="500" step="1" value="100"></div>
         <div class="field third"><label for="stickQty">Ilość sztuk</label><div class="d24-control-guide d24-sticker-hint">Podaj ilość potrzebnych naklejek lub etykiet.</div><input id="stickQty" type="number" min="1" step="1" value="80"></div>
       </div>
       <div id="stickTaxiFields" class="field hidden"><label>Ilość kompletów / sztuk</label><input id="stickTaxiQty" type="number" min="1" step="1" value="1"></div>
@@ -4924,7 +4924,7 @@
       }).join("")}</tbody></table></details>` : "";
 
       document.getElementById("stickInfo").innerHTML =
-        alertBox(`Minimalny wymiar: 30 × 30 mm. Maksymalny wymiar: 500 × 500 mm. Minimalne zamówienie: ${num(productData.minimum_m2, 1)} mb. Szerokość folii: 1000 mm. Do wymiaru produkcyjnego dodawane są 3 mm. ${LIMIT_CONTACT_TEXT}`, "info") +
+        alertBox(`Minimalny wymiar: 20 × 20 mm. Maksymalny wymiar: 500 × 500 mm. Minimalne zamówienie: ${num(productData.minimum_m2, 1)} mb. Szerokość folii: 1000 mm. Do wymiaru produkcyjnego dodawane są 3 mm. ${LIMIT_CONTACT_TEXT}`, "info") +
         tierTable;
     }
     product.addEventListener("change", refresh); refresh();

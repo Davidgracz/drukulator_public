@@ -142,7 +142,8 @@
     if (Object.prototype.hasOwnProperty.call(data.powierzchniowe, productType)) {
       assertPositive(widthMm, "Szerokość");
       assertPositive(heightMm, "Wysokość");
-      if (Number(widthMm) < 30 || Number(heightMm) < 30) throwLimit("Minimalny wymiar naklejki to 30 × 30 mm.");
+      // 0.26.11v: minimalny wymiar naklejki / etykiety to 20 × 20 mm (wcześniej 30 × 30 mm).
+      if (Number(widthMm) < 20 || Number(heightMm) < 20) throwLimit("Minimalny wymiar naklejki to 20 × 20 mm.");
       if (Number(widthMm) > 500 || Number(heightMm) > 500) throwLimit("Maksymalny wymiar naklejki to 500 × 500 mm.");
       const product = data.powierzchniowe[productType];
       const marginMm = 3;

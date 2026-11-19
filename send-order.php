@@ -142,8 +142,8 @@ function drukulator_validate_item_limits(array $item, string $title): void
     if ($product_type === 'sticker') {
         $width = drukulator_number($meta, 'widthMm');
         $height = drukulator_number($meta, 'heightMm');
-        if ($width < 30 || $height < 30 || $width > 500 || $height > 500) {
-            drukulator_response(false, drukulator_limit_message('Wymiar naklejki musi mieścić się w zakresie od 30 × 30 mm do 500 × 500 mm.'), 422);
+        if ($width < 20 || $height < 20 || $width > 500 || $height > 500) {
+            drukulator_response(false, drukulator_limit_message('Wymiar naklejki musi mieścić się w zakresie od 20 × 20 mm do 500 × 500 mm.'), 422);
         }
         return;
     }
