@@ -31,18 +31,18 @@ t('jednostronnie: arkusze = strony × komplety',()=>{
   assert.equal(r.sheets,30); assert.equal(r.totalPages,30); assert.equal(r.tier,'21-100'); near(r.printTotal,75); near(r.paperTotal,9);
 });
 
-t('próg cenowy liczony od wszystkich stron: 10 stron × 2 komplety = 20 -> 1-20, × 3 = 30 -> 21-100',()=>{
+t('próg cenowy liczony od wszystkich stron: 10 stron × 2 komplety = 20 -> 1-20, × 3 = 30 -> 21-50',()=>{
   const bw={...base,colorMode:'Czarno-biały',pages:10,sideMode:'Jednostronny',paperType:'Standardowy 80 g'};
   assert.equal(C.calculateDigitalPrint(prices,{...bw,sets:2}).tier,'1-20');
-  assert.equal(C.calculateDigitalPrint(prices,{...bw,sets:3}).tier,'21-100');
-  near(C.calculateDigitalPrint(prices,{...bw,sets:3}).price,15); // 30 × 0,50
+  assert.equal(C.calculateDigitalPrint(prices,{...bw,sets:3}).tier,'21-50');
+  near(C.calculateDigitalPrint(prices,{...bw,sets:3}).price,24); // 30 × 0,80 (0.26.12)
 });
 
 t('A3: mnożnik formatu dla druku, papieru i foliowania',()=>{
   const r=C.calculateDigitalPrint(prices,{...base,colorMode:'Czarno-biały',pages:10,sets:2,formatName:'A3',sideMode:'Jednostronny',paperType:'Papier kredowy 250 g',foilType:'Błysk'});
-  assert.equal(r.printUnits,40); assert.equal(r.tier,'21-100'); near(r.printTotal,20);      // 40 × 0,50
+  assert.equal(r.printUnits,40); assert.equal(r.tier,'21-50'); near(r.printTotal,32);      // 40 × 0,80 (0.26.12)
   near(r.paperTotal,0.75*20*2);                                                             // 20 arkuszy × 2
-  near(r.foilTotal,1.5*20*2); near(r.price,20+30+60);
+  near(r.foilTotal,1.5*20*2); near(r.price,32+30+60);
 });
 
 t('foliowanie liczone od wszystkich arkuszy (wszystkie komplety)',()=>{
@@ -74,8 +74,8 @@ t('wszystko razem: 3 komplety (druk + papier + oprawa; foliowanie osobno)',()=>{
 });
 
 t('walidacja kompletów: 0, ujemne, ułamek',()=>{
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,sets:0}),/Ilość kompletów/);
-  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,sets:-1}),/Ilość kompletów/);
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,sets:0}),/Ilość sztuk/);
+  assert.throws(()=>C.calculateDigitalPrint(prices,{...base,sets:-1}),/Ilość sztuk/);
   assert.throws(()=>C.calculateDigitalPrint(prices,{...base,sets:1.5}),/całkowitą/);
 });
 

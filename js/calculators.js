@@ -573,8 +573,16 @@
     };
   }
 
-  function getQuantityTier(quantity) {
+  // 0.26.12v: próg cenowy wybierany jest z kluczy tabeli cen („1-20”, „21-50”, „51-100”, „101-500”, „501+”), więc czarno-biały druk cyfrowy
+  // może mieć inne przedziały niż kolorowy (21–50 i 51–100 zamiast jednego 21–100). Bez tabeli działa stary podział 1-20 / 21-100 / 101-500 / 501+.
+  function getQuantityTier(quantity, tierTable) {
     assertPositive(quantity, "Ilość");
+    const bounds = tierTable && typeof tierTable === "object" ? Object.keys(tierTable).map(key => {
+      const range = /^(\d+)\s*-\s*(\d+)$/.exec(key);
+      if (range) return { key, upper: Number(range[2]) };
+      return /^\d+\+$/.test(key) ? { key, upper: Infinity } : null;
+    }).filter(Boolean).sort((a, b) => a.upper - b.upper) : [];
+    if (bounds.length) return (bounds.find(item => quantity <= item.upper) || bounds[bounds.length - 1]).key;
     if (quantity <= 20) return "1-20";
     if (quantity <= 100) return "21-100";
     if (quantity <= 500) return "101-500";
@@ -591,7 +599,7 @@
       if (service === "Druk cyfrowy" && Number(quantity) < getDigitalMinPages(sideMode)) throw new Error(digitalMinPagesError(sideMode));
       const formatMultiplier = Number(prices.mnozniki_formatu[formatName]);
       const printUnits = Number(quantity) * sideMultiplier * formatMultiplier;
-      const tier = getQuantityTier(printUnits);
+      const tier = getQuantityTier(printUnits, servicePrices[colorMode]);
       const basePrice = Number(servicePrices[colorMode][tier]);
       const paperSurcharge = Number(prices.doplaty_do_papieru[paperType]);
       const printTotal = basePrice * printUnits;
@@ -699,8 +707,8 @@
     assertPositive(pages, "Liczba stron");
     if (!Number.isInteger(Number(pages))) throw new Error("Liczba stron musi być liczbą całkowitą.");
     if (Number(pages) < getDigitalMinPages(sideMode)) throw new Error(digitalMinPagesError(sideMode));
-    assertPositive(sets, "Ilość kompletów");
-    if (!Number.isInteger(Number(sets))) throw new Error("Ilość kompletów musi być liczbą całkowitą.");
+    assertPositive(sets, "Ilość sztuk");   // 0.26.12v: w formularzu „komplet” nazywa się „sztuka”
+    if (!Number.isInteger(Number(sets))) throw new Error("Ilość sztuk musi być liczbą całkowitą.");
     const prices = pricesRoot.druk_cyfrowy_i_ksero;
     const sideMultiplier = Number(prices.mnozniki_zadruku[sideMode]);
     const formatMultiplier = Number(prices.mnozniki_formatu[formatName]);
@@ -713,7 +721,7 @@
     const sheetsPerSet = Math.ceil(Number(pages) / sideMultiplier);
     const sheets = sheetsPerSet * setCount;
     const printUnits = totalPages * formatMultiplier;
-    const tier = getQuantityTier(printUnits);
+    const tier = getQuantityTier(printUnits, prices.druk_cyfrowy[colorMode]);
     const basePrice = Number(prices.druk_cyfrowy[colorMode][tier]);
     const printTotal = round2(basePrice * printUnits);
     const paperSurcharge = Number(prices.doplaty_do_papieru[paperType]);
@@ -737,7 +745,7 @@
       if (!isDigitalBindingPaper(paperType)) throw new Error(`Bindowanie i oprawy są dostępne tylko dla papieru ${DIGITAL_BINDING_GRAMS} g.`);
       // Rozmiar dobiera kalkulator: przekazany bindingVariant jest ignorowany, żeby nie dało się wybrać mniejszej (tańszej) oprawy, która się nie zmieści.
       const found = findDigitalBinding(pricesRoot, bindingType, sheetsPerSet);
-      if (!found.match) throw new Error(`Liczba kartek w jednym komplecie (${sheetsPerSet}) jest większa niż pojemność oprawy „${bindingType}” (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`);
+      if (!found.match) throw new Error(`Liczba kartek w jednej sztuce (${sheetsPerSet}) jest większa niż pojemność oprawy „${bindingType}” (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`);
       bindingCopies = setCount; // jedna oprawa na komplet
       bindingVariantUsed = found.match.size;
       bindingCapacity = found.match.maxSheets;
@@ -866,7 +874,7 @@
     assertPositive(pagesPerCopy, "Liczba stron");
     assertPositive(copies, "Liczba egzemplarzy");
     const totalPrintedPages = Number(pagesPerCopy) * Number(copies);
-    const tier = getQuantityTier(totalPrintedPages);
+    const tier = getQuantityTier(totalPrintedPages, prices.druk_cyfrowy_i_ksero.druk_cyfrowy[colorMode]);
     const printPricePerPage = Number(prices.druk_cyfrowy_i_ksero.druk_cyfrowy[colorMode][tier]);
     const printTotal = totalPrintedPages * printPricePerPage;
     const sheetsPerCopy = sideMode === "Dwustronny" ? Math.ceil(Number(pagesPerCopy) / 2) : Number(pagesPerCopy);

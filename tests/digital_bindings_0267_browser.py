@@ -73,7 +73,7 @@ with sync_playwright() as p:
         assert page.locator('#digBindTypeField').is_visible() and not page.evaluate('document.getElementById("digBindTypeField").inert')
         setv(page,'#digBindType',PLA); fill(page,'Jednostronny',86)
         assert selected(page)==['do 14 mm'],selected(page)
-        assert page.locator('#digBindNote').inner_text().strip()=='Kartek w jednym komplecie: 86. Rozmiar oprawy dobieramy automatycznie.',page.locator('#digBindNote').inner_text()
+        assert page.locator('#digBindNote').inner_text().strip()=='Kartek w jednej sztuce: 86. Rozmiar oprawy dobieramy automatycznie.',page.locator('#digBindNote').inner_text()
         names=[n for n,*_ in prices_on(page,'digBindVariantField')]; assert names==['do 14 mm','do 19 mm','do 25 mm','do 32 mm','do 38 mm','do 51 mm'],names
         details=page.eval_on_selector_all('#digBindVariantField .d24-smart-choice small','e=>e.map(x=>x.textContent.trim())'); assert details==['do 90 kartek','do 150 kartek','do 200 kartek','do 260 kartek','do 320 kartek','do 430 kartek'],details
         # zablokowane: kliknięcie innego rozmiaru (nawet wymuszone) nic nie zmienia; pole jest „tylko do odczytu”
@@ -146,7 +146,7 @@ with sync_playwright() as p:
     setv(page,'#digPaper','Standardowy 80 g'); page.locator('#digBindBox > summary').click(); setv(page,'#digBindType',PLA); fill(page,'Jednostronny',86)
     names=[n for n,*_ in prices_on(page,'digBindVariantField')]; assert names[:2]==['up to 14 mm','up to 19 mm'],names
     assert page.eval_on_selector_all('#digBindVariantField .d24-smart-choice small','e=>e.map(x=>x.textContent.trim())')[0]=='up to 90 sheets'
-    assert page.locator('#digBindNote').inner_text().strip()=='Sheets in one set: 86. The binding size is chosen automatically.'
+    assert page.locator('#digBindNote').inner_text().strip()=='Sheets in one piece: 86. The binding size is chosen automatically.'
     assert 'Binding is available only for 80 gsm paper.' in page.locator('#digBindTypeField').evaluate('e=>e.textContent')
     fill(page,'Jednostronny',500); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(250)
     assert 'exceeds the capacity of the binding' in quote_text(page) and 'Plastic coil binding' in quote_text(page),quote_text(page)[:400]

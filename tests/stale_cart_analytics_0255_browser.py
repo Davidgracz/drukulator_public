@@ -1,6 +1,6 @@
 """0.25.5: (1) krok lejka „cena po konfiguracji” (price_seen) tylko po prawdziwej zmianie klienta, raz na kategorię w sesji;
 (2) klasyfikacja błędów wysyłki zamówienia (order_error: stale_item / limit / validation / files / network / server);
-(3) pozycje koszyka ze starszej wersji kalkulatora: ostrzeżenie, „Oblicz ponownie”, blokada wysyłki przed serwerem."""
+(3) 0.26.12: pozycje koszyka ze starszej wersji kalkulatora nie dają ostrzeżeń ani blokady wysyłki."""
 import json,re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -53,34 +53,24 @@ def fill_order(page):
 with sync_playwright() as p:
     browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
     for width in (1300,390):
+        # --- 1) 0.26.12: stary koszyk (pozycje bez typu produktu, np. z linku „?q=”) nie pokazuje żadnych ostrzeżeń o „starszej wersji kalkulatora”
         page,errors=boot(browser,width,legacy)
-        # --- 1) stary koszyk: ostrzeżenie i oznaczone karty tylko przy pozycjach, które serwer by odrzucił
-        stale=page.locator('.cart-card.is-stale')
-        assert stale.count()==2,stale.count()
-        assert page.locator('.d24-stale-cart-alert').count()==1 and 'starszej wersji kalkulatora' in page.locator('.d24-stale-cart-alert').inner_text()
-        titles=[stale.nth(i).locator('h4').inner_text() for i in range(2)]
-        assert titles==['Plakaty 24h','Plansza pianka 5 mm'],titles
-        assert page.locator('[data-recalc]').count()==2 and page.locator('[data-recalc]').first.inner_text().strip()=='Oblicz ponownie'
-        assert page.locator('.cart-card:not(.is-stale)').count()==3        # roll-up (uzupełniony typ), laminowanie, płótno
-        # --- 2) wysyłka z taką pozycją jest zatrzymana po stronie przeglądarki i zapisana jako stale_item
-        fill_order(page)
-        page.locator('#sendOrder').click(); page.wait_for_timeout(300)
-        status=page.locator('#orderSendStatus').inner_text()
-        assert 'Nie można wysłać zamówienia' in status and 'Oblicz ponownie' in status,status
-        assert page.evaluate('window.__orderCalls')==0
-        errs=events(page,'order_error'); assert [e['data']['reason'] for e in errs]==['stale_item'],errs
-        # --- 3) „Oblicz ponownie”: pozycja znika z koszyka, otwiera się właściwa strona z opisem starej pozycji
-        page.locator('[data-recalc]').first.click(); page.wait_for_timeout(600)
-        assert [i['title'] for i in cart(page)]==['Plansza pianka 5 mm','Roll-up Standard','Laminowanie','Obrazy na płótnie'],[i['title'] for i in cart(page)]
-        hint=page.locator('.d24-recalc-hint'); assert hint.count()==1
-        assert 'Plakaty 24h' in hint.inner_text() and 'stary plakat A2, 3 szt.' in hint.inner_text()
-        assert page.locator('#cartPanel .cart-card.is-stale').count()==1
-        assert page.locator('.nav-button.active, .nav-button[aria-current="page"]').first.get_attribute('data-page')=='Plakaty 24h'
-        page.locator('[data-recalc]').first.click(); page.wait_for_timeout(600)
-        assert 'Plansza pianka 5 mm' in page.locator('.d24-recalc-hint').inner_text()
-        assert page.locator('#pvcProduct').count()==1
-        assert page.locator('.cart-card.is-stale').count()==0 and page.locator('.d24-stale-cart-alert').count()==0
-        assert len(cart(page))==3
+        assert page.locator('.cart-card').count()==5,page.locator('.cart-card').count()
+        assert page.locator('.cart-card.is-stale').count()==0 and page.locator('.d24-stale-cart-alert').count()==0 and page.locator('.d24-stale-note').count()==0
+        assert page.locator('[data-recalc]').count()==0
+        assert 'starszej wersji' not in page.locator('body').inner_text() and 'Oblicz ponownie' not in page.locator('body').inner_text()
+        assert [page.locator('.cart-card h4').nth(i).inner_text() for i in range(5)]==['Plakaty 24h','Plansza pianka 5 mm','Roll-up Standard','Laminowanie','Obrazy na płótnie']
+        # --- 2) wysyłka takiego koszyka nie jest blokowana w przeglądarce: żądanie idzie do serwera, bez błędu w statystykach
+        page.evaluate("window.__sendMode='ok'"); fill_order(page)
+        page.locator('#sendOrder').click(); page.wait_for_timeout(500)
+        assert page.evaluate('window.__orderCalls')==1
+        assert 'T-1' in page.locator('#orderSendStatus').inner_text(),page.locator('#orderSendStatus').inner_text()
+        assert events(page,'order_error')==[]
+        assert not errors,errors
+        page.close()
+        # --- 3) kolejne próby z koszykiem bez „starych” pozycji
+        page,errors=boot(browser,width,legacy[2:])
+        assert page.locator('.cart-card').count()==3 and page.locator('.cart-card.is-stale').count()==0
         # --- 4) czysty koszyk przechodzi do serwera; każdy rodzaj niepowodzenia dostaje swoją przyczynę
         before=len(events(page,'order_error'))
         expected=[]

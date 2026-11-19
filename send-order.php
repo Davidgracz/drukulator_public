@@ -71,20 +71,8 @@ function drukulator_validate_item_limits(array $item, string $title): void
     $product_type = sanitize_key((string) ($meta['productType'] ?? ''));
 
     if ($product_type === '') {
-        $normalized_title = function_exists('mb_strtolower') ? mb_strtolower($title, 'UTF-8') : strtolower($title);
-        $requires_metadata = strpos($normalized_title, 'plakat') !== false
-            || strpos($normalized_title, 'baner') !== false
-            || strpos($normalized_title, 'folia') !== false
-            || strpos($normalized_title, 'naklejk') !== false
-            || strpos($normalized_title, 'etykiet') !== false
-            || strpos($normalized_title, 'pcv') !== false
-            || strpos($normalized_title, 'piank') !== false
-            || strpos($normalized_title, 'płótn') !== false
-            || strpos($normalized_title, 'plotn') !== false;
-
-        if ($requires_metadata) {
-            drukulator_response(false, 'Jedna z pozycji pochodzi ze starszej wersji kalkulatora. Usuń ją z koszyka i oblicz ponownie.', 422);
-        }
+        // 0.26.12v: pozycje bez typu produktu (stare wyceny, m.in. z linków „?q=”) nie mają zapisanych parametrów do sprawdzenia limitów,
+        // ale nie odrzucamy ich — zamówienie przechodzi tak jak wycena zapisana w koszyku, a drukarnia i tak potwierdza każde zamówienie.
         return;
     }
 

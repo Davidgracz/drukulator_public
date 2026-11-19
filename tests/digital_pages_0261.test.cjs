@@ -40,12 +40,12 @@ t('2 strony dwustronnie = 1 arkusz (0.26.8: dwustronnie minimum to 2 strony)',()
 
 t('próg cenowy liczony od stron × mnożnik formatu (A3)',()=>{
   const r=C.calculateDigitalPrint(prices,{...base,colorMode:'Czarno-biały',pages:11,formatName:'A3',paperType:'Standardowy 80 g',sideMode:'Jednostronny'});
-  assert.equal(r.printUnits,22); assert.equal(r.tier,'21-100'); near(r.printTotal,11); // 22 × 0,50
+  assert.equal(r.printUnits,22); assert.equal(r.tier,'21-50'); near(r.printTotal,17.6); // 22 × 0,80 (0.26.12: czarno-biały 21–50 = 0,80 zł)
 });
 
-t('granice progów: 20 -> 1-20, 21 -> 21-100, 101 -> 101-500, 501 -> 501+',()=>{
+t('granice progów czarno-białych: 20 -> 1-20, 21..50 -> 21-50, 51..100 -> 51-100, 101 -> 101-500, 501 -> 501+',()=>{
   const tier=pages=>C.calculateDigitalPrint(prices,{...base,colorMode:'Czarno-biały',pages,paperType:'Standardowy 80 g'}).tier;
-  assert.equal(tier(20),'1-20'); assert.equal(tier(21),'21-100'); assert.equal(tier(100),'21-100');
+  assert.equal(tier(20),'1-20'); assert.equal(tier(21),'21-50'); assert.equal(tier(50),'21-50'); assert.equal(tier(51),'51-100'); assert.equal(tier(100),'51-100');
   assert.equal(tier(101),'101-500'); assert.equal(tier(500),'101-500'); assert.equal(tier(501),'501+');
 });
 

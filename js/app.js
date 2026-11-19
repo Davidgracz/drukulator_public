@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.11v";
+  const VERSION = "0.26.12v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -2458,6 +2458,10 @@
       delete pricesToMigrate.notesy_i_bloczki.Biuwary;
     }
 
+    // 0.26.12v: czarno-biały druk cyfrowy ma przedziały 21–50 i 51–100 zamiast 21–100 — stary przedział z lokalnie zapisanego cennika nie może się z nimi nakładać.
+    const bwTiers = pricesToMigrate.druk_cyfrowy_i_ksero?.druk_cyfrowy?.["Czarno-biały"];
+    if (bwTiers && typeof bwTiers === "object" && ("21-50" in bwTiers || "51-100" in bwTiers)) delete bwTiers["21-100"];
+
     const banners = pricesToMigrate.banery;
     if (banners && banners["Frontlit 510g"]) {
       const legacyBanner = banners["Frontlit 510g"];
@@ -2761,9 +2765,9 @@
     return pricesToMigrate;
   }
 
-  // 0.25.3: X-banery, roll-upy i komplety taxi dodane do koszyka w starszych wersjach nie miały typu produktu, przez co serwer
-  // odrzucał zamówienie komunikatem o „starszej wersji kalkulatora”. Te produkty nie mają limitów do sprawdzenia, więc typ uzupełniamy.
-  // Pozostałe pozycje bez typu (np. plakaty, PCV, obrazy) zostają bez zmian — dla nich serwer nadal wymaga ponownego obliczenia.
+  // 0.25.3: X-banery, roll-upy i komplety taxi dodane do koszyka w starszych wersjach nie miały typu produktu. Te produkty nie mają limitów
+  // do sprawdzenia, więc typ uzupełniamy. 0.26.12v: pozostałe pozycje bez typu (stare wyceny, także z linków „?q=”) są po prostu wysyłane — bez komunikatów
+  // o „starszej wersji kalkulatora” i bez blokady zamówienia.
   function legacyProductType(item) {
     const title = String(item?.title || "");
     if (/^(roll-up|x-baner|wkład z wymianą)/i.test(title)) return "rollup";
@@ -2777,22 +2781,6 @@
       const type = legacyProductType(item);
       return type ? { ...item, meta: { ...(item.meta && typeof item.meta === "object" ? item.meta : {}), productType: type } } : item;
     });
-  }
-  // 0.25.5: pozycje z koszyka zapisanego w starszej wersji (bez typu produktu) serwer odrzuca. Wykrywamy je tym samym warunkiem co send-order.php,
-  // pokazujemy ostrzeżenie i pozwalamy obliczyć produkt od nowa (stare pozycje nie mają zapisanych wymiarów, więc nie da się ich przeliczyć automatycznie).
-  const STALE_CART_TITLE_PATTERN = /plakat|baner|folia|naklejk|etykiet|pcv|piank|płótn|plotn/;
-  function isStaleCartItem(item) {
-    if (!item || typeof item !== "object" || item.meta?.productType) return false;
-    return STALE_CART_TITLE_PATTERN.test(String(item.title || "").toLowerCase());
-  }
-  function staleCartItemPage(item) {
-    const title = String(item?.title || "").toLowerCase();
-    if (/plakat/.test(title)) return "Plakaty 24h";
-    if (/pcv|piank/.test(title)) return "PCV i pianki";
-    if (/płótn|plotn/.test(title)) return "Obrazy na płótnie";
-    if (/naklejk|etykiet/.test(title)) return "Naklejki, etykiety i magnesy";
-    if (/baner|folia/.test(title)) return "Folie i banery 24h";
-    return "";
   }
   function loadJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -4306,7 +4294,7 @@
       cena_m2_obrazu: "Cena za m² obrazu",
       doplaty_do_papieru: "Dopłaty do papieru",
       foliowanie: "Foliowanie wydruków [zł za arkusz A4, A3 = 2 × A4; tylko dla papieru od 250 g; Satyna = folia soft skin]",
-      oprawy_ceny: "Oprawy w druku cyfrowym — cena [zł za oprawę jednego kompletu; tylko dla papieru 80 g]",
+      oprawy_ceny: "Oprawy w druku cyfrowym — cena [zł za oprawę jednej sztuki; tylko dla papieru 80 g]",
       oprawy_pojemnosc_kartek: "Oprawy w druku cyfrowym — pojemność [do ilu kartek 80 g; rozmiar dobierany automatycznie]",
       mnozniki_formatu: "Mnożniki formatu",
       mnozniki_zadruku: "Mnożniki zadruku",
@@ -6028,8 +6016,7 @@
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="2" step="1" value="2"><small id="digMinHint" aria-live="polite"></small><small id="digSheetsHint" aria-live="polite"></small></div>
-          <div class="field half"><label for="digSets">Ilość kompletów</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div>
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digSets">Ilość sztuk</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="2" step="1" value="2"><small id="digMinHint" aria-live="polite"></small><small id="digSheetsHint" aria-live="polite"></small></div>
           <details class="d24-extra" id="digBindBox"><summary><span class="d24-extra__title">Bindowanie i oprawy</span><span class="d24-extra__state" id="digBindState"></span></summary>
             <div class="d24-extra__body">
               <div class="field half" id="digBindTypeField"><label for="digBindType">Rodzaj oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select><p class="d24-inactive-note">Bindowanie i oprawy są dostępne tylko dla papieru 80 g.</p></div>
@@ -6038,7 +6025,7 @@
           <details class="d24-extra" id="digFoilBox"><summary><span class="d24-extra__title">Foliowanie</span><span class="d24-extra__state" id="digFoilState"></span></summary>
             <div class="d24-extra__body"><div class="field" id="digFoilField"><label for="digFoil">Rodzaj folii</label><select id="digFoil">${["Brak", ...foilTypes].map(name => `<option value="${esc(name)}">${esc(C.getDigitalFoilLabel(name))}</option>`).join("")}</select><p class="d24-inactive-note">Foliowanie jest dostępne tylko dla papieru od 250 g.</p></div></div></details>
 `;
-        note = "Komplet to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × komplety), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każdy komplet dostaje własną oprawę. Bindowanie i foliowanie rozwijasz poniżej: bindowanie jest dostępne tylko dla papieru 80 g (rozmiar oprawy dobieramy automatycznie do liczby kartek w komplecie), foliowanie tylko dla papieru od 250 g. Format A3 kosztuje 2 razy więcej niż A4.";
+        note = "Sztuka to jeden egzemplarz całego dokumentu. Cena druku liczona jest od łącznej liczby stron (strony × sztuki), druk dwustronny mieści 2 strony na jednym arkuszu. Papier i foliowanie liczone są od liczby arkuszy, a każda sztuka dostaje własną oprawę. Bindowanie i foliowanie rozwijasz poniżej: bindowanie jest dostępne tylko dla papieru 80 g (rozmiar oprawy dobieramy automatycznie do liczby kartek w jednej sztuce), foliowanie tylko dla papieru od 250 g. Format A3 kosztuje 2 razy więcej niż A4.";
       } else if (service.value === "Ksero i druk") {
         html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.ksero_i_druk))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field"><label>Rodzaj papieru</label><select id="digPaper">${options(standardPapers)}</select></div><div class="field"><label>Liczba kopii</label><input id="digQty" type="number" min="1" step="1" value="1"></div>`;
         note = "Format A3 kosztuje 2 razy więcej niż format A4.";
@@ -6118,9 +6105,9 @@
           const sideMultiplier = Number(root.mnozniki_zadruku[side.value]) || 1;
           const perSet = Math.ceil(pages / sideMultiplier);
           const total = perSet * (setCount > 0 ? setCount : 1);
-          sheetsHint.textContent = `Potrzebne arkusze ${format.value}: ${total}${setCount > 1 ? ` (${perSet} na komplet)` : ""}`;
+          sheetsHint.textContent = `Potrzebne arkusze ${format.value}: ${total}${setCount > 1 ? ` (${perSet} na sztukę)` : ""}`;
         }
-        setsHint.textContent = bindType.value !== "Brak" ? "Każdy komplet dostaje własną oprawę." : "Komplet to jeden egzemplarz całego dokumentu.";
+        setsHint.textContent = bindType.value !== "Brak" ? "Każda sztuka dostaje własną oprawę." : "Sztuka to jeden egzemplarz całego dokumentu.";
       }
       function setInactive(field, inactive) {
         field.classList.toggle("d24-field-inactive", inactive);
@@ -6178,8 +6165,8 @@
         bindNote.textContent = !eligible ? "Dostępne tylko dla papieru 80 g."
           : !known ? "Najpierw wybierz rodzaj oprawy."
           : !(sheets > 0) ? "Wpisz liczbę stron."
-          : wanted ? `Kartek w jednym komplecie: ${sheets}. Rozmiar oprawy dobieramy automatycznie.`
-          : `Kartek w jednym komplecie (${sheets}) jest więcej niż mieści ta oprawa (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`;
+          : wanted ? `Kartek w jednej sztuce: ${sheets}. Rozmiar oprawy dobieramy automatycznie.`
+          : `Kartek w jednej sztuce (${sheets}) jest więcej niż mieści ta oprawa (maks. ${found.maxSheets}). Wybierz inną oprawę albo skontaktuj się z nami.`;
       }
       function sync(event) { enforceMinPages(event); setFoil(); setBinding(); sheetsText(); summaries(); }
       publishAuto();
@@ -6239,7 +6226,7 @@
         const result = C.calculateDigitalPrint(state.prices, opts);
         const multiSet = result.sets > 1;
         const details = [["Rodzaj usługi", s], ["Wariant", opts.colorMode], ["Liczba stron", opts.pages]];
-        if (multiSet) details.push(["Ilość kompletów", result.sets], ["Łącznie stron", result.totalPages]);
+        if (multiSet) details.push(["Ilość sztuk", result.sets], ["Łącznie stron", result.totalPages]);
         details.push(["Liczba arkuszy", result.sheets], ["Format", opts.formatName], ["Zadruk", opts.sideMode], ["Papier", opts.paperType], ["Próg cenowy", result.tier]);
         const extras = [];
         if (result.foilActive) {
@@ -6991,7 +6978,6 @@
       return;
     }
     const totals = cartTotals();
-    const staleItems = state.cart.filter(isStaleCartItem);
     cartPanel.innerHTML = `<div class="card cart-shell">
       <div class="cart-heading cart-heading--wide">
         <div><span class="cart-kicker">PODSUMOWANIE ZAMÓWIENIA</span><h2>Twoje zamówienie</h2><p>Sprawdź produkty i prześlij zamówienie do drukarni. Realizacja wymaga jej potwierdzenia wraz z terminem.</p></div>
@@ -7000,14 +6986,12 @@
       <div class="cart-review-layout">
         <section class="cart-review-products" aria-label="Produkty w zamówieniu">
           <h3>Wybrane produkty</h3>
-          ${staleItems.length ? `<div class="alert warning d24-stale-cart-alert" role="alert"><strong>${staleItems.length === 1 ? "Jedna pozycja pochodzi" : "Część pozycji pochodzi"} ze starszej wersji kalkulatora.</strong> Takiej pozycji nie da się wysłać w zamówieniu. Kliknij „Oblicz ponownie” przy oznaczonej pozycji — usuniemy ją z koszyka i otworzymy produkt, żeby wycenić go jeszcze raz.</div>` : ""}
-          <div class="cart-list">${state.cart.map((item, index) => `<article class="cart-card${isStaleCartItem(item) ? " is-stale" : ""}">
+          <div class="cart-list">${state.cart.map((item, index) => `<article class="cart-card">
             <div class="d24-cart-row"><span class="d24-cart-number">${index + 1}</span><div class="d24-cart-data">
               <h4>${esc(item.title)}</h4><p>${esc(item.description)}</p>
-              ${isStaleCartItem(item) ? `<p class="d24-stale-note">Pozycja ze starszej wersji kalkulatora — wymaga ponownego obliczenia.</p>` : ""}
               ${Array.isArray(item.details) && item.details.length ? `<details class="d24-cart-details"><summary>Zobacz konfigurację</summary><dl>${item.details.slice(0, 25).filter(entry => Array.isArray(entry)).map(([key, val]) => `<dt>${esc(key)}</dt><dd>${esc(val)}</dd>`).join("")}</dl></details>` : ""}
             </div></div>
-            <div class="cart-card-footer"><strong>${item.meta?.requiresManualPrice ? "Do ustalenia" : `${money(item.price)} zł`}</strong><span class="cart-card-actions">${isStaleCartItem(item) && staleCartItemPage(item) ? `<button class="button" data-recalc="${esc(item.id)}" type="button">Oblicz ponownie</button>` : ""}<button class="button danger" data-remove="${esc(item.id)}" type="button">Usuń</button></span></div>
+            <div class="cart-card-footer"><strong>${item.meta?.requiresManualPrice ? "Do ustalenia" : `${money(item.price)} zł`}</strong><span class="cart-card-actions"><button class="button danger" data-remove="${esc(item.id)}" type="button">Usuń</button></span></div>
           </article>`).join("")}</div>
         </section>
         <section class="cart-review-summary" aria-label="Podsumowanie kosztów">
@@ -7034,7 +7018,6 @@
       </div>
     </div>`;
     cartPanel.querySelectorAll("[data-remove]").forEach(button => button.addEventListener("click", () => { state.cart = state.cart.filter(item => String(item.id) !== button.dataset.remove); if (!state.cart.length) { orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); } saveState(); renderCart(); }));
-    cartPanel.querySelectorAll("[data-recalc]").forEach(button => button.addEventListener("click", () => recalculateStaleCartItem(button.dataset.recalc)));
     document.getElementById("clearCart").addEventListener("click", () => { state.cart = []; orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); saveState(); renderCart(); });
     document.getElementById("downloadCsv").addEventListener("click", downloadCsv);
     document.getElementById("saveQuoteLink").addEventListener("click", saveShareableQuote);
@@ -7056,21 +7039,6 @@
     updateOrderText();
     updateMobileCartBar();
     revalidatePromoOnce();
-  }
-
-  // 0.25.5: „Oblicz ponownie” — usuwa starą pozycję i otwiera właściwy produkt, a opis starej pozycji zostaje na górze strony jako podpowiedź.
-  function recalculateStaleCartItem(itemId) {
-    const item = state.cart.find(entry => String(entry.id) === String(itemId));
-    const pageName = item ? staleCartItemPage(item) : "";
-    if (!item || !pageName) return;
-    state.cart = state.cart.filter(entry => entry !== item);
-    if (!state.cart.length) { orderFiles = []; window.DrukulatorCheckoutUX?.clear?.(); }
-    saveState();
-    renderCart();
-    navigateToPage(pageName);
-    content.insertAdjacentHTML("afterbegin", `<div class="alert info d24-recalc-hint" role="status"><strong>Przelicz ponownie pozycję:</strong> ${esc(item.title)}${item.description ? ` — ${esc(item.description)}` : ""}. Ustaw parametry jeszcze raz i dodaj produkt do koszyka.</div>`);
-    showToast("Usunięto starą pozycję — dodaj produkt ponownie");
-    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { window.scrollTo(0, 0); }
   }
 
   function cartForSharing() {
@@ -7618,13 +7586,6 @@
 
     if (!state.cart.length) {
       status.innerHTML = alertBox("Koszyk jest pusty.", "error");
-      return;
-    }
-    // 0.25.5: serwer odrzuciłby taką pozycję, więc mówimy o tym od razu i wskazujemy, co zrobić.
-    if (state.cart.some(isStaleCartItem)) {
-      status.innerHTML = alertBox("Nie można wysłać zamówienia: w koszyku jest pozycja ze starszej wersji kalkulatora. Przy oznaczonej pozycji kliknij „Oblicz ponownie”.", "warning");
-      trackOrderError("stale_item");
-      document.querySelector(".cart-card.is-stale")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
       return;
     }
     const sendTotals = cartTotals();

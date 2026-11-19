@@ -65,7 +65,7 @@ with sync_playwright() as p:
         assert types==['Brak','Oprawa miękka zaciskowa','Bindowanie – spirala plastikowa','Bindowanie – spirala metalowa'],types
         assert not any('kanałowa' in t for t in types)
         assert inactive(page,'digBindVariantField') and page.locator('#digBindCopies').count()==0   # brak pola „Liczba opraw”
-        assert page.locator('label[for="digSets"]').inner_text().strip()=='Ilość kompletów' and page.locator('#digSets').input_value()=='1'
+        assert page.locator('label[for="digSets"]').inner_text().strip()=='Ilość sztuk' and page.locator('#digSets').input_value()=='1'
         assert page.locator('#digFoilBox .d24-extra__title').text_content().strip()=='Foliowanie' and page.locator('#digFoilBox').locator('label[for="digFoil"]').text_content().strip()=='Rodzaj folii'
         assert page.locator('#digBindBox .d24-extra__title').text_content().strip()=='Bindowanie i oprawy'
         assert page.locator('#digFoilSide').count()==0 and page.locator('#digFoilType').count()==0   # nie ma już podziału na jedno- i dwustronne
@@ -114,15 +114,15 @@ with sync_playwright() as p:
         assert price(page)=='110,00 zł'
         # komplety: oprawa na każdy komplet, druk od wszystkich stron
         setv(page,'#digSets','2'); assert price(page)==f'220,00 zł',price(page)   # 80 stron × 2,50 + 2 × 10
-        assert page.locator('#digSheetsHint').inner_text().strip()=='Potrzebne arkusze A4: 40 (20 na komplet)',page.locator('#digSheetsHint').inner_text()
-        assert page.locator('#digSetsHint').inner_text().strip()=='Każdy komplet dostaje własną oprawę.'
+        assert page.locator('#digSheetsHint').inner_text().strip()=='Potrzebne arkusze A4: 40 (20 na sztukę)',page.locator('#digSheetsHint').inner_text()
+        assert page.locator('#digSetsHint').inner_text().strip()=='Każda sztuka dostaje własną oprawę.'
         setv(page,'#digBindType','Oprawa miękka zaciskowa'); assert opts(page,'#digBindVariant')==['5 mm','10 mm','13 mm','16 mm'] and page.locator('#digBindVariant').input_value()=='5 mm'
         got=price(page); assert got=='225,00 zł',got   # 200 + 2 × 12,50
         setv(page,'#digBindType','Brak'); assert inactive(page,'digBindVariantField') and opts(page,'#digBindVariant')==[]
-        assert page.locator('#digSetsHint').inner_text().strip()=='Komplet to jeden egzemplarz całego dokumentu.'
+        assert page.locator('#digSetsHint').inner_text().strip()=='Sztuka to jeden egzemplarz całego dokumentu.'
         got=price(page); assert got=='200,00 zł',got
         setv(page,'#digSets','0'); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)
-        assert 'Ilość kompletów musi być większa od zera' in quote_text(page),quote_text(page)
+        assert 'Ilość sztuk musi być większa od zera' in quote_text(page),quote_text(page)
         setv(page,'#digSets','1')
         setv(page,'#digQty',''); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)   # 0.26.8: 0 jest podnoszone do minimum, puste pole nadal daje błąd
         assert 'Liczba stron musi być większa od zera' in quote_text(page),quote_text(page)
@@ -137,7 +137,7 @@ with sync_playwright() as p:
         got=price(page); assert got=='273,00 zł',got   # 120 stron × 2,00 + 3 × 11
         q=quote_text(page)
         assert 'Bindowanie i oprawy' in q and '6,4 mm' in q and 'do 30 kartek' in q and 'Foliowanie' not in q and re.search(r'Oprawa – cena\s*33,00 zł',q),q
-        assert re.search(r'Ilość kompletów\s*3',q) and re.search(r'Łącznie stron\s*120',q) and re.search(r'Liczba arkuszy\s*60',q),q
+        assert re.search(r'Ilość sztuk\s*3',q) and re.search(r'Łącznie stron\s*120',q) and re.search(r'Liczba arkuszy\s*60',q),q
         page.locator('#calculate').click(); page.wait_for_timeout(400)   # zaufane kliknięcie = dodanie do koszyka
         cart=json.loads(page.evaluate('localStorage.getItem("drukulator_cart")'))
         assert len(cart)==1 and abs(cart[0]['price']-273)<0.001,cart
@@ -196,18 +196,18 @@ with sync_playwright() as p:
     go(page)
     page.locator('#digFoilBox > summary').click(); page.locator('#digBindBox > summary').click(); page.wait_for_timeout(300)
     txt=page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-    for need in ('Number of pages','Number of sets','Lamination','Binding','Lamination type','With matt film','Choose the binding type first.','Lamination is available only for paper from 250 g.'):
+    for need in ('Number of pages','Quantity','Lamination','Binding','Lamination type','With matt film','Choose the binding type first.','Lamination is available only for paper from 250 g.'):
         assert need in txt,(need,txt)
     assert page.locator('#digFoilState').text_content().strip()=='Only for paper from 250 g',page.locator('#digFoilState').text_content()   # po rozwinięciu podsumowanie jest ukryte
-    assert 'Liczba stron' not in txt and 'Foliowanie' not in txt and 'Ilość kompletów' not in txt and 'Tylko kreda' not in txt
+    assert 'Liczba stron' not in txt and 'Foliowanie' not in txt and 'Ilość sztuk' not in txt and 'Tylko kreda' not in txt
     setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digFoil','Satyna'); page.wait_for_timeout(300)
     st=page.locator('#digFoilState').text_content(); assert st.startswith('With soft-skin film · +') and 'PLN' in st,st
     setv(page,'#digFoil','Mat'); page.wait_for_timeout(300); st=page.locator('#digFoilState').text_content(); assert st.startswith('With matt film · +') and 'PLN' in st,st
     st=page.locator('#digBindState').text_content().strip(); assert st=='Only for 80 gsm paper',st      # papier 250 g: bindowanie niedostępne
     setv(page,'#digPaper','Standardowy 80 g'); setv(page,'#digQty','86'); setv(page,'#digSide','Jednostronny'); setv(page,'#digBindType','Bindowanie – spirala metalowa'); page.wait_for_timeout(300)
     st=page.locator('#digBindState').text_content(); assert 'coil' in st.lower() and 'up to 12.7 mm' in st and 'PLN' in st,st
-    note=page.locator('#digBindNote').text_content().strip(); assert note=='Sheets in one set: 86. The binding size is chosen automatically.',note
-    setv(page,'#digQty','500'); note=page.locator('#digBindNote').text_content().strip(); assert note.startswith('There are 500 sheets in one set, more than this binding holds (max. 105).'),note
+    note=page.locator('#digBindNote').text_content().strip(); assert note=='Sheets in one piece: 86. The binding size is chosen automatically.',note
+    setv(page,'#digQty','500'); note=page.locator('#digBindNote').text_content().strip(); assert note.startswith('There are 500 sheets in one piece, more than this binding holds (max. 105).'),note
     assert not errors,errors
     page.close()
     browser.close()

@@ -73,13 +73,13 @@ with sync_playwright() as p:
     page.locator('#calculateCanvas').click(); page.wait_for_timeout(400)
     can=[i for i in cart() if i['title']=='Obrazy na płótnie']
     assert can and can[0]['meta']['productType']=='canvas',can
-    # 5) walidator serwera (wycięty z send-order.php): nowe pozycje przechodzą, stara pozycja bez danych nadal jest odrzucana
+    # 5) walidator serwera (wycięty z send-order.php): nowe pozycje przechodzą, a stara pozycja bez danych (0.26.12) też nie jest odrzucana
     result=php_validate(cart())
     if result is None: print('UWAGA: brak php — pominięto walidator serwera')
     else:
         items=cart()
         for i in items:
-            if i['title']=='Plakaty 24h': assert 'starszej wersji' in result[i['title']],result
+            if i['title']=='Plakaty 24h': assert result[i['title']]=='ok',result   # 0.26.12: pozycja bez typu produktu nie jest już odrzucana
         for t in ('X-baner','Komplet magnesy + naklejki taxi','Roll-up Standard','Laminowanie','Obrazy na płótnie'):
             assert result[t]=='ok',(t,result[t])
     assert not errors,errors
