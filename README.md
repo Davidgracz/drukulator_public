@@ -4,7 +4,7 @@ Kalkulator cen druku online dla Druk24 Szczecin: wizytówki, ulotki, plakaty, ba
 obrazy na płótnie, odzież z nadrukiem i inne. Aplikacja działa w przeglądarce (czysty HTML/CSS/JS, bez kroku budowania)
 i jest osadzona w WordPressie pod adresem `/drukulator/`; zamówienia, wgrywanie plików i panel pracowników obsługują pliki PHP.
 
-**Bieżąca wersja: 0.26.12v** — zobacz `CHANGELOG_0.26.12v.md` (każde wydanie ma własny plik `CHANGELOG_*.md`).
+**Bieżąca wersja: 0.26.14v** — zobacz `CHANGELOG_0.26.14v.md` (każde wydanie ma własny plik `CHANGELOG_*.md`).
 
 ## Struktura
 
@@ -13,7 +13,7 @@ i jest osadzona w WordPressie pod adresem `/drukulator/`; zamówienia, wgrywanie
 | `index.html` | Strona aplikacji; zasoby mają `?v=<wersja>` do odświeżania pamięci podręcznej |
 | `js/app.js` | Główna logika: strony produktów, koszyk, zamówienie |
 | `js/calculators.js` | Reguły liczenia cen (wszystkie ceny pochodzą z `data/prices.json`) |
-| `js/*.js` | Nakładki: formularze, podgląd produktu, odzież Malfini, konfigurator, tłumaczenia (`i18n.js`) |
+| `js/*.js` | Nakładki: formularze, podgląd produktu, podgląd 3D wizytówek (`card-3d-preview.js`), generator banerów (`banner-gen-*.js`, `banner-generator.js`), odzież Malfini, konfigurator, tłumaczenia (`i18n.js`) |
 | `data/prices.json` | **Cennik** — źródło wszystkich cen i progów rabatowych |
 | `data/search-terms.json`, `data/case-items.json` | Słownik wyszukiwarki, przykłady |
 | `assets/` | Style, grafiki, instrukcje zdjęć produktów |
