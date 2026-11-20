@@ -9,6 +9,11 @@ const DRUKULATOR_CONTACT_EMAIL = 'biuro@druk24.szczecin.pl';
 const DRUKULATOR_MAX_ORDER_TOTAL = 5000.0;
 const DRUKULATOR_MAX_ATTACHMENTS = 5;
 const DRUKULATOR_MAX_ATTACHMENTS_TOTAL_BYTES = 52428800;
+// 0.26.12v: kod rabatowy na następne zamówienie, pokazywany w mailu z potwierdzeniem dla klienta.
+// Kod musi istnieć w panelu pracowniczym (Kody rabatowe) i dawać wskazany rabat — sam mail tylko o nim informuje.
+// Pusty kod ('') wyłącza ramkę w mailu.
+const DRUKULATOR_NEXT_ORDER_PROMO_CODE = 'DRUK10';
+const DRUKULATOR_NEXT_ORDER_PROMO_BENEFIT = '10% rabatu';
 require_once __DIR__ . '/upload-staging-lib.php';
 
 function drukulator_limit_message(string $message): string
@@ -730,6 +735,14 @@ if ($attachment_names) {
         $customer_message .= '<li>' . esc_html($file_name) . '</li>';
     }
     $customer_message .= '</ul></div>';
+}
+if (DRUKULATOR_NEXT_ORDER_PROMO_CODE !== '') {
+    $customer_message .= '<div style="margin:26px 0 0;padding:20px;border:2px dashed #088fca;border-radius:12px;background:#eff7fd;text-align:center;">';
+    $customer_message .= '<div style="font-size:16px;line-height:1.5;color:#0f172a;">Przy następnym zamówieniu użyj kodu</div>';
+    $customer_message .= '<div style="margin:10px 0;font-size:30px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#088fca;">' . esc_html(DRUKULATOR_NEXT_ORDER_PROMO_CODE) . '</div>';
+    $customer_message .= '<div style="font-size:16px;line-height:1.5;color:#0f172a;">aby otrzymać <strong>' . esc_html(DRUKULATOR_NEXT_ORDER_PROMO_BENEFIT) . '</strong>.</div>';
+    $customer_message .= '<div style="margin-top:8px;font-size:13px;line-height:1.5;color:#475569;">Wpisz kod w koszyku, w polu „Kod rabatowy”.</div>';
+    $customer_message .= '</div>';
 }
 $customer_message .= '<div style="margin-top:26px;padding-top:20px;border-top:1px solid #d7dee8;color:#475569;line-height:1.65;">';
 $customer_message .= '<strong>Zespół Druk24</strong><br>' . esc_html(DRUKULATOR_CONTACT_EMAIL);
