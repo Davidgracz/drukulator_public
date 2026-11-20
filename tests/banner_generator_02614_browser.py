@@ -49,12 +49,25 @@ def check(name, cond, detail=''):
 def goto_page(page, name):
     page.evaluate("name => document.querySelector(`[data-page=\"${name}\"]`).click()", name); page.wait_for_timeout(450)
 
+def expand_full(page):
+    """pełny generator jest w zwijanej sekcji (0.26.17v) — rozwiń ją przed użyciem panelu"""
+    page.evaluate("(() => { const d = document.querySelector('.d24bg-more'); if (d) d.open = true; })()")
+
 def api(page, expr): return page.evaluate(expr)
 
 def export_bytes(page, fmt, px):
-    b64 = page.evaluate("""async ([fmt, px]) => { const o = await Druk24BannerGen.exportBlob(fmt, px); const u = new Uint8Array(await o.blob.arrayBuffer());
-      let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return {b: btoa(s), name: o.name, w: o.w, h: o.h, scale: o.scale}; }""", [fmt, px])
-    return base64.b64decode(b64['b']), b64
+    """0.26.18v: generator nie ma eksportu do pliku. PNG (do kontroli pikseli) = render na własnym canvasie, PDF = plik załączany do zamówienia."""
+    if fmt == 'png':
+        d = page.evaluate("""(px) => { const s = Druk24BannerGen.getState(), r = s.widthCm / s.heightCm;
+          const c = document.createElement('canvas'); c.width = r >= 1 ? px : Math.round(px * r); c.height = r >= 1 ? Math.round(px / r) : px;
+          Druk24BannerGen.render(c); return {u: c.toDataURL('image/png'), w: c.width, h: c.height}; }""", px)
+        return base64.b64decode(d['u'].split(',', 1)[1]), {'name': 'render.png', 'w': d['w'], 'h': d['h']}
+    page.evaluate("Druk24BannerGen.setAttach(true)")
+    page.wait_for_function("Druk24BannerGen.getAttachFiles().length === 1", timeout=60000)
+    d = page.evaluate("""async () => { const f = Druk24BannerGen.getAttachFiles()[0]; const u = new Uint8Array(await f.arrayBuffer());
+      let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return {b: btoa(s), name: f.name}; }""")
+    page.evaluate("Druk24BannerGen.setAttach(false)")
+    return base64.b64decode(d['b']), {'name': d['name'], 'w': None, 'h': None}
 
 def decode_qr(png):
     img = cv2.imdecode(np.frombuffer(png, np.uint8), cv2.IMREAD_COLOR)
@@ -78,13 +91,13 @@ with sync_playwright() as p:
 
     # --- 1. panel tylko na banerach ---
     goto_page(page, 'Wizytówki 24h')
-    check('brak panelu generatora na wizytówkach', page.locator('.d24bg-entry').count() == 0)
+    check('brak panelu generatora na wizytówkach', page.locator('.d24bg-entry').count() == 0 and page.locator('.d24bgs-entry').count() == 0)
     goto_page(page, 'Folie i banery 24h')
-    check('panel generatora na banerach', page.locator('.d24bg-entry').count() == 1)
-    check('miniatura projektu narysowana', page.evaluate("document.querySelector('.d24bg-entry canvas').width") > 100)
+    check('panel generatora na banerach (pełny + prosty)', page.locator('.d24bg-entry:not(.d24bgs-entry)').count() == 1 and page.locator('.d24bgs-entry').count() == 1)
+    check('miniatura projektu narysowana', page.evaluate("document.querySelector('.d24bg-entry:not(.d24bgs-entry) canvas').width") > 100)
 
     # --- 2. otwarcie edytora ---
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(900)
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(900)
     check('okno edytora otwarte', page.evaluate("document.querySelector('dialog.d24bg-dialog').open"))
     check('rozmiar z formularza (100 × 100)', page.input_value('[data-size=w]') == '100' and page.input_value('[data-size=h]') == '100')
     check('nazwa materiału w nagłówku', 'Baner' in page.inner_text('[data-mat]'))
@@ -132,7 +145,7 @@ with sync_playwright() as p:
     page.fill('#bannerHeight', '150'); page.dispatch_event('#bannerHeight', 'change'); page.wait_for_timeout(300)
     s = api(page, 'Druk24BannerGen.getState()')
     check('zmiana formularza → stan generatora', s['widthCm'] == 300 and s['heightCm'] == 150)
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(600)
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(600)
     check('pola rozmiaru po ponownym otwarciu', page.input_value('[data-size=w]') == '300' and page.input_value('[data-size=h]') == '150')
     cw, ch = api(page, "[document.querySelector('[data-canvas]').width, document.querySelector('[data-canvas]').height]")
     check('proporcje podglądu 2:1', abs(cw / ch - 2) < 0.03, f'{cw}x{ch}')
@@ -197,37 +210,40 @@ with sync_playwright() as p:
         r = pypdf.PdfReader(io.BytesIO(pdf)); box = r.pages[0].mediabox
         check('PDF 100×100 cm = 2834,6 pt', abs(float(box.width) - 2834.65) < 0.5 and abs(float(box.height) - 2834.65) < 0.5, f'{box.width}x{box.height}')
         imgs = list(r.pages[0].images)
-        check('PDF zawiera obraz JPEG', len(imgs) == 1 and imgs[0].image.size == (meta['w'], meta['h']))
+        check('PDF zawiera obraz JPEG 4000 × 4000 px', len(imgs) == 1 and imgs[0].image.size == (4000, 4000), str(imgs[0].image.size if imgs else None))
         api(page, "Druk24BannerGen.setState({...Druk24BannerGen.getState(), widthCm: 1000, heightCm: 100})")
         pdf2, meta2 = export_bytes(page, 'pdf', 3000)
         r2 = pypdf.PdfReader(io.BytesIO(pdf2)); pg = r2.pages[0]
-        check('PDF 1000×100 cm w skali (UserUnit)', meta2['scale'] >= 2 and float(pg.get('/UserUnit', 1)) == meta2['scale'] and float(pg.mediabox.width) <= 14400, f"{pg.mediabox.width} uu={pg.get('/UserUnit')}")
+        check('PDF 1000×100 cm w skali (UserUnit)', float(pg.get('/UserUnit', 1)) >= 2 and float(pg.mediabox.width) <= 14400, f"{pg.mediabox.width} uu={pg.get('/UserUnit')}")
         (tmp / 'out.pdf').write_bytes(pdf)
         import subprocess
         res = subprocess.run(['pdfinfo', str(tmp / 'out.pdf')], capture_output=True, text=True)
         check('pdfinfo odczytuje PDF bez błędów', res.returncode == 0 and 'Page size' in res.stdout and not res.stderr.strip(), res.stderr[:120])
     api(page, "Druk24BannerGen.setState({...Druk24BannerGen.getState(), widthCm: 100, heightCm: 100})")
 
-    # --- 10. przycisk „Pobierz” ---
-    page.click('[data-tab=export]'); page.wait_for_timeout(300)
-    check('informacja o wyniku w px i dpi', 'dpi' in page.inner_text('[data-exportinfo]'))
-    for fmt, magic in (('pdf', b'%PDF-'), ('jpg', b'\xff\xd8\xff'), ('png', b'\x89PNG')):
-        page.click(f'[data-exportfmt={fmt}]')
-        with page.expect_download() as dl:
-            page.click('[data-dl]')
-        path = dl.value.path(); data = pathlib.Path(path).read_bytes()
-        check(f'pobieranie {fmt.upper()}', data[:len(magic)] == magic and dl.value.suggested_filename.endswith('.' + fmt), dl.value.suggested_filename)
+    # --- 10. brak eksportu, zakładki (0.26.18v) ---
+    tabs = page.evaluate("[...document.querySelectorAll('.d24bg-dialog:not(.d24bgs-dialog) [data-tab]')].map(b => b.textContent.trim())")
+    check('zakładki: Szablony, Treść, Układ, Dodatki, Projekt (bez Eksportu)', tabs == ['Szablony', 'Treść', 'Układ', 'Dodatki', 'Projekt'], str(tabs))
+    check('zamiast „Wygląd” jest „Układ”', 'Wygląd' not in page.inner_text('.d24bg-dialog:not(.d24bgs-dialog)'))
+    check('brak zakładki ani panelu „Eksport”', page.locator('[data-tab=export]').count() == 0 and page.locator('[data-panel=export]').count() == 0)
+    page.click('[data-tab=project]'); page.wait_for_timeout(300)
+    dlg_html = page.evaluate("document.querySelector('.d24bg-dialog:not(.d24bgs-dialog)').innerHTML")
+    check('brak przycisków i ustawień pobierania PDF / JPG / PNG', not any(k in dlg_html for k in ('data-dl', 'data-exportfmt', 'data-exportpx', 'data-exportinfo', 'data-act="download"')))
+    txt = page.inner_text('.d24bg-dialog:not(.d24bgs-dialog)')
+    check('w oknie nie ma „Pobierz plik” ani „Pobierz projekt”', 'Pobierz plik' not in txt and 'Pobierz projekt' not in txt and 'Rozdzielczość' not in txt)
+    check('w panelu „Projekt” jest „Zapisz projekt” i „Wczytaj projekt”', page.locator('[data-panel=project] [data-act=save]').count() == 1 and page.locator('[data-panel=project] [data-act=load]').count() == 1)
+    check('API bez eksportu do pliku (jest tylko dołączanie do zamówienia)', page.evaluate("typeof Druk24BannerGen.exportBlob") == 'undefined')
 
     # --- 11. zapis / odczyt projektu ---
     page.click('[data-tab=text]'); page.fill('#d24bg-head', 'TEST ZAPISU'); page.wait_for_timeout(300)
-    page.click('[data-tab=export]')
+    page.click('[data-tab=project]')
     with page.expect_download() as dl:
         page.click('[data-act=save]')
     proj = pathlib.Path(dl.value.path()).read_text(encoding='utf-8'); obj = json.loads(proj)
     check('plik projektu zawiera stan i zasoby', obj['app'] == 'drukulator-banner' and obj['state']['headline'] == 'TEST ZAPISU' and len(obj['assets']) >= 1)
     page.click('[data-tab=text]'); page.fill('#d24bg-head', 'INNY'); page.wait_for_timeout(300)
     (tmp / 'proj.json').write_text(proj, encoding='utf-8')
-    page.click('[data-tab=export]'); page.set_input_files('[data-file=project]', str(tmp / 'proj.json')); page.wait_for_timeout(700)
+    page.click('[data-tab=project]'); page.set_input_files('[data-file=project]', str(tmp / 'proj.json')); page.wait_for_timeout(700)
     s = api(page, 'Druk24BannerGen.getState()')
     check('wczytanie projektu przywraca teksty i zdjęcie', s['headline'] == 'TEST ZAPISU' and bool(s['bg']['photo']) and api(page, "document.querySelector('[data-canvas]').width") > 100)
     (tmp / 'zly.json').write_text('{"a":1}'); page.set_input_files('[data-file=project]', str(tmp / 'zly.json')); page.wait_for_timeout(300)
@@ -238,13 +254,13 @@ with sync_playwright() as p:
     check('Esc zamyka okno', not page.evaluate("document.querySelector('dialog.d24bg-dialog').open"))
 
     # --- 13. dołączanie do zamówienia ---
-    check('domyślnie projekt NIE jest dołączany', api(page, 'Druk24BannerGen.getAttachFiles().length') == 0 and not page.is_checked('[data-attach]'))
+    check('domyślnie projekt NIE jest dołączany', api(page, 'Druk24BannerGen.getAttachFiles().length') == 0 and not page.is_checked('.d24bg-entry:not(.d24bgs-entry) [data-attach]'))
     page.fill('#bannerWidth', '100'); page.dispatch_event('#bannerWidth', 'change'); page.fill('#bannerHeight', '100'); page.dispatch_event('#bannerHeight', 'change'); page.wait_for_timeout(300)
     page.evaluate("document.getElementById('calculate').click()"); page.wait_for_timeout(300)
     page.evaluate("document.getElementById('addToCart').click()"); page.wait_for_timeout(500)
     check('bez zgody plik nie trafia do koszyka', 'baner-100x100cm' not in page.inner_text('#cartPanel'))
-    page.check('[data-attach]'); page.wait_for_function("document.querySelector('.d24bg-entry__status').textContent.includes('✓')", timeout=20000)
-    check('status: plik gotowy do dołączenia', 'baner-100x100cm' in page.inner_text('.d24bg-entry__status'))
+    expand_full(page); page.check('.d24bg-entry:not(.d24bgs-entry) [data-attach]'); page.wait_for_function("document.querySelector('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__status').textContent.includes('✓')", timeout=20000)
+    expand_full(page); check('status: plik gotowy do dołączenia', 'baner-100x100cm' in page.inner_text('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__status'))
     files = api(page, 'Druk24BannerGen.getAttachFiles().map(f => [f.name, f.type, f.size])')
     check('getAttachFiles zwraca PDF', len(files) == 1 and files[0][1] == 'application/pdf' and files[0][2] > 1000, str(files))
     page.evaluate("document.getElementById('calculate').click()"); page.wait_for_timeout(300)
@@ -255,16 +271,16 @@ with sync_playwright() as p:
     check('zmiana rozmiaru unieważnia załącznik do czasu przebudowy', api(page, 'Druk24BannerGen.getAttachFiles().length') == 0)
     page.wait_for_function("Druk24BannerGen.getAttachFiles().length === 1", timeout=20000)
     check('załącznik przebudowany po zmianie rozmiaru', 'baner-120x100cm' in api(page, 'Druk24BannerGen.getAttachFiles()[0].name'))
-    page.uncheck('[data-attach]'); page.wait_for_timeout(200)
+    expand_full(page); page.uncheck('.d24bg-entry:not(.d24bgs-entry) [data-attach]'); page.wait_for_timeout(200)
     check('wyłączenie zgody usuwa załącznik', api(page, 'Druk24BannerGen.getAttachFiles().length') == 0)
     # „Użyj w zamówieniu”
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(500)
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(500)
     page.click('[data-act=use]'); page.wait_for_function("!document.querySelector('dialog.d24bg-dialog').open", timeout=20000)
-    check('„Użyj w zamówieniu” zamyka okno i dołącza PDF', api(page, 'Druk24BannerGen.getAttachFiles().length') == 1 and page.is_checked('[data-attach]'))
-    page.uncheck('[data-attach]')
+    check('„Użyj w zamówieniu” zamyka okno i dołącza PDF', api(page, 'Druk24BannerGen.getAttachFiles().length') == 1 and page.is_checked('.d24bg-entry:not(.d24bgs-entry) [data-attach]'))
+    expand_full(page); page.uncheck('.d24bg-entry:not(.d24bgs-entry) [data-attach]')
 
     # --- 14. zapamiętanie ustawień po odświeżeniu ---
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(400)
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(400)
     page.click('[data-tab=text]'); page.fill('#d24bg-head', 'ZAPAMIĘTANY'); page.wait_for_timeout(700); page.keyboard.press('Escape')
     page.reload(); page.wait_for_timeout(800); goto_page(page, 'Folie i banery 24h')
     check('ustawienia tekstowe pamiętane po odświeżeniu', api(page, 'Druk24BannerGen.getState().headline') == 'ZAPAMIĘTANY')
@@ -284,17 +300,17 @@ with sync_playwright() as p:
 
     # --- 16. ciemny motyw, EN, mobile ---
     page.evaluate("document.documentElement.setAttribute('data-theme','dark')")
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(600)
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(600)
     page.click('[data-tab=look]'); page.wait_for_timeout(400); page.screenshot(path=str(shot / 'bg_t_dark.png'))
     page.keyboard.press('Escape'); page.evaluate("document.documentElement.setAttribute('data-theme','light')")
     page.evaluate("document.documentElement.lang = 'en'"); page.wait_for_timeout(500)
-    check('wersja EN panelu', 'BANNER GENERATOR' in page.inner_text('.d24bg-entry'))
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(700)
+    expand_full(page); check('wersja EN panelu', 'FULL GENERATOR' in page.inner_text('.d24bg-entry:not(.d24bgs-entry)') and 'Want to design more' in page.inner_text('.d24bg-more > summary') and 'download a ready' not in page.inner_text('.d24bg-entry:not(.d24bgs-entry)'))
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(700)
     check('wersja EN edytora', 'Banner generator' in page.inner_text('.d24bg-top__title') and 'Templates' in page.inner_text('.d24bg-tabs'))
     page.screenshot(path=str(shot / 'bg_t_en.png')); page.keyboard.press('Escape')
     page.evaluate("document.documentElement.lang = 'pl'"); page.wait_for_timeout(400)
     page.set_viewport_size({'width': 390, 'height': 844}); page.wait_for_timeout(300)
-    page.locator('.d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(800)
+    expand_full(page); page.locator('.d24bg-entry:not(.d24bgs-entry) .d24bg-entry__actions [data-act=open]').click(); page.wait_for_timeout(800)
     box = page.evaluate("(() => { const r = document.querySelector('dialog.d24bg-dialog').getBoundingClientRect(); return [r.width, r.height]; })()")
     check('mobile: okno na cały ekran', box[0] >= 389 and box[1] >= 843, str(box))
     page.screenshot(path=str(shot / 'bg_t_mobile.png'))

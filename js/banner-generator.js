@@ -1,7 +1,7 @@
-/* Drukulator 0.26.14v — generator banerów (edytor w przeglądarce).
+/* Drukulator 0.26.18v — generator banerów (edytor w przeglądarce).
  * Na stronie „Folie i banery 24h” dodaje panel z podglądem projektu i przycisk otwierający pełnoekranowy edytor:
- * szablony, układy, kolory, tło (kolor / gradient / zdjęcie), teksty z podpowiedziami, logo, kod QR, plakietka,
- * podgląd w skali z marginesem bezpiecznym i oczkami, kontrola czytelności, eksport JPG / PNG / PDF (rozmiar = wymiar banera).
+ * szablony, układy, kolory, tło (kolor / zdjęcie), teksty z podpowiedziami, logo, kod QR, plakietka,
+ * podgląd w skali z marginesem bezpiecznym i oczkami, kontrola czytelności. Bez eksportu: nie ma pobierania PDF / JPG / PNG — projekt trafia do zamówienia jako PDF (rozmiar = wymiar banera).
  * Projekt powstaje lokalnie (canvas) — nic nie jest wysyłane. Do zamówienia trafia wyłącznie za zgodą klienta
  * (przełącznik „Dołącz projekt do zamówienia”) przez window.Druk24BannerGen.getAttachFiles() → app.js (quote.files).
  * Silnik rysowania: js/banner-gen-engine.js, QR: js/banner-gen-qr.js, PDF: js/banner-gen-pdf.js. */
@@ -30,22 +30,22 @@
   let st = loadSaved();
   let history = [], hi = -1, commitTimer = 0;
   let tab = 'tpl', tplCat = 'all', suggCat = 'promo', useTplTexts = true;
-  let zoom = 1, exportFmt = 'pdf', exportPx = 4000, resetArmed = 0;
+  let zoom = 1, resetArmed = 0;
   const attach = { enabled: false, file: null, sig: '', busy: false, error: '', token: 0, scale: 1 };
-  let dlg = null, ui = null, entry = null, curCard = null;
+  let dlg = null, ui = null, entry = null, more = null, moreOpen = false, curCard = null;
   let previewQueued = false, thumbsQueued = false, thumbsDirty = { tpl: true, look: true };
   let lastReport = null;
 
   function loadSaved() {
     try {
       const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-      if (raw && raw.state) { textTouched = !!raw.touched; const s = E.normalizeState(raw.state); s.logo.id = ''; s.bg.photo = ''; if (s.bg.type === 'photo') s.bg.type = 'gradient'; return s; }
+      if (raw && raw.state) { textTouched = !!raw.touched; const s = E.normalizeState(raw.state); s.logo.id = ''; s.bg.photo = ''; if (s.bg.type === 'photo') s.bg.type = 'solid'; return s; }
     } catch (e) { /* brak dostępu do pamięci przeglądarki */ }
     return E.defaultState();
   }
   function autosave() {
     try {
-      const s = JSON.parse(JSON.stringify(st)); s.logo.id = ''; s.bg.photo = ''; if (s.bg.type === 'photo') s.bg.type = 'gradient';
+      const s = JSON.parse(JSON.stringify(st)); s.logo.id = ''; s.bg.photo = ''; if (s.bg.type === 'photo') s.bg.type = 'solid';
       localStorage.setItem(STORE_KEY, JSON.stringify({ state: s, touched: textTouched }));
     } catch (e) { /* ignoruj */ }
   }
@@ -134,7 +134,7 @@
     } catch (e) { say(e.message || tr('Nie udało się wczytać pliku.', 'Could not load the file.'), true); }
   }
 
-  // ---------- eksport ----------
+  // ---------- render PDF do zamówienia (bez pobierania plików przez klienta) ----------
   const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/gi, 'l').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 28);
   function exportDims(longPx) {
     const ratio = st.widthCm / st.heightCm, mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent), maxArea = mobile ? 16e6 : 30e6;
@@ -159,17 +159,6 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 15000);
   }
-  async function doDownload() {
-    const btn = ui.dl; btn.disabled = true; say(tr('Generuję plik…', 'Rendering…'));
-    try {
-      await new Promise(r => setTimeout(r, 30));
-      const out = await exportBlob(exportFmt, exportPx);
-      download(out.blob, out.name);
-      say(tr(`Pobrano: ${out.name} (${fmtNum(out.blob.size / 1048576, 1)} MB)`, `Downloaded: ${out.name} (${fmtNum(out.blob.size / 1048576, 1)} MB)`) + (out.scale > 1 ? tr(` — PDF w skali 1:${out.scale}`, ` — PDF at 1:${out.scale} scale`) : ''));
-    } catch (e) { say(tr('Nie udało się wygenerować pliku — wybierz niższą jakość.', 'Could not render the file — choose a lower quality.'), true); }
-    btn.disabled = false;
-  }
-
   // ---------- załącznik do zamówienia ----------
   let attachTimer = 0;
   function scheduleAttach() { if (!attach.enabled) return; clearTimeout(attachTimer); attachTimer = setTimeout(buildAttach, 700); updateEntry(); }
@@ -191,6 +180,7 @@
     if (attach.enabled && attach.sig !== sigNow() && attach.file) scheduleAttach();
   }
   function setAttach(on) {
+    if (on && window.Druk24BannerSimple) window.Druk24BannerSimple.setAttach(false);   // jeden projekt naraz
     attach.enabled = !!on;
     if (!on) { clearTimeout(attachTimer); attach.token++; attach.busy = false; attach.error = ''; updateEntry(); return; }
     buildAttach();
@@ -209,7 +199,7 @@
     'size-max': r => tr(`Ten materiał ma limit ${r.v} cm dla krótszego boku — kalkulator nie wyceni takiego rozmiaru (w sprawie większych skontaktuj się z drukarnią).`, `This material is limited to ${r.v} cm on the shorter side — the calculator cannot price this size (contact the print shop for bigger jobs).`),
     'size-min': () => tr('Minimalny krótszy bok banera to 30 cm.', 'The minimum shorter side of a banner is 30 cm.'),
     'size-long': () => tr('Maksymalny dłuższy bok to 10 m.', 'The maximum longer side is 10 m.'),
-    'need-photo': () => tr('Wybrano tło ze zdjęciem — wgraj zdjęcie (Wygląd → Tło).', 'Photo background selected — upload a photo (Look → Background).')
+    'need-photo': () => tr('Wybrano tło ze zdjęciem — wgraj zdjęcie (Układ → Tło).', 'Photo background selected — upload a photo (Layout → Background).')
   };
   const RATING = { great: ['świetna', 'great'], good: ['dobra', 'good'], weak: ['słaba', 'weak'], bad: ['zła', 'poor'] };
 
@@ -221,7 +211,7 @@
   const color = (path, label, clear) => `<label class="d24bg-color"><span>${label}</span><input type="color" data-bind="${path}" data-type="color">${clear ? `<button type="button" class="d24bg-mini" data-act="clear-color" data-k="${path}" title="${tr('Przywróć kolor z palety', 'Reset to palette colour')}">↺</button>` : ''}</label>`;
 
   function dialogMarkup() {
-    const tabs = [['tpl', tr('Szablony', 'Templates')], ['text', tr('Treść', 'Text')], ['look', tr('Wygląd', 'Look')], ['extra', tr('Dodatki', 'Extras')], ['export', tr('Eksport', 'Export')]];
+    const tabs = [['tpl', tr('Szablony', 'Templates')], ['text', tr('Treść', 'Text')], ['look', tr('Układ', 'Layout')], ['extra', tr('Dodatki', 'Extras')], ['project', tr('Projekt', 'Project')]];
     return `<div class="d24bg" data-d24bg>
     <header class="d24bg-top">
       <div class="d24bg-top__title"><strong>${tr('Generator banera', 'Banner generator')}</strong><span data-mat></span></div>
@@ -260,7 +250,7 @@
           <div class="d24bg-panel" role="tabpanel" id="d24bg-panel-text" aria-labelledby="d24bg-tab-text" data-panel="text" hidden>${textPanel()}</div>
           <div class="d24bg-panel" role="tabpanel" id="d24bg-panel-look" aria-labelledby="d24bg-tab-look" data-panel="look" hidden>${lookPanel()}</div>
           <div class="d24bg-panel" role="tabpanel" id="d24bg-panel-extra" aria-labelledby="d24bg-tab-extra" data-panel="extra" hidden>${extraPanel()}</div>
-          <div class="d24bg-panel" role="tabpanel" id="d24bg-panel-export" aria-labelledby="d24bg-tab-export" data-panel="export" hidden>${exportPanel()}</div>
+          <div class="d24bg-panel" role="tabpanel" id="d24bg-panel-project" aria-labelledby="d24bg-tab-project" data-panel="project" hidden>${projectPanel()}</div>
         </div>
       </aside>
     </div>
@@ -298,18 +288,16 @@
     return `<h4>${tr('Układ', 'Layout')}</h4>
     <div class="d24bg-laygrid" data-laygrid>${E.LAYOUTS.map(l => `<button type="button" data-act="layout" data-id="${l.id}" aria-pressed="false" aria-label="${nm(l.name)}"><canvas></canvas><span>${nm(l.name)}</span></button>`).join('')}</div>
     <h4>${tr('Kolory', 'Colours')}</h4>
-    <div class="d24bg-pals" data-pals>${E.PALETTES.map(p => `<button type="button" data-act="palette" data-id="${p.id}" aria-pressed="false" title="${nm(p.name)}" aria-label="${nm(p.name)}" style="background:linear-gradient(135deg,${p.bg1} 0 52%,${p.bg2} 52% 100%)"><i style="background:${p.accent}"></i><b style="color:${p.text}">A</b></button>`).join('')}</div>
+    <div class="d24bg-pals" data-pals>${E.PALETTES.map(p => `<button type="button" data-act="palette" data-id="${p.id}" aria-pressed="false" title="${nm(p.name)}" aria-label="${nm(p.name)}" style="background:${p.bg1}"><i style="background:${p.accent}"></i><b style="color:${p.text}">A</b></button>`).join('')}</div>
     <div class="d24bg-colors">${color('custom.text', tr('Kolor tekstu', 'Text colour'), true)}${color('custom.accent', tr('Kolor akcentu', 'Accent colour'), true)}</div>
     <h4>${tr('Tło', 'Background')}</h4>
-    ${seg('bg.type', [['solid', tr('Kolor', 'Solid')], ['gradient', tr('Gradient', 'Gradient')], ['photo', tr('Zdjęcie', 'Photo')]])}
-    <div class="d24bg-colors" data-showif="bg.type=solid,gradient">${color('bg.c1', tr('Kolor 1', 'Colour 1'), true)}<span data-showif="bg.type=gradient">${color('bg.c2', tr('Kolor 2', 'Colour 2'), true)}</span></div>
-    <div data-showif="bg.type=gradient">${range('bg.angle', tr('Kierunek', 'Angle'), 0, 360, 5, 'deg')}</div>
+    ${seg('bg.type', [['solid', tr('Kolor', 'Solid')], ['photo', tr('Zdjęcie', 'Photo')]])}
+    <div class="d24bg-colors" data-showif="bg.type=solid">${color('bg.c1', tr('Kolor tła', 'Background colour'), true)}</div>
     <div data-showif="bg.type=photo" class="d24bg-group">
       <div class="d24bg-inline"><button type="button" class="d24bg-btn" data-act="pick-photo">${tr('Wgraj zdjęcie…', 'Upload photo…')}</button><button type="button" class="d24bg-btn d24bg-btn--ghost" data-act="remove-photo" data-showif="bg.photo!=">${tr('Usuń', 'Remove')}</button></div>
       <p class="d24bg-hint">${tr('JPG, PNG lub WebP do 25 MB. Im większe zdjęcie, tym ostrzejszy baner.', 'JPG, PNG or WebP up to 25 MB. The larger the photo, the sharper the banner.')}</p>
       ${range('bg.dim', tr('Przyciemnienie', 'Dimming'), 0, 85, 5, 'pct')}${range('bg.zoom', tr('Powiększenie', 'Zoom'), 100, 300, 5, 'pct')}${range('bg.px', tr('Położenie ←→', 'Position ←→'), 0, 100, 1, 'pct')}${range('bg.py', tr('Położenie ↑↓', 'Position ↑↓'), 0, 100, 1, 'pct')}
     </div>
-    <label class="d24bg-row d24bg-row--sel"><span>${tr('Wzór tła', 'Pattern')}</span><select data-bind="bg.pattern">${E.PATTERNS.map(p => `<option value="${p.id}">${nm(p.name)}</option>`).join('')}</select></label>
     <h4>${tr('Czcionka', 'Font')}</h4>
     <div class="d24bg-fonts">${Object.keys(E.FONTS).map(k => `<button type="button" data-set="font" data-val="${k}" aria-pressed="false" style="font-family:${E.FONTS[k].head[0]};font-weight:${E.FONTS[k].head[1]}">${nm(E.FONTS[k].name)}<small>Aa</small></button>`).join('')}</div>
     <h4>${tr('Tekst', 'Text')}</h4>
@@ -341,19 +329,13 @@
     ${check('frame', tr('Dodaj ramkę wokół projektu', 'Add a frame around the design'))}`;
   }
 
-  function exportPanel() {
-    return `<h4>${tr('Pobierz projekt', 'Download design')}</h4>
-    <div class="d24bg-seg d24bg-seg--fmt" role="group">${['pdf', 'jpg', 'png'].map(f => `<button type="button" data-exportfmt="${f}" aria-pressed="false">${f.toUpperCase()}</button>`).join('')}</div>
-    <div class="d24bg-field"><label>${tr('Rozdzielczość', 'Resolution')}</label><div class="d24bg-seg" role="group">${[[2500, tr('Standard', 'Standard')], [4000, tr('Wysoka', 'High')], [6000, tr('Maksymalna', 'Maximum')]].map(([v, l]) => `<button type="button" data-exportpx="${v}" aria-pressed="false">${l}</button>`).join('')}</div></div>
-    <p class="d24bg-hint" data-exportinfo></p>
-    <button type="button" class="d24bg-btn d24bg-btn--primary d24bg-btn--wide" data-act="download" data-dl>${tr('Pobierz plik', 'Download file')}</button>
-    <p class="d24bg-hint">${tr('Plik ma dokładnie proporcje Twojego banera. PDF ma wymiar strony równy rozmiarowi banera (dla banerów powyżej ok. 5 m — w skali, z adnotacją w pliku).', 'The file has exactly your banner proportions. The PDF page equals the banner size (for banners above ~5 m it is scaled, noted inside the file).')}</p>
+  function projectPanel() {
+    return `<h4>${tr('Zapis projektu', 'Save project')}</h4>
+    <div class="d24bg-inline"><button type="button" class="d24bg-btn d24bg-btn--primary" data-act="save">${tr('Zapisz projekt (.json)', 'Save project (.json)')}</button><button type="button" class="d24bg-btn" data-act="load">${tr('Wczytaj projekt…', 'Load project…')}</button></div>
+    <p class="d24bg-hint">${tr('„Zapisz projekt” tworzy plik, do którego możesz wrócić i dalej edytować projekt w generatorze (to nie jest plik do druku). Ostatnie ustawienia (bez zdjęć i logo) zapamiętujemy też w tej przeglądarce.', '“Save project” creates a file you can load back into the generator to keep editing (it is not a print file). Your latest settings (without photos and logo) are also remembered in this browser.')}</p>
     <h4>${tr('Zamówienie', 'Order')}</h4>
     <p class="d24bg-hint">${tr('„Użyj w zamówieniu” zapisuje projekt jako PDF i dołącza go do wyceny — trafi do koszyka razem z banerem. Możesz to wyłączyć w panelu pod formularzem.', '“Use in order” saves the design as a PDF and attaches it to the quote — it goes to the cart with your banner. You can turn this off in the panel under the form.')}</p>
-    <h4>${tr('Zapis projektu', 'Project file')}</h4>
-    <div class="d24bg-inline"><button type="button" class="d24bg-btn d24bg-btn--ghost d24bg-reset2" data-act="reset">${tr('Wyczyść projekt', 'Reset design')}</button></div>
-    <div class="d24bg-inline"><button type="button" class="d24bg-btn" data-act="save">${tr('Zapisz projekt (.json)', 'Save project (.json)')}</button><button type="button" class="d24bg-btn" data-act="load">${tr('Wczytaj projekt…', 'Load project…')}</button></div>
-    <p class="d24bg-hint">${tr('Projekt możesz zapisać i wrócić do niego później. Ostatnie ustawienia (bez zdjęć i logo) zapamiętujemy w tej przeglądarce.', 'Save the project to continue later. Your latest settings (without photos and logo) are remembered in this browser.')}</p>`;
+    <div class="d24bg-inline"><button type="button" class="d24bg-btn d24bg-btn--ghost d24bg-reset2" data-act="reset">${tr('Wyczyść projekt', 'Reset design')}</button></div>`;
   }
 
   // ---------- budowa okna ----------
@@ -367,9 +349,9 @@
     const q = s => dlg.querySelector(s);
     ui = {
       root: q('[data-d24bg]'), stage: q('[data-stage]'), canvas: q('[data-canvas]'), chips: q('[data-chips]'), quality: q('[data-quality]'),
-      msg: q('[data-msg]'), undo: q('[data-act="undo"]'), redo: q('[data-act="redo"]'), dl: q('[data-dl]'), guides: q('[data-guides]'),
+      msg: q('[data-msg]'), undo: q('[data-act="undo"]'), redo: q('[data-act="redo"]'), guides: q('[data-guides]'),
       zoom: q('[data-zoom]'), mat: q('[data-mat]'), sizeW: q('[data-size="w"]'), sizeH: q('[data-size="h"]'), sugg: q('[data-sugg]'), suggbox: q('[data-suggbox]'),
-      tplgrid: q('[data-tplgrid]'), laygrid: q('[data-laygrid]'), tpltexts: q('[data-tpltexts]'), qrinfo: q('[data-qrinfo]'), exportinfo: q('[data-exportinfo]')
+      tplgrid: q('[data-tplgrid]'), laygrid: q('[data-laygrid]'), tpltexts: q('[data-tpltexts]'), qrinfo: q('[data-qrinfo]')
     };
     dlg.addEventListener('input', onInput);
     dlg.addEventListener('change', onChange);
@@ -410,8 +392,7 @@
     else v = el.value;
     setPath(st, path, v);
     if (/^(headline|sub|contact|cta)$/.test(path)) textTouched = true;
-    if (path === 'bg.c1' || path === 'bg.c2') { /* kolor tła ustawiony ręcznie */ }
-    if (path === 'bg.type' || path === 'qr.on' || path === 'badge.on' || path === 'bg.pattern') thumbsDirty = { tpl: true, look: true };
+        if (path === 'bg.type' || path === 'qr.on' || path === 'badge.on') thumbsDirty = { tpl: true, look: true };
     afterChange({ commitNow });
   }
   function sizeFromInput(el, final) {
@@ -428,8 +409,6 @@
     const t = e.target.closest('button,[data-tab]'); if (!t || !dlg.contains(t)) return;
     if (t.dataset.tab) { setTab(t.dataset.tab); return; }
     if (t.dataset.set) { const path = t.dataset.set; let v = t.dataset.val; if (v === 'true') v = true; if (v === 'false') v = false; setPath(st, path, v); if (path === 'bg.type' || path === 'font') thumbsDirty = { tpl: true, look: true }; syncUI(true); afterChange({ commitNow: true }); return; }
-    if (t.dataset.exportfmt) { exportFmt = t.dataset.exportfmt; syncUI(true); return; }
-    if (t.dataset.exportpx) { exportPx = Number(t.dataset.exportpx); syncUI(true); return; }
     const act = t.dataset.act; if (!act) return;
     switch (act) {
       case 'close': dlg.close(); break;
@@ -442,13 +421,12 @@
       case 'tpl': { const tpl = E.TEMPLATES.find(x => x.id === t.dataset.id); if (!tpl) break; const withTexts = useTplTexts || !textTouched; st = E.applyTemplate(st, tpl, withTexts); if (withTexts) textTouched = false; thumbsDirty = { tpl: true, look: true }; syncUI(true); afterChange({ commitNow: true }); break; }
       case 'random': st = E.randomize(st); thumbsDirty = { tpl: true, look: true }; syncUI(true); afterChange({ commitNow: true }); break;
       case 'layout': st.layout = t.dataset.id; st.tpl = ''; syncUI(true); afterChange({ commitNow: true }); break;
-      case 'palette': st.pal = t.dataset.id; st.custom = { text: '', accent: '' }; st.bg.c1 = ''; st.bg.c2 = ''; st.tpl = ''; thumbsDirty = { tpl: true, look: true }; syncUI(true); afterChange({ commitNow: true }); break;
+      case 'palette': st.pal = t.dataset.id; st.custom = { text: '', accent: '' }; st.bg.c1 = ''; st.tpl = ''; thumbsDirty = { tpl: true, look: true }; syncUI(true); afterChange({ commitNow: true }); break;
       case 'clear-color': { const p = t.dataset.k; setPath(st, p, ''); thumbsDirty = { tpl: true, look: true }; syncUI(true); afterChange({ commitNow: true }); break; }
       case 'pick-photo': dlg.querySelector('[data-file="photo"]').click(); break;
       case 'pick-logo': dlg.querySelector('[data-file="logo"]').click(); break;
-      case 'remove-photo': st.bg.photo = ''; st.bg.type = 'gradient'; syncUI(true); afterChange({ commitNow: true }); break;
+      case 'remove-photo': st.bg.photo = ''; st.bg.type = 'solid'; syncUI(true); afterChange({ commitNow: true }); break;
       case 'remove-logo': st.logo.id = ''; syncUI(true); afterChange({ commitNow: true }); break;
-      case 'download': doDownload(); break;
       case 'save': saveProject(); break;
       case 'load': dlg.querySelector('[data-file="project"]').click(); break;
       case 'suggest': { const k = t.dataset.k; if (k === 'head') st.headline = t.dataset.v; else if (k === 'sub') st.sub = t.dataset.v; else { st.cta = t.dataset.v; st.ctaOn = true; } textTouched = true; syncUI(true); afterChange({ commitNow: true }); break; }
@@ -494,7 +472,7 @@
     dlg.querySelectorAll('[data-bind]').forEach(el => {
       if (!force && document.activeElement === el) return;
       let v = getPath(st, el.dataset.bind);
-      if (el.type === 'color') { const p = el.dataset.bind; v = v || (p === 'custom.text' ? eff.text : p === 'custom.accent' ? eff.accent : p === 'bg.c1' ? eff.bg1 : eff.bg2); el.value = v; }
+      if (el.type === 'color') { const p = el.dataset.bind; v = v || (p === 'custom.text' ? eff.text : p === 'custom.accent' ? eff.accent : eff.bg1); el.value = v; }
       else if (el.type === 'checkbox') el.checked = !!v;
       else el.value = v == null ? '' : v;
     });
@@ -503,8 +481,6 @@
     dlg.querySelectorAll('[data-act="palette"]').forEach(b => b.setAttribute('aria-pressed', String(st.pal === b.dataset.id && !st.custom.accent)));
     dlg.querySelectorAll('[data-act="cat"]').forEach(b => b.setAttribute('aria-pressed', String(tplCat === b.dataset.id)));
     dlg.querySelectorAll('[data-act="tpl"]').forEach(b => { b.hidden = tplCat !== 'all' && b.dataset.cat !== tplCat; b.classList.toggle('is-active', st.tpl === b.dataset.id); });
-    dlg.querySelectorAll('[data-exportfmt]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.exportfmt === exportFmt)));
-    dlg.querySelectorAll('[data-exportpx]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.exportpx) === exportPx)));
     if (document.activeElement !== ui.sizeW || force) ui.sizeW.value = String(st.widthCm);
     if (document.activeElement !== ui.sizeH || force) ui.sizeH.value = String(st.heightCm);
     ui.tpltexts.checked = useTplTexts; ui.zoom.value = String(zoom);
@@ -529,7 +505,6 @@
     ui.mat.textContent = materialName();
     const gl = dlg.querySelector('[data-guidelabel]');
     if (gl) gl.textContent = hasEyelets() ? tr('Margines bezpieczny i oczka', 'Safe margin and eyelets') : tr('Margines bezpieczny', 'Safe margin');
-    ui.exportinfo.textContent = (() => { const d = exportDims(exportPx); return tr(`Wynik: ${d.w} × ${d.h} px (ok. ${Math.round(d.w / (st.widthCm / 2.54))} dpi przy rozmiarze banera).`, `Output: ${d.w} × ${d.h} px (about ${Math.round(d.w / (st.widthCm / 2.54))} dpi at banner size).`); })();
   }
   function updateTabFlags() {
     const flags = { extra: !!st.logo.id || (st.qr.on && st.qr.text) || st.badge.on, look: st.bg.type === 'photo' };
@@ -607,14 +582,18 @@
 
   // ---------- panel pod formularzem ----------
   function buildEntry() {
+    more = document.createElement('details');      // pełny generator jest „do otwarcia” — na wierzchu jest prosty generator
+    more.className = 'd24bg-more'; more.open = moreOpen;
+    more.innerHTML = `<summary><span class="d24bg-more__title">${tr('Chcesz projektować bardziej?', 'Want to design more?')}</span><span class="d24bg-more__sub">${tr('Pełny generator: szablony, układy, logo, zdjęcie, kod QR', 'Full generator: templates, layouts, logo, photo, QR code')}</span><span class="d24bg-more__badge" data-more-badge hidden>${tr('✓ w zamówieniu', '✓ in your order')}</span></summary>`;
+    more.addEventListener('toggle', () => { moreOpen = more.open; });
     entry = document.createElement('section');
     entry.className = 'd24bg-entry';
     entry.innerHTML = `<div class="d24bg-entry__copy">
-      <span class="d24bg-eyebrow">${tr('GENERATOR BANERA', 'BANNER GENERATOR')}</span>
-      <h3>${tr('Zaprojektuj baner online — bez grafika', 'Design your banner online — no designer needed')}</h3>
-      <p>${tr('Wybierz szablon, wpisz tekst, dodaj logo i kod QR. Zobaczysz baner w skali, z marginesem bezpiecznym i oczkami, a na koniec pobierzesz gotowy plik PDF, JPG lub PNG.', 'Pick a template, type your text, add a logo and QR code. See the banner to scale with safe margin and eyelets, then download a ready PDF, JPG or PNG.')}</p>
+      <span class="d24bg-eyebrow">${tr('PEŁNY GENERATOR', 'FULL GENERATOR')}</span>
+      <h3>${tr('Szablony, układy, logo, zdjęcie i kod QR', 'Templates, layouts, logo, photo and QR code')}</h3>
+      <p>${tr('Wybierz szablon, wpisz tekst, dodaj logo i kod QR. Zobaczysz baner w skali, z marginesem bezpiecznym i oczkami, a na koniec zapiszesz projekt i dołączysz go do zamówienia jako PDF.', 'Pick a template, type your text, add a logo and QR code. See the banner to scale with safe margin and eyelets, then save the design and attach it to your order as a PDF.')}</p>
       <div class="d24bg-entry__actions">
-        <button type="button" class="d24bg-btn d24bg-btn--primary" data-act="open">${tr('Otwórz generator', 'Open generator')}</button>
+        <button type="button" class="d24bg-btn d24bg-btn--primary" data-act="open">${tr('Otwórz pełny generator', 'Open full generator')}</button>
         <label class="d24bg-check"><input type="checkbox" data-attach><span>${tr('Dołącz projekt do zamówienia', 'Attach the design to my order')}</span></label>
       </div>
       <p class="d24bg-entry__status" data-status aria-live="polite"></p>
@@ -623,7 +602,9 @@
     <button type="button" class="d24bg-entry__thumb" data-act="open" aria-label="${tr('Otwórz generator banera', 'Open banner generator')}"><canvas></canvas><span>${tr('Edytuj projekt', 'Edit design')}</span></button>`;
     entry.addEventListener('click', e => { if (e.target.closest('[data-act="open"]')) openEditor(); });
     entry.addEventListener('change', e => { if (e.target.matches('[data-attach]')) setAttach(e.target.checked); });
+    more.append(entry);
   }
+  function dropEntry() { if (more) more.remove(); entry = null; more = null; }
   function renderEntryThumb() {
     const c = entry && entry.isConnected ? entry.querySelector('canvas') : null; if (!c) return;
     const r = Math.min(6, Math.max(0.5, st.widthCm / st.heightCm)), w = 520, h = Math.round(w / r);
@@ -634,6 +615,7 @@
     if (!entry || !entry.isConnected) return;
     const cb = entry.querySelector('[data-attach]'), s = entry.querySelector('[data-status]');
     if (cb) cb.checked = attach.enabled;
+    const badge = more && more.querySelector('[data-more-badge]'); if (badge) badge.hidden = !attach.enabled;
     let msg = '', cls = '';
     if (attach.enabled) {
       if (attach.error) { msg = attach.error; cls = 'is-bad'; }
@@ -653,6 +635,7 @@
   async function useInOrder() {
     ui.root.classList.add('is-busy'); say(tr('Zapisuję projekt jako PDF…', 'Saving the design as PDF…'));
     pushSizeToForm();
+    if (window.Druk24BannerSimple) window.Druk24BannerSimple.setAttach(false);   // jeden projekt naraz
     attach.enabled = true; clearTimeout(attachTimer);
     await buildAttach();
     ui.root.classList.remove('is-busy');
@@ -678,7 +661,7 @@
         map[id] = registerAsset(await loadImg(url), url);
       }
       const s = E.normalizeState(obj.state);
-      s.logo.id = map[s.logo.id] || ''; s.bg.photo = map[s.bg.photo] || ''; if (s.bg.type === 'photo' && !s.bg.photo) s.bg.type = 'gradient';
+      s.logo.id = map[s.logo.id] || ''; s.bg.photo = map[s.bg.photo] || ''; if (s.bg.type === 'photo' && !s.bg.photo) s.bg.type = 'solid';
       st = s; textTouched = true; pushSizeToForm(); thumbsDirty = { tpl: true, look: true };
       syncUI(true); afterChange({ commitNow: true }); say(tr('Wczytano projekt.', 'Project loaded.'));
     } catch (e) { say(tr('To nie jest poprawny plik projektu generatora.', 'This is not a valid generator project file.'), true); }
@@ -690,10 +673,11 @@
     scheduled = false;
     const card = content.querySelector(':scope > .card');
     const grid = card && card.querySelector(':scope > .form-grid');
-    if (!card || !grid || !card.querySelector('#bannerWidth')) { if (curCard) { curCard = null; if (entry) entry.remove(); } return; }
-    if (card !== curCard) { curCard = card; if (entry) entry.remove(); entry = null; }
+    if (!card || !grid || !card.querySelector('#bannerWidth')) { if (curCard) { curCard = null; dropEntry(); } return; }
+    if (card !== curCard) { curCard = card; dropEntry(); }
     if (!entry) buildEntry();
-    if (grid.nextElementSibling !== entry) grid.after(entry);
+    const anchor = card.querySelector(':scope > .d24bgs-entry') || grid;      // pod prostym generatorem, jeśli jest
+    if (anchor.nextElementSibling !== more) anchor.after(more);
     syncFromForm(); renderEntryThumb(); updateEntry();
   }
   function schedule() { if (scheduled) return; scheduled = true; requestAnimationFrame(decorate); }
@@ -706,7 +690,7 @@
   content.addEventListener('input', onForm, true); content.addEventListener('change', onForm, true);
   new MutationObserver(() => {
     if (dlg) { const was = dlg.open; if (was) dlg.close(); dlg.remove(); dlg = null; ui = null; }
-    if (entry) { entry.remove(); entry = null; } schedule();
+    dropEntry(); schedule();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 
   window.Druk24BannerGen = {
@@ -716,7 +700,6 @@
     getAttachFiles() { return attach.enabled && attach.file && attach.sig === sigNow() ? [attach.file] : []; },
     isAttachEnabled: () => attach.enabled,
     setAttach,
-    exportBlob: (fmt, px) => exportBlob(fmt || 'pdf', px || 2500),
     render: canvas => E.render(canvas, st, assets, {}),
     getReport: () => lastReport
   };

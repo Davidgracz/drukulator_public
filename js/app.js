@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.14v";
+  const VERSION = "0.26.18v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -4872,7 +4872,7 @@
     document.getElementById("calculate").addEventListener("click", () => { try {
       const result = C.calculateBanner(state.prices, numberValue("bannerWidth"), numberValue("bannerHeight"), numberValue("bannerQty"), material.value);
       const details = [["Łączna powierzchnia", `${num(result.totalArea)} m²`], ["Cena za m²", `${money(result.unitPrice)} zł`], ["Minimum zamówienia", `${money(result.minimumOrder)} zł`]];
-      showQuote({ title: material.value, description: `${material.value}, ${value("bannerWidth")} × ${value("bannerHeight")} cm, ${value("bannerQty")} szt.`, price: result.price, details, meta: { productType: "banner", material: material.value, widthCm: numberValue("bannerWidth"), heightCm: numberValue("bannerHeight"), quantity: numberValue("bannerQty") } , files: window.Druk24BannerGen?.getAttachFiles?.() || [] });
+      showQuote({ title: material.value, description: `${material.value}, ${value("bannerWidth")} × ${value("bannerHeight")} cm, ${value("bannerQty")} szt.`, price: result.price, details, meta: { productType: "banner", material: material.value, widthCm: numberValue("bannerWidth"), heightCm: numberValue("bannerHeight"), quantity: numberValue("bannerQty") } , files: [...(window.Druk24BannerGen?.getAttachFiles?.() || []), ...(window.Druk24BannerSimple?.getAttachFiles?.() || [])] });
     } catch (e) { setResultError(e); } });
   }
 

@@ -1,0 +1,60 @@
+/* Drukulator 0.26.17v — prosty generator banerów (kolor tła + treść).
+ * Używa przycisków, panelu i pól z banner-generator.css (.d24bg-btn, .d24bg-entry, .d24bg-check, .d24bg-hint, .d24bg input…)
+ * oraz zmiennych motywu: --panel --panel-2 --border --text --muted --accent --nav-hover. Tryb ciemny przez zmienne. */
+
+/* ===== panel pod formularzem: na wierzchu strony banerów, wygląd jak .d24bg-entry (z banner-generator.css) ===== */
+.d24bgs-entry { margin: 14px 0 6px; }
+.d24bgs-entry .d24bg-entry__status:empty { display: none; }
+
+/* ===== okno ===== */
+dialog.d24bgs-dialog { padding: 0; border: 1px solid var(--border); border-radius: 16px; width: min(980px, 96vw); height: min(700px, 94vh); max-width: none; max-height: none; background: var(--panel); color: var(--text); overflow: hidden; box-shadow: 0 24px 70px rgba(0, 0, 0, .45); }
+dialog.d24bgs-dialog:not([open]) { display: none; }
+dialog.d24bgs-dialog::backdrop { background: rgba(8, 12, 22, .66); }
+.d24bgs { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.d24bgs.is-busy { cursor: progress; }
+.d24bgs.is-busy button { pointer-events: none; opacity: .75; }
+
+.d24bgs-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--panel-2); }
+.d24bgs-top__title { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.d24bgs-top__title strong { font-size: 1rem; }
+.d24bgs-top__title span { font-size: .72rem; color: var(--muted); }
+
+.d24bgs-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+.d24bgs-stage { min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--panel-2); overflow: auto; }
+.d24bgs-stage canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; box-shadow: 0 6px 26px rgba(0, 0, 0, .28); background: #fff; }
+.d24bgs-side { min-height: 0; overflow-y: auto; padding: 14px 16px; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+.d24bgs-side h4 { margin: 0 0 8px; font-size: .8rem; letter-spacing: .02em; }
+
+/* kolory tła */
+.d24bgs-swatches { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.d24bgs-swatches button { aspect-ratio: 1; min-height: 0; padding: 0; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+.d24bgs-swatches button:hover { transform: translateY(-1px); }
+.d24bgs-swatches button[aria-pressed=true] { border-color: var(--text); box-shadow: 0 0 0 2px var(--accent); }
+.d24bgs-swatches button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.d24bgs-custom { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: .78rem; font-weight: 650; }
+
+/* pola treści */
+.d24bgs-field { display: grid; gap: 5px; margin: 0 0 10px; }
+.d24bgs-field > span { display: flex; align-items: baseline; gap: 6px; font-size: .76rem; font-weight: 750; }
+.d24bgs-field em { font-style: normal; font-weight: 500; color: var(--muted); }
+.d24bgs-field small { margin-left: auto; font-weight: 600; color: var(--muted); font-size: .68rem; }
+
+.d24bgs-link { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.d24bgs-note { margin: 0; }
+.d24bgs-msg { min-height: 1.2em; margin: 0; font-size: .78rem; font-weight: 650; color: var(--muted); }
+.d24bgs-msg.is-bad { color: #c0392b; }
+html[data-theme=dark] .d24bgs-msg.is-bad { color: #ff8f84; }
+.d24bgs-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: auto -16px -14px; padding: 10px 16px 14px; position: sticky; bottom: -14px; background: var(--panel); border-top: 1px solid var(--border); }
+.d24bgs-actions .d24bg-btn--primary { flex: 1 1 100%; min-height: 44px; }
+
+/* pola w oknie (poza .content przebijają globalne style pól) — te same zasady co w .d24bg */
+.d24bgs button:focus-visible, .d24bgs input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+/* ===== węższe ekrany ===== */
+@media (max-width: 760px) {
+  dialog.d24bgs-dialog { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; border: 0; }
+  .d24bgs-main { display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+  .d24bgs-stage { flex: none; position: sticky; top: 0; z-index: 3; height: 30vh; min-height: 150px; padding: 10px; border-bottom: 1px solid var(--border); }
+  .d24bgs-side { border-left: 0; overflow: visible; flex: none; }
+  .d24bgs-top__title span { display: none; }
+}

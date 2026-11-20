@@ -18,26 +18,26 @@
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
   // ---------- palety ----------
-  const P = (id, pl, en, bg1, bg2, text, accent, onAccent) => ({ id, name: { pl, en }, bg1, bg2, text, accent, onAccent });
+  const P = (id, pl, en, bg1, text, accent, onAccent) => ({ id, name: { pl, en }, bg1, text, accent, onAccent });
   const PALETTES = [
-    P('navy-gold', 'Granat i żółć', 'Navy & yellow', '#0f2747', '#1a4a82', '#ffffff', '#ffc928', '#0f2747'),
-    P('red-white', 'Czerwień i biel', 'Red & white', '#d71920', '#a50f16', '#ffffff', '#ffffff', '#b3121a'),
-    P('yellow-black', 'Żółty i czerń', 'Yellow & black', '#ffd60a', '#ffbf00', '#111111', '#111111', '#ffd60a'),
-    P('black-orange', 'Czerń i pomarańcz', 'Black & orange', '#111111', '#2b2b2b', '#ffffff', '#ff6a13', '#111111'),
-    P('white-blue', 'Biel i błękit', 'White & blue', '#ffffff', '#e8f0fb', '#12263f', '#1d6fe0', '#ffffff'),
-    P('green-yellow', 'Zieleń i żółć', 'Green & yellow', '#0b6b3a', '#0e8a4b', '#ffffff', '#ffe14d', '#0b3d22'),
-    P('purple-pink', 'Fiolet i róż', 'Purple & pink', '#3b1c6e', '#6a2fb0', '#ffffff', '#ff7ab8', '#2a0f4f'),
-    P('teal-white', 'Turkus i biel', 'Teal & white', '#08808b', '#05606b', '#ffffff', '#ffffff', '#05606b'),
-    P('cream-burgundy', 'Krem i bordo', 'Cream & burgundy', '#f7efe3', '#efe3d0', '#4a1020', '#8c1d3b', '#ffffff'),
-    P('graphite-lime', 'Grafit i limonka', 'Graphite & lime', '#20252b', '#323a42', '#ffffff', '#b7f208', '#1a2000'),
-    P('orange-brown', 'Pomarańcz i brąz', 'Orange & brown', '#ff7a00', '#ff9a1f', '#1a1000', '#ffffff', '#b34700'),
-    P('blue-red', 'Niebieski i czerwień', 'Blue & red', '#0d47a1', '#1565c0', '#ffffff', '#ff3d3d', '#ffffff'),
-    P('blush-rose', 'Pudrowy róż', 'Blush rose', '#ffe3ec', '#ffd0df', '#5b1033', '#e6155f', '#ffffff'),
-    P('mint', 'Mięta', 'Mint', '#d9f5ec', '#bfeadb', '#0e3b43', '#0e8f6f', '#ffffff'),
-    P('black-gold', 'Czerń i złoto', 'Black & gold', '#0b0b0c', '#1c1a14', '#f5e6b8', '#d4a017', '#0b0b0c'),
-    P('burgundy-peach', 'Bordo i brzoskwinia', 'Burgundy & peach', '#6d0f2a', '#8f1b3d', '#ffffff', '#ffd6a5', '#4a0a1c'),
-    P('sky', 'Niebo', 'Sky', '#4cc3ff', '#1c8fe0', '#08233f', '#ffffff', '#0d5fa8'),
-    P('lavender', 'Lawenda', 'Lavender', '#ece6ff', '#d9ceff', '#2a1b5c', '#6a3df0', '#ffffff')
+    P('navy-gold', 'Granat i żółć', 'Navy & yellow', '#0f2747', '#ffffff', '#ffc928', '#0f2747'),
+    P('red-white', 'Czerwień i biel', 'Red & white', '#d71920', '#ffffff', '#ffffff', '#b3121a'),
+    P('yellow-black', 'Żółty i czerń', 'Yellow & black', '#ffd60a', '#111111', '#111111', '#ffd60a'),
+    P('black-orange', 'Czerń i pomarańcz', 'Black & orange', '#111111', '#ffffff', '#ff6a13', '#111111'),
+    P('white-blue', 'Biel i błękit', 'White & blue', '#ffffff', '#12263f', '#1d6fe0', '#ffffff'),
+    P('green-yellow', 'Zieleń i żółć', 'Green & yellow', '#0b6b3a', '#ffffff', '#ffe14d', '#0b3d22'),
+    P('purple-pink', 'Fiolet i róż', 'Purple & pink', '#3b1c6e', '#ffffff', '#ff7ab8', '#2a0f4f'),
+    P('teal-white', 'Turkus i biel', 'Teal & white', '#08808b', '#ffffff', '#ffffff', '#05606b'),
+    P('cream-burgundy', 'Krem i bordo', 'Cream & burgundy', '#f7efe3', '#4a1020', '#8c1d3b', '#ffffff'),
+    P('graphite-lime', 'Grafit i limonka', 'Graphite & lime', '#20252b', '#ffffff', '#b7f208', '#1a2000'),
+    P('orange-brown', 'Pomarańcz i brąz', 'Orange & brown', '#ff7a00', '#1a1000', '#ffffff', '#b34700'),
+    P('blue-red', 'Niebieski i czerwień', 'Blue & red', '#0d47a1', '#ffffff', '#ff3d3d', '#ffffff'),
+    P('blush-rose', 'Pudrowy róż', 'Blush rose', '#ffe3ec', '#5b1033', '#e6155f', '#ffffff'),
+    P('mint', 'Mięta', 'Mint', '#d9f5ec', '#0e3b43', '#0e8f6f', '#ffffff'),
+    P('black-gold', 'Czerń i złoto', 'Black & gold', '#0b0b0c', '#f5e6b8', '#d4a017', '#0b0b0c'),
+    P('burgundy-peach', 'Bordo i brzoskwinia', 'Burgundy & peach', '#6d0f2a', '#ffffff', '#ffd6a5', '#4a0a1c'),
+    P('sky', 'Niebo', 'Sky', '#4cc3ff', '#08233f', '#ffffff', '#0d5fa8'),
+    P('lavender', 'Lawenda', 'Lavender', '#ece6ff', '#2a1b5c', '#6a3df0', '#ffffff')
   ];
   const paletteById = id => PALETTES.find(p => p.id === id) || PALETTES[0];
 
@@ -65,10 +65,6 @@
     { id: 'minimal', name: { pl: 'Minimalny', en: 'Minimal' } },
     { id: 'ribbon', name: { pl: 'Wstęga', en: 'Ribbon' } }
   ];
-  const PATTERNS = [
-    { id: 'none', name: { pl: 'Brak', en: 'None' } }, { id: 'dots', name: { pl: 'Kropki', en: 'Dots' } },
-    { id: 'lines', name: { pl: 'Ukośne linie', en: 'Diagonal lines' } }, { id: 'grid', name: { pl: 'Siatka', en: 'Grid' } }
-  ];
   const ANCHORS = ['tl', 'tc', 'tr', 'bl', 'bc', 'br'];
 
   // ---------- stan ----------
@@ -79,7 +75,7 @@
       headline: 'TWÓJ NAGŁÓWEK', sub: 'Krótki opis oferty lub hasło reklamowe', contact: 'tel. 500 600 700 • www.twojafirma.pl', cta: 'Zadzwoń teraz', ctaOn: true,
       upper: true, align: 'auto', spacing: 0, shadow: false, outline: false,
       headScale: 100, subScale: 100, contactScale: 100,
-      bg: { type: 'gradient', c1: '', c2: '', angle: 135, photo: '', dim: 45, px: 50, py: 50, zoom: 100, pattern: 'none' },
+      bg: { type: 'solid', c1: '', photo: '', dim: 45, px: 50, py: 50, zoom: 100 },
       frame: false,
       logo: { id: '', anchor: 'tl', size: 22, plate: true },
       qr: { on: false, text: '', anchor: 'br', size: 20 },
@@ -102,7 +98,7 @@
       cta: str(s.cta, LIMITS.cta * 2, d.cta), ctaOn: s.ctaOn !== false,
       upper: s.upper !== false, align: oneOf(s.align, ['auto', 'left', 'center', 'right'], 'auto'), spacing: num(s.spacing, -3, 12, 0), shadow: !!s.shadow, outline: !!s.outline,
       headScale: num(s.headScale, 40, 100, 100), subScale: num(s.subScale, 40, 100, 100), contactScale: num(s.contactScale, 40, 100, 100),
-      bg: { type: oneOf(bg.type, ['solid', 'gradient', 'photo'], 'gradient'), c1: col(bg.c1), c2: col(bg.c2), angle: num(bg.angle, 0, 360, 135), photo: str(bg.photo, 24), dim: num(bg.dim, 0, 85, 45), px: num(bg.px, 0, 100, 50), py: num(bg.py, 0, 100, 50), zoom: num(bg.zoom, 100, 300, 100), pattern: oneOf(bg.pattern, PATTERNS.map(p => p.id), 'none') },
+      bg: { type: oneOf(bg.type, ['solid', 'photo'], 'solid'), c1: col(bg.c1), photo: str(bg.photo, 24), dim: num(bg.dim, 0, 85, 45), px: num(bg.px, 0, 100, 50), py: num(bg.py, 0, 100, 50), zoom: num(bg.zoom, 100, 300, 100) },
       frame: !!s.frame,
       logo: { id: str(lg.id, 24), anchor: oneOf(lg.anchor, ANCHORS, 'tl'), size: num(lg.size, 8, 60, 22), plate: lg.plate !== false },
       qr: { on: !!qr.on, text: str(qr.text, LIMITS.qr), anchor: oneOf(qr.anchor, ANCHORS, 'br'), size: num(qr.size, 8, 45, 20) },
@@ -113,7 +109,7 @@
     const p = paletteById(st.pal);
     const accent = st.custom.accent || p.accent;
     return {
-      bg1: st.bg.c1 || p.bg1, bg2: st.bg.c2 || p.bg2, text: st.custom.text || p.text, accent,
+      bg1: st.bg.c1 || p.bg1, text: st.custom.text || p.text, accent,
       onAccent: st.custom.accent ? bestOn(accent) : p.onAccent
     };
   }
@@ -380,23 +376,8 @@
       ctx.drawImage(photo, -(dw - W) * bg.px / 100, -(dh - H) * bg.py / 100, dw, dh);
       if (bg.dim > 0) { ctx.fillStyle = rgba(pal.bg1, bg.dim / 100); ctx.fillRect(0, 0, W, H); }
       report.photoDpi = Math.round(iw / (dw / W * st.widthCm / 2.54));
-    } else if (bg.type === 'solid') { ctx.fillStyle = pal.bg1; ctx.fillRect(0, 0, W, H); }
-    else {
-      const th = bg.angle * Math.PI / 180, dx = Math.sin(th), dy = -Math.cos(th), len = Math.abs(W * dx) + Math.abs(H * dy);
-      const g = ctx.createLinearGradient(W / 2 - dx * len / 2, H / 2 - dy * len / 2, W / 2 + dx * len / 2, H / 2 + dy * len / 2);
-      g.addColorStop(0, pal.bg1); g.addColorStop(1, pal.bg2); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    }
+    } else { ctx.fillStyle = pal.bg1; ctx.fillRect(0, 0, W, H); }
     if (bg.type === 'photo' && !photo) report.needsPhoto = true;
-    // wzór
-    if (bg.pattern !== 'none') {
-      const S = Math.min(W, H), sp = Math.max(8, S * 0.045);
-      const light = lum(hex2rgb(pal.bg1)) < 0.4;
-      ctx.save(); ctx.globalAlpha = 0.09; ctx.fillStyle = ctx.strokeStyle = light ? '#ffffff' : '#000000';
-      if (bg.pattern === 'dots') { for (let y = sp / 2; y < H; y += sp) for (let x = sp / 2 + ((Math.round(y / sp) % 2) ? sp / 2 : 0); x < W; x += sp) { ctx.beginPath(); ctx.arc(x, y, sp * 0.14, 0, 6.2832); ctx.fill(); } }
-      else if (bg.pattern === 'lines') { ctx.lineWidth = sp * 0.12; ctx.beginPath(); for (let x = -H; x < W; x += sp * 0.9) { ctx.moveTo(x, H); ctx.lineTo(x + H, 0); } ctx.stroke(); }
-      else { ctx.lineWidth = Math.max(1, sp * 0.05); ctx.beginPath(); for (let x = 0; x < W; x += sp) { ctx.moveTo(x, 0); ctx.lineTo(x, H); } for (let y = 0; y < H; y += sp) { ctx.moveTo(0, y); ctx.lineTo(W, y); } ctx.stroke(); }
-      ctx.restore();
-    }
   }
 
   // ---------- średni kontrast pod tekstem ----------
@@ -608,11 +589,11 @@
   ];
   const TEMPLATES = [
     T('promo-sale', 'promo', 'giant', 'red-white', 'impact', 'WYPRZEDAŻ', 'Wszystko do -50% • tylko w tym tygodniu', 'Sprawdź ofertę', 'www.twojsklep.pl', { badge: { text: '-50%', anchor: 'tr', shape: 'burst' } }),
-    T('promo-30', 'promo', 'center', 'yellow-black', 'impact', 'PROMOCJA -30%', 'Na całą kolekcję wiosna / lato', 'Zapraszamy', 'ul. Przykładowa 12, Szczecin', { pattern: 'dots' }),
+    T('promo-30', 'promo', 'center', 'yellow-black', 'impact', 'PROMOCJA -30%', 'Na całą kolekcję wiosna / lato', 'Zapraszamy', 'ul. Przykładowa 12, Szczecin'),
     T('promo-mega', 'promo', 'diagonal', 'black-orange', 'impact', 'MEGA OKAZJA', 'Tylko do końca miesiąca', 'Kup teraz', 'tel. 500 600 700'),
     T('promo-black', 'promo', 'frame', 'black-gold', 'serif', 'BLACK WEEK', 'Najlepsze ceny roku', 'Zobacz więcej', 'www.twojsklep.pl', { upper: true }),
     T('open-grand', 'open', 'bandBottom', 'teal-white', 'modern', 'WIELKIE OTWARCIE', 'Sobota od 10:00 • atrakcje i rabaty', 'Zapraszamy', 'ul. Przykładowa 12, Szczecin'),
-    T('open-now', 'open', 'left', 'navy-gold', 'modern', 'JUŻ OTWARTE', 'Zapraszamy do nowego salonu', 'Wejdź', 'tel. 500 600 700 • www.twojafirma.pl', { pattern: 'lines' }),
+    T('open-now', 'open', 'left', 'navy-gold', 'modern', 'JUŻ OTWARTE', 'Zapraszamy do nowego salonu', 'Wejdź', 'tel. 500 600 700 • www.twojafirma.pl'),
     T('open-soon', 'open', 'ribbon', 'purple-pink', 'round', 'WKRÓTCE OTWARCIE', 'Śledź nas w mediach społecznościowych', '', 'www.twojafirma.pl'),
     T('open-welcome', 'open', 'stripes', 'green-yellow', 'modern', 'ZAPRASZAMY', 'Otwarte codziennie 8:00–20:00', 'Odwiedź nas', 'ul. Przykładowa 12'),
     T('srv-reno', 'service', 'bandBottom', 'navy-gold', 'condensed', 'REMONTY MIESZKAŃ', 'Solidnie • Terminowo • Z gwarancją', 'Bezpłatna wycena', 'tel. 500 600 700'),
@@ -626,7 +607,7 @@
     T('est-sale', 'estate', 'split', 'blue-red', 'modern', 'NA SPRZEDAŻ', 'Mieszkanie 3-pokojowe • 62 m²', 'Zadzwoń', 'tel. 500 600 700'),
     T('est-rent', 'estate', 'minimal', 'black-gold', 'serif', 'DO WYNAJĘCIA', 'Lokal użytkowy 120 m² • centrum miasta', '', 'tel. 500 600 700 • www.twojafirma.pl'),
     T('est-plots', 'estate', 'right', 'green-yellow', 'modern', 'DZIAŁKI BUDOWLANE', 'Media • Dojazd • Okazyjna cena', 'Zapytaj o szczegóły', 'tel. 500 600 700'),
-    T('evt-concert', 'event', 'diagonal', 'purple-pink', 'impact', 'KONCERT', 'Sobota, godz. 18:00 • wstęp wolny', '', 'Rynek Główny', { pattern: 'dots' }),
+    T('evt-concert', 'event', 'diagonal', 'purple-pink', 'impact', 'KONCERT', 'Sobota, godz. 18:00 • wstęp wolny', '', 'Rynek Główny'),
     T('evt-fair', 'event', 'ribbon', 'orange-brown', 'round', 'FESTYN RODZINNY', 'Atrakcje dla dzieci • gry • konkursy', 'Zapraszamy', 'Park Miejski'),
     T('evt-expo', 'event', 'center', 'navy-gold', 'modern', 'TARGI', 'Wystawcy • warsztaty • strefa networkingu', 'Zarejestruj się', 'www.twojeevent.pl'),
     T('job-hire', 'job', 'giant', 'yellow-black', 'impact', 'ZATRUDNIMY', 'Kierowca kat. C • Magazynier • Sprzedawca', 'Zgłoś się', 'praca@twojafirma.pl'),
@@ -636,7 +617,7 @@
   function applyTemplate(state, tpl, withTexts) {
     const s = normalizeState(state), p = paletteById(tpl.pal);
     s.tpl = tpl.id; s.layout = tpl.layout; s.pal = p.id; s.font = tpl.font; s.custom = { text: '', accent: '' };
-    s.bg = { ...s.bg, type: s.bg.type === 'photo' && s.bg.photo ? 'photo' : 'gradient', c1: '', c2: '', pattern: tpl.pattern || 'none' };
+    s.bg = { ...s.bg, type: s.bg.type === 'photo' && s.bg.photo ? 'photo' : 'solid', c1: '' };
     s.upper = tpl.upper !== false; s.frame = false; s.headScale = s.subScale = s.contactScale = 100; s.align = 'auto'; s.spacing = 0; s.shadow = false; s.outline = false;
     if (tpl.badge) s.badge = { ...s.badge, on: true, text: tpl.badge.text, anchor: tpl.badge.anchor, shape: tpl.badge.shape, tilt: true }; else s.badge = { ...s.badge, on: false };
     if (withTexts) { s.headline = tpl.head; s.sub = tpl.sub; s.contact = tpl.contact; s.cta = tpl.cta || s.cta; s.ctaOn = !!tpl.cta; }
@@ -645,7 +626,7 @@
   function randomize(state, rnd = Math.random) {
     const s = normalizeState(state), pick = a => a[Math.floor(rnd() * a.length)];
     s.tpl = ''; s.layout = pick(LAYOUTS).id; s.pal = pick(PALETTES).id; s.font = pick(Object.keys(FONTS));
-    s.custom = { text: '', accent: '' }; s.bg = { ...s.bg, type: s.bg.type === 'photo' && s.bg.photo ? 'photo' : (rnd() < 0.3 ? 'solid' : 'gradient'), c1: '', c2: '', angle: pick([90, 135, 160, 180, 45]), pattern: pick(['none', 'none', 'dots', 'lines', 'grid']) };
+    s.custom = { text: '', accent: '' }; s.bg = { ...s.bg, type: s.bg.type === 'photo' && s.bg.photo ? 'photo' : 'solid', c1: '' };
     return s;
   }
 
@@ -661,7 +642,7 @@
   ];
 
   window.Druk24BannerEngine = {
-    LIMITS, PALETTES, FONTS, LAYOUTS, PATTERNS, ANCHORS, TEMPLATES, TEMPLATE_CATS, SUGGEST, SAFE_CM,
+    LIMITS, PALETTES, FONTS, LAYOUTS, ANCHORS, TEMPLATES, TEMPLATE_CATS, SUGGEST, SAFE_CM,
     defaultState, normalizeState, effPalette, paletteById, render, applyTemplate, randomize, qrFor
   };
 })();

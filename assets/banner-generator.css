@@ -1,4 +1,4 @@
-/* Drukulator 0.26.14v — generator banerów (panel pod formularzem + edytor w oknie pełnoekranowym).
+/* Drukulator 0.26.18v — generator banerów (panel pod formularzem + edytor w oknie pełnoekranowym).
  * Korzysta ze zmiennych motywu: --panel --panel-2 --border --text --muted --accent --nav-active --nav-hover. Tryb ciemny przez zmienne. */
 
 /* ===== panel pod formularzem ===== */
@@ -17,6 +17,22 @@ html[data-theme=dark] .d24bg-entry__status.is-ok { color: #6fdc97; }
 .d24bg-entry__thumb:hover { border-color: var(--accent); }
 .d24bg-entry__thumb:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .d24bg-hint { margin: 6px 0 8px; font-size: .74rem; line-height: 1.45; color: var(--muted); }
+
+/* ===== pełny generator: zwijana sekcja pod prostym generatorem ===== */
+.d24bg-more { margin: 10px 0 4px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); overflow: hidden; }
+.d24bg-more > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 13px 16px; cursor: pointer; user-select: none; }
+.d24bg-more > summary::-webkit-details-marker { display: none; }
+.d24bg-more > summary::marker { content: ''; }
+.d24bg-more > summary::after { content: ''; width: 9px; height: 9px; margin: 0 4px 3px auto; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; flex: none; }
+.d24bg-more[open] > summary::after { transform: rotate(-135deg); margin-bottom: -3px; }
+.d24bg-more > summary:hover { background: var(--nav-hover); }
+.d24bg-more > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.d24bg-more__title { font-weight: 800; font-size: .92rem; }
+.d24bg-more__sub { color: var(--muted); font-size: .8rem; }
+.d24bg-more__badge { padding: 2px 9px; border-radius: 99px; background: rgba(22, 128, 60, .14); color: #16803c; font-size: .72rem; font-weight: 750; }
+html[data-theme=dark] .d24bg-more__badge { background: rgba(111, 220, 151, .16); color: #6fdc97; }
+.d24bg-more[open] > summary { border-bottom: 1px solid var(--border); }
+.d24bg-more > .d24bg-entry { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
 
 /* ===== przyciski i pola (także w oknie dialogowym, poza .content) ===== */
 .d24bg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
