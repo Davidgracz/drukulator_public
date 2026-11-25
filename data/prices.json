@@ -29,6 +29,29 @@
         }
       ]
     },
+    "Baner siatka mesh": {
+      "cena_m2": 80,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": true,
+      "progi_cenowe": [
+        {
+          "maks_m2": 3,
+          "cena_m2": 80
+        },
+        {
+          "maks_m2": 9,
+          "cena_m2": 70
+        },
+        {
+          "maks_m2": 20,
+          "cena_m2": 60
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 50
+        }
+      ]
+    },
     "Folia mat": {
       "cena_m2": 80,
       "minimum_zamowienia": 70,
@@ -160,6 +183,25 @@
         {
           "maks_m2": null,
           "cena_m2": 90
+        }
+      ]
+    },
+    "Folia podłogowa": {
+      "cena_m2": 140,
+      "minimum_zamowienia": 70,
+      "oczka_w_standardzie": false,
+      "progi_cenowe": [
+        {
+          "maks_m2": 3,
+          "cena_m2": 140
+        },
+        {
+          "maks_m2": 10,
+          "cena_m2": 130
+        },
+        {
+          "maks_m2": null,
+          "cena_m2": 120
         }
       ]
     },
@@ -978,24 +1020,24 @@
           "opis": "Okładka kredowa 170 g, środek offset 80 g, druk jednostronny, 50 kart",
           "formaty": {
             "A4": {
-              "50": 850,
-              "100": 1320,
-              "200": 2150
+              "50": 975,
+              "100": 1475,
+              "200": 2420
             },
             "A5": {
-              "50": 540,
-              "100": 770,
-              "200": 1240
+              "50": 605,
+              "100": 865,
+              "200": 1385
             },
             "A6": {
-              "50": 370,
-              "100": 510,
-              "200": 750
+              "50": 415,
+              "100": 570,
+              "200": 860
             },
             "DL": {
-              "50": 430,
-              "100": 590,
-              "200": 910
+              "50": 475,
+              "100": 670,
+              "200": 1030
             }
           }
         },
@@ -1003,24 +1045,24 @@
           "opis": "Bez okładki, środek offset 80 g, druk jednostronny, 50 kart",
           "formaty": {
             "A4": {
-              "50": 710,
-              "100": 1120,
-              "200": 1920
+              "50": 805,
+              "100": 1270,
+              "200": 2150
             },
             "A5": {
-              "50": 460,
-              "100": 670,
-              "200": 1100
+              "50": 520,
+              "100": 760,
+              "200": 1235
             },
             "A6": {
-              "50": 340,
-              "100": 460,
-              "200": 690
+              "50": 370,
+              "100": 510,
+              "200": 770
             },
             "DL": {
-              "50": 380,
-              "100": 430,
-              "200": 810
+              "50": 420,
+              "100": 590,
+              "200": 920
             }
           }
         }
@@ -1088,16 +1130,16 @@
   "plakaty": {
     "Cyfrowy 24h": {
       "A4": {
+        "5": 17.5,
         "10": 35,
         "20": 70,
-        "50": 150,
-        "5": 17.5
+        "50": 150
       },
       "A3": {
+        "5": 35,
         "10": 70,
         "20": 120,
-        "50": 300,
-        "5": 35
+        "50": 300
       }
     },
     "Offsetowy": {
@@ -2124,39 +2166,54 @@
         }
       }
     },
-    "Menu A3 offset preprint 90 g": {
+    "Menu offset preprint 90 g": {
       "warianty": {
         "Jednostronnie": {
-          "opis": "Format A3, papier offset preprint 90 g, druk jednostronny",
+          "opis": "Formaty A3 i A4, papier offset preprint 90 g, druk jednostronny",
           "formaty": {
             "A3": {
               "500": 480,
               "1000": 580,
               "2500": 860
+            },
+            "A4": {
+              "500": 290,
+              "1000": 350,
+              "2500": 510
             }
           }
         },
         "Dwustronnie": {
-          "opis": "Format A3, papier offset preprint 90 g, druk dwustronny",
+          "opis": "Formaty A3 i A4, papier offset preprint 90 g, druk dwustronny",
           "formaty": {
             "A3": {
               "500": 630,
               "1000": 780,
               "2500": 1090
+            },
+            "A4": {
+              "500": 360,
+              "1000": 420,
+              "2500": 620
             }
           }
         }
       }
     },
-    "Menu A3 laminowane": {
+    "Menu laminowane": {
       "warianty": {
         "Dwustronnie": {
-          "opis": "Format A3, menu laminowane, druk dwustronny",
+          "opis": "Formaty A3 i A4, menu laminowane, druk dwustronny",
           "formaty": {
             "A3": {
               "10": 170,
               "20": 320,
               "30": 450
+            },
+            "A4": {
+              "10": 90,
+              "20": 160,
+              "30": 240
             }
           }
         }

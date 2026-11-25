@@ -1,4 +1,4 @@
-"""0.26.5: Restauracje, hotele — ceny na kafelkach formatu także dla podkładek na tackę, menu A3 (offset) i menu A3 laminowanego
+"""0.26.5 (zaktualizowany w 0.26.20v: menu bez „A3” w nazwie, dodany format A4): Restauracje, hotele — ceny na kafelkach formatu także dla podkładek na tackę, menu A3 (offset) i menu A3 laminowanego
 (wcześniej przy jednej opcji formatu kafelek nie miał ceny); ceny zmieniają się z nakładem i zgadzają z cennikiem; inne produkty bez zmian."""
 import json,re
 from pathlib import Path
@@ -54,22 +54,29 @@ with sync_playwright() as p:
             setv(page,'#hospitalityQty',q); t=fmt(page)
             assert len(t)==1 and t[0][0].startswith('40 × 30 cm') and t[0][1]==money(v),(q,t)
             assert total(page)==money(v),(q,total(page))
-        # 2) Menu A3 offset — cena formatu A3 zależy od wariantu (jedno-/dwustronnie) i nakładu
-        choose(page,'Menu A3 offset preprint 90 g')
-        for var,vals in (('Jednostronnie',{'500':480,'1000':580,'2500':860}),('Dwustronnie',{'500':630,'1000':780,'2500':1090})):
-            setv(page,'#hospitalityVariant',var)
+        # 2) Menu offset (A3 i A4) — cena formatu zależy od wariantu (jedno-/dwustronnie) i nakładu
+        choose(page,'Menu offset preprint 90 g')
+        assert page.locator('#hospitalityType').evaluate("e=>[...e.options].map(o=>o.value)")==['Podkładki na tackę','Menu offset preprint 90 g','Menu laminowane','Prezenter trójkątny – stojak','Notesy kelnerskie','Bloczki samokopiujące'],'lista produktów'
+        for var,fm,vals in (('Jednostronnie','A3',{'500':480,'1000':580,'2500':860}),('Dwustronnie','A3',{'500':630,'1000':780,'2500':1090}),
+                            ('Jednostronnie','A4',{'500':290,'1000':350,'2500':510}),('Dwustronnie','A4',{'500':360,'1000':420,'2500':620})):
+            setv(page,'#hospitalityVariant',var); setv(page,'#hospitalityFormat',fm)
             for q,v in vals.items():
-                setv(page,'#hospitalityQty',q); t=fmt(page)
-                assert len(t)==1 and t[0][0].startswith('A3') and t[0][1]==money(v),(var,q,t)
-                assert total(page)==money(v),(var,q,total(page))
+                setv(page,'#hospitalityQty',q)
+                t=dict((n.split(' ')[0],pr) for n,pr,_ in fmt(page))
+                assert len(fmt(page))==2 and t[fm]==money(v),(var,fm,q,t)
+                assert total(page)==money(v),(var,fm,q,total(page))
         # kafelki wariantu zachowują własne ceny
         vt=tiles(page,'hospitalityVariant'); assert all(pr for _,pr,_ in vt) and len(vt)==2,vt
-        # 3) Menu A3 laminowane — format A3, nakład 10/20/30
-        choose(page,'Menu A3 laminowane')
-        for q,v in (('10',170),('20',320),('30',450)):
-            setv(page,'#hospitalityQty',q); t=fmt(page)
-            assert len(t)==1 and t[0][0].startswith('A3') and t[0][1]==money(v),(q,t)
-            assert total(page)==money(v),(q,total(page))
+        # 3) Menu laminowane — tylko dwustronnie, A3 i A4, nakład 10/20/30
+        choose(page,'Menu laminowane')
+        assert page.locator('#hospitalityVariant').evaluate("e=>[...e.options].map(o=>o.value)")==['Dwustronnie'],'tylko dwustronnie'
+        for fm,vals in (('A3',(('10',170),('20',320),('30',450))),('A4',(('10',90),('20',160),('30',240)))):
+            setv(page,'#hospitalityFormat',fm)
+            for q,v in vals:
+                setv(page,'#hospitalityQty',q)
+                t=dict((n.split(' ')[0],pr) for n,pr,_ in fmt(page))
+                assert len(fmt(page))==2 and t[fm]==money(v),(fm,q,t)
+                assert total(page)==money(v),(fm,q,total(page))
         # 4) produkty z kilkoma formatami nadal mają ceny (bez zmian)
         choose(page,'Prezenter trójkątny – stojak'); t=fmt(page); assert len(t)==2 and all(pr for _,pr,_ in t),t
         choose(page,'Notesy kelnerskie'); t=fmt(page); assert len(t)==3 and all(pr for _,pr,_ in t),t

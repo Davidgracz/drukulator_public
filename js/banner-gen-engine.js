@@ -74,7 +74,7 @@
       layout: 'center', pal: 'navy-gold', custom: { text: '', accent: '' }, font: 'modern',
       headline: 'TWÓJ NAGŁÓWEK', sub: 'Krótki opis oferty lub hasło reklamowe', contact: 'tel. 500 600 700 • www.twojafirma.pl', cta: 'Zadzwoń teraz', ctaOn: true,
       upper: true, align: 'auto', spacing: 0, shadow: false, outline: false,
-      headScale: 100, subScale: 100, contactScale: 100,
+      headScale: 100, subScale: 100, contactScale: 100, ctaScale: 100,
       bg: { type: 'solid', c1: '', photo: '', dim: 45, px: 50, py: 50, zoom: 100 },
       frame: false,
       logo: { id: '', anchor: 'tl', size: 22, plate: true },
@@ -97,7 +97,7 @@
       headline: str(s.headline, LIMITS.headline * 2, d.headline), sub: str(s.sub, LIMITS.sub * 2, d.sub), contact: str(s.contact, LIMITS.contact * 2, d.contact),
       cta: str(s.cta, LIMITS.cta * 2, d.cta), ctaOn: s.ctaOn !== false,
       upper: s.upper !== false, align: oneOf(s.align, ['auto', 'left', 'center', 'right'], 'auto'), spacing: num(s.spacing, -3, 12, 0), shadow: !!s.shadow, outline: !!s.outline,
-      headScale: num(s.headScale, 40, 100, 100), subScale: num(s.subScale, 40, 100, 100), contactScale: num(s.contactScale, 40, 100, 100),
+      headScale: num(s.headScale, 40, 100, 100), subScale: num(s.subScale, 40, 100, 100), contactScale: num(s.contactScale, 40, 100, 100), ctaScale: num(s.ctaScale, 40, 100, 100),
       bg: { type: oneOf(bg.type, ['solid', 'photo'], 'solid'), c1: col(bg.c1), photo: str(bg.photo, 24), dim: num(bg.dim, 0, 85, 45), px: num(bg.px, 0, 100, 50), py: num(bg.py, 0, 100, 50), zoom: num(bg.zoom, 100, 300, 100) },
       frame: !!s.frame,
       logo: { id: str(lg.id, 24), anchor: oneOf(lg.anchor, ANCHORS, 'tl'), size: num(lg.size, 8, 60, 22), plate: lg.plate !== false },
@@ -505,7 +505,7 @@
     if (blocks.contact) plan('contact', texts.contact, { font: [F.body[0], Math.max(F.body[1], 700)], lh: 1.2, maxLines: 2, maxSize: conCap, scale: st.contactScale / 100, shadow: st.shadow && st.bg.type === 'photo', valign: 'middle' });
     if (blocks.cta) {
       const b = blocks.cta, band = b.on === 'band';
-      const probe = fit(ctx, texts.cta, R(0, 0, b.w * 0.8, b.h * 0.5), { font: F.head, lh: 1, maxLines: 1, maxSize: headSize ? headSize * 0.5 : null });
+      const probe = fit(ctx, texts.cta, R(0, 0, b.w * 0.8, b.h * 0.5), { font: F.head, lh: 1, maxLines: 1, maxSize: headSize ? headSize * 0.5 : null, scale: st.ctaScale / 100 });
       setFont(ctx, F.head, probe.size);
       const tw = ctx.measureText(texts.cta).width, pad = probe.size * 0.85, bh = Math.min(b.h, probe.size * 2), bw = Math.min(b.w, tw + 2 * pad);
       plans.cta = { k: 'cta', b, box: b, used: bh, cta: { size: probe.size, bw, bh, fill: band ? pal.bg1 : pal.accent, tcol: band ? pal.text : pal.onAccent } };

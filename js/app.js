@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.18v";
+  const VERSION = "0.26.21v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -199,7 +199,7 @@
       "restauracje", "restauracja", "hotele", "hotel", "gastronomia", "horeca",
       "menu restauracyjne", "menu hotelowe", "karta menu", "karty menu",
       "podkładki na tackę", "podkladki na tacke", "podkładka na tackę", "tray liner",
-      "papier na tackę", "papier na tace", "40x30", "40 x 30", "menu a3", "menu offset",
+      "papier na tackę", "papier na tace", "40x30", "40 x 30", "menu a3", "menu a4", "menu offset",
       "menu preprint", "preprint 90 g", "menu jednostronne", "menu dwustronne", "menu laminowane",
       "prezenter", "prezenter trójkątny", "prezenter trojkatny", "stojak dl", "stojak a6",
       "stojak na stół", "stojak na stol", "tent card", "notes kelnerski", "notesy kelnerskie",
@@ -227,7 +227,9 @@
       "oklejenie witryny", "grafika na szybe", "druk na folii", "folia samoprzylepna",
       "folie i banery 24h", "banery 24h", "folie 24h", "baner powlekany", "baner powlekany 510g",
       "folia do podswietlen", "folia podświetlana", "backlit", "folia do kasetonu", "folia do lightboxa",
-      "folia z transferem", "folia transferowa", "transfer folia", "transfer tape"
+      "folia z transferem", "folia transferowa", "transfer folia", "transfer tape",
+      "baner siatka mesh", "baner mesh", "baner siatkowy", "folia podlogowa", "folia podłogowa",
+      "folia na podloge", "folia na podłogę", "naklejka na podloge", "naklejka na podłogę", "oklejenie podlogi"
     ],
     "Naklejki, etykiety i magnesy": [
       "naklejki", "naklejka", "naklejek", "naklejke", "wlepki", "wlepka", "wlepek", "etykiety",
@@ -360,6 +362,8 @@
       .toLocaleLowerCase("pl-PL")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
+      // 0.26.20v: „ł” nie rozkłada się w NFD — bez tego „podłogowa”/„błysk” zamieniały się w „pod ogowa”/„b ysk” i nie pasowały do słów kluczowych.
+      .replace(/ł/g, "l")
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
   }
@@ -720,12 +724,14 @@
     if (!root) return null;
     const normalized = normalizeSearchText(query);
     let material = "Baner powlekany 510g";
+    if (!normalized.includes("folia") && (/\bmesh\b/.test(normalized) || normalized.includes("siatk"))) material = "Baner siatka mesh";
     if (normalized.includes("folia")) {
       if (normalized.includes("laminat")) material = "Folia + laminat";
       else if (normalized.includes("owh") || normalized.includes("owv") || normalized.includes("one way")) material = "Folia OWH";
       else if (normalized.includes("transparent") || normalized.includes("przezrocz")) material = "Folia transparentna";
       else if (normalized.includes("podswiet") || normalized.includes("backlit")) material = "Folia do podświetleń";
       else if (normalized.includes("transfer")) material = "Folia z transferem";
+      else if (normalized.includes("podlog")) material = "Folia podłogowa";
       else if (normalized.includes("blysk")) material = "Folia błysk";
       else material = "Folia mat";
     }
@@ -852,11 +858,11 @@
       if (taxiIntent) return taxiIntent;
     }
     if (smartQueryHas(query, ["naklejka", "naklejki", "etykieta", "etykiety", "wlepka", "wlepki", "sticker", "stickers", "magnes", "magnesy", "moagne", "manges", "magenes"])) return buildStickerSmartQuote(query, quantity, dimensions);
-    if (smartQueryHas(query, ["baner", "banery", "banner", "bannery", "folia", "folie", "frontlit", "owv", "owh"])) return buildBannerSmartQuote(query, quantity, dimensions);
+    if (smartQueryHas(query, ["baner", "banery", "banner", "bannery", "folia", "folie", "frontlit", "mesh", "owv", "owh"])) return buildBannerSmartQuote(query, quantity, dimensions);
     if (smartQueryHas(query, ["notes", "notesy", "notatnik", "bloczek", "bloczki", "samokopiuj", "ncr"])) return buildNotepadSmartQuote(query, quantity);
     if (smartQueryHas(query, ["koperta", "koperty", "teczka", "teczki", "papier firmowy", "preprint"])) return buildCatalogSmartQuote(query, quantity, buildCompanyMaterialsCatalog(), { pageName: "Koperty, teczki i papier firmowy", prefix: "companyMaterials" });
     if (smartQueryHas(query, ["kalendarz", "kalendarze", "biuwar", "biuwary", "piramidka"])) return buildCatalogSmartQuote(query, quantity, state.prices?.kalendarze, { pageName: "Kalendarze", prefix: "calendar" });
-    if (smartQueryHas(query, ["menu a3", "podkladka na tacke", "podkladki na tacke", "prezenter", "stojak dl", "stojak a6", "notes kelnerski", "notesy kelnerskie"])) return buildCatalogSmartQuote(query, quantity, buildHospitalityCatalog(), { pageName: "Restauracje, hotele", prefix: "hospitality" });
+    if (smartQueryHas(query, ["menu a3", "menu a4", "podkladka na tacke", "podkladki na tacke", "prezenter", "stojak dl", "stojak a6", "notes kelnerski", "notesy kelnerskie"])) return buildCatalogSmartQuote(query, quantity, buildHospitalityCatalog(), { pageName: "Restauracje, hotele", prefix: "hospitality" });
     if (smartQueryHas(query, ["zaproszenie", "zaproszenia", "zaproszenie slubne", "zaproszenia slubne"])) return buildWeddingSmartQuote(query, quantity);
     if (smartQueryHas(query, ["druk", "wydruk", "wydruki", "ksero", "skan", "skanowanie", "kopie", "kopii", "strony", "stron"])) return buildDigitalSmartQuote(query, quantity, format);
     return null;
@@ -920,7 +926,7 @@
       aliases: ["dla restauracji", "otwieram restauracje", "otwieram bar", "do restauracji", "dla hotelu", "menu do restauracji", "reklama restauracji", "reklama baru", "kawiarnia", "otwieram kawiarnie", "gastronomia", "lokal gastronomiczny"],
       note: "Produkty restauracyjne mają osobne warianty w kalkulatorze; dobierzesz je po przejściu do kategorii.",
       suggestions: [
-        { title: "Menu restauracyjne", query: "menu A3", page: "Restauracje, hotele", reason: "Karty i menu do prezentowania oferty." },
+        { title: "Menu restauracyjne", query: "menu", page: "Restauracje, hotele", reason: "Karty i menu do prezentowania oferty." },
         { title: "Podkładki na tacki", query: "podkładki na tackę", page: "Restauracje, hotele", reason: "Materiały pod posiłki i promocje." },
         { title: "Naklejki i etykiety", query: "naklejki", page: "Naklejki, etykiety i magnesy", reason: "Oznaczenia opakowań i produktów." }
       ]
@@ -998,12 +1004,12 @@
       ["Wizytówki 24h", ["wizytowka", "wizytowki", "wizytowke", "wizytowek", "business card", "karta biznesowa"]],
       ["Plakaty 24h", ["plakat", "plakaty", "poster", "postery", "afisz"]],
       ["Naklejki, etykiety i magnesy", ["naklejka", "naklejki", "etykieta", "etykiety", "wlepka", "wlepki", "sticker", "stickers", "magnes", "magnesy", "taxi", "taksi"]],
-      ["Folie i banery 24h", ["baner", "banery", "banner", "bannery", "folia", "folie", "frontlit", "owv", "owh"]],
+      ["Folie i banery 24h", ["baner", "banery", "banner", "bannery", "folia", "folie", "frontlit", "mesh", "owv", "owh"]],
       ["Druk cyfrowy i ksero 24h", ["druk", "wydruk", "wydruki", "ksero", "skan", "skanowanie", "kopie", "kopii", "strony", "stron", "cyfra", "cyfrowy", "cyfrowa", "cyfrowe", "cyfrowo", "digital"]],
       ["Notesy i bloczki", ["notes", "notesy", "notatnik", "bloczek", "bloczki", "samokopiuj", "ncr"]],
       ["Koperty, teczki i papier firmowy", ["koperta", "koperty", "teczka", "teczki", "papier firmowy", "preprint"]],
       ["Kalendarze", ["kalendarz", "kalendarze", "biuwar", "biuwary", "piramidka"]],
-      ["Restauracje, hotele", ["menu a3", "podkladka na tacke", "podkladki na tacke", "prezenter", "stojak dl", "stojak a6", "notes kelnerski", "notesy kelnerskie"]],
+      ["Restauracje, hotele", ["menu a3", "menu a4", "podkladka na tacke", "podkladki na tacke", "prezenter", "stojak dl", "stojak a6", "notes kelnerski", "notesy kelnerskie"]],
       ["Śluby, wesela i imprezy", ["zaproszenie", "zaproszenia", "winietka", "winietki", "plan stolow", "plan stołów"]],
       ["Roll-upy i X-banery", ["rollup", "roll up", "roll-up", "xbaner", "x baner", "x-banner"]],
       ["PCV i pianki", ["pcv", "pianka", "pianki", "foamboard", "plansza", "plansze", "tablica reklamowa", "tablice reklamowe"]],
@@ -1146,10 +1152,10 @@
           "Np. 120x250 cm"
         );
       }
-      if (quoteAssistantHasAny(clean, ["folia", "folie"]) && !quoteAssistantHasAny(clean, ["mat", "blysk", "laminat", "owh", "owv", "transparent", "przezrocz", "podswiet", "backlit", "transfer"])) {
+      if (quoteAssistantHasAny(clean, ["folia", "folie"]) && !quoteAssistantHasAny(clean, ["mat", "blysk", "laminat", "owh", "owv", "transparent", "przezrocz", "podswiet", "backlit", "transfer", "podlog"])) {
         return quoteAssistantQuestion(
           "Jakiej folii potrzebujesz?",
-          [["Mat", "folia mat"], ["Błysk", "folia błysk"], ["Z laminatem", "folia z laminatem"], ["OWH / OWV", "folia OWH"], ["Transparentna", "folia transparentna"], ["Do podświetleń", "folia do podświetleń"]],
+          [["Mat", "folia mat"], ["Błysk", "folia błysk"], ["Z laminatem", "folia z laminatem"], ["OWH / OWV", "folia OWH"], ["Transparentna", "folia transparentna"], ["Do podświetleń", "folia do podświetleń"], ["Podłogowa", "folia podłogowa"]],
           "Np. folia OWH"
         );
       }

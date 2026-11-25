@@ -1,4 +1,4 @@
-"""Generator banerów (0.26.14v): panel tylko na banerach, edycja, cofanie, rozmiar ↔ formularz, logo, zdjęcie, kod QR (dekodowany OpenCV),
+"""Pełny generator banerów (0.26.14v; od 0.26.19v WYŁĄCZONY na stronie — test włącza go przez podmianę index.html): panel tylko na banerach, edycja, cofanie, rozmiar ↔ formularz, logo, zdjęcie, kod QR (dekodowany OpenCV),
 eksport JPG/PNG/PDF (wymiar strony), załączanie do zamówienia, zapis/odczyt projektu, układy × proporcje, motyw ciemny, EN, mobile.
 
 Uruchomienie: python tests/banner_generator_02614_browser.py   (wymaga playwright, Pillow, numpy, opencv-python, pypdf)
@@ -83,6 +83,12 @@ with sync_playwright() as p:
         except Exception: continue
     ctx = browser.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True)
     ctx.route(re.compile(r'googletagmanager|fonts\.g'), lambda r: r.abort())
+    # od 0.26.19v pełny generator jest wyłączony w index.html (skrypt w komentarzu) — na potrzeby tego testu włączamy go z powrotem
+    def _enable_profi(route):
+        body = (root / 'index.html').read_text(encoding='utf-8')
+        body = re.sub(r'<!--\s*(<script src="js/banner-generator\.js[^"]*"></script>)\s*-->', r'\1', body)
+        route.fulfill(status=200, content_type='text/html; charset=utf-8', body=body)
+    ctx.route(re.compile(r'/index\.html(\?.*)?$'), _enable_profi)
     page = ctx.new_page()
     errors = []
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' and not IGNORE.search(m.text) else None)

@@ -181,8 +181,8 @@ with sync_playwright() as p:
         # ---------- RESTAURACJE, HOTELE
         go(page,'Restauracje, hotele')
         no_price_table(page)
-        pick(page,'#hospitalityType','Menu A3 offset preprint 90 g')
-        MA='Menu A3 offset preprint 90 g'
+        pick(page,'#hospitalityType','Menu offset preprint 90 g')
+        MA='Menu offset preprint 90 g'
         for v in R[MA]['warianty']:
             assert tile_price(page,'#hospitalityVariant',v)==zl(price_of(R,MA,v,'A3',500))+' zł',v
         pick(page,'#hospitalityQty','1000')

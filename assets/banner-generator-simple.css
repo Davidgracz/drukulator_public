@@ -1,60 +1,104 @@
-/* Drukulator 0.26.17v — prosty generator banerów (kolor tła + treść).
- * Używa przycisków, panelu i pól z banner-generator.css (.d24bg-btn, .d24bg-entry, .d24bg-check, .d24bg-hint, .d24bg input…)
+/* Drukulator 0.26.19v — generator banerów (okno edytora: wymiary, podgląd z oceną czytelności, kolory, teksty, suwaki, wyrównanie).
+ * Używa przycisków, chipów, suwaków i pól z banner-generator.css (.d24bg-btn, .d24bg-chip, .d24bg-row, .d24bg-seg, .d24bg-entry, .d24bg input…)
  * oraz zmiennych motywu: --panel --panel-2 --border --text --muted --accent --nav-hover. Tryb ciemny przez zmienne. */
 
-/* ===== panel pod formularzem: na wierzchu strony banerów, wygląd jak .d24bg-entry (z banner-generator.css) ===== */
+/* ===== panel pod formularzem ===== */
 .d24bgs-entry { margin: 14px 0 6px; }
 .d24bgs-entry .d24bg-entry__status:empty { display: none; }
+.d24bgs-entry[hidden] { display: none !important; }   /* 0.26.21v: przy foliach generator jest ukryty */
 
 /* ===== okno ===== */
-dialog.d24bgs-dialog { padding: 0; border: 1px solid var(--border); border-radius: 16px; width: min(980px, 96vw); height: min(700px, 94vh); max-width: none; max-height: none; background: var(--panel); color: var(--text); overflow: hidden; box-shadow: 0 24px 70px rgba(0, 0, 0, .45); }
+dialog.d24bgs-dialog { padding: 0; border: 1px solid var(--border); border-radius: 16px; width: min(1240px, 97vw); height: min(820px, 96vh); max-width: none; max-height: none; background: var(--panel); color: var(--text); overflow: hidden; box-shadow: 0 24px 70px rgba(0, 0, 0, .45); }
 dialog.d24bgs-dialog:not([open]) { display: none; }
 dialog.d24bgs-dialog::backdrop { background: rgba(8, 12, 22, .66); }
 .d24bgs { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .d24bgs.is-busy { cursor: progress; }
 .d24bgs.is-busy button { pointer-events: none; opacity: .75; }
 
-.d24bgs-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--panel-2); }
-.d24bgs-top__title { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-.d24bgs-top__title strong { font-size: 1rem; }
-.d24bgs-top__title span { font-size: .72rem; color: var(--muted); }
+/* góra: Generator banera · wymiary · Wyczyść projekt · ✕ */
+.d24bgs-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--panel-2); }
+.d24bgs-top strong { font-size: 1.02rem; }
+.d24bgs-size { display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 700; }
+.d24bgs-size input { width: 78px; }
+.d24bgs-close { margin-left: auto; }
 
-.d24bgs-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
-.d24bgs-stage { min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--panel-2); overflow: auto; }
-.d24bgs-stage canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; box-shadow: 0 6px 26px rgba(0, 0, 0, .28); background: #fff; }
-.d24bgs-side { min-height: 0; overflow-y: auto; padding: 14px 16px; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
-.d24bgs-side h4 { margin: 0 0 8px; font-size: .8rem; letter-spacing: .02em; }
+.d24bgs-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 430px; }
 
-/* kolory tła */
-.d24bgs-swatches { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
-.d24bgs-swatches button { aspect-ratio: 1; min-height: 0; padding: 0; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+/* lewa strona: podgląd, pod nim wymiary, czytelność i ocena */
+.d24bgs-left { min-width: 0; min-height: 0; display: grid; background: var(--panel-2); }
+.d24bgs-stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 20px; overflow: hidden; }
+.d24bgs-stage canvas { display: block; flex: 0 1 auto; width: auto; height: auto; min-height: 0; max-width: 100%; max-height: calc(100% - 64px); box-shadow: 0 6px 26px rgba(0, 0, 0, .28); background: #fff; }
+.d24bgs-chips { flex: none; justify-content: center; max-width: 100%; }
+
+/* prawa strona: kolory → teksty → suwaki → wyrównanie → „Użyj w zamówieniu” (mieści się bez przewijania) */
+.d24bgs-side { min-height: 0; overflow-y: auto; padding: 16px 18px 0; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; }
+
+.d24bgs-swatches { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; }
+.d24bgs-swatches button { height: 34px; min-height: 0; padding: 0; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14); }
 .d24bgs-swatches button:hover { transform: translateY(-1px); }
 .d24bgs-swatches button[aria-pressed=true] { border-color: var(--text); box-shadow: 0 0 0 2px var(--accent); }
 .d24bgs-swatches button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.d24bgs-custom { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: .78rem; font-weight: 650; }
+.d24bgs-targets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.d24bgs-targets > span { margin-right: 2px; font-size: .78rem; font-weight: 750; }
+.d24bgs-targets button { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 5px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--panel); color: var(--text); font: inherit; font-size: .8rem; font-weight: 650; cursor: pointer; }
+.d24bgs-targets button:hover:not(:disabled) { border-color: var(--accent); }
+.d24bgs-targets button[aria-pressed=true] { background: var(--accent); border-color: transparent; color: #06130a; font-weight: 800; }
+.d24bgs-targets button:disabled { opacity: .45; cursor: not-allowed; }
+.d24bgs-targets button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.d24bgs-targets i { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .4); box-shadow: 0 0 0 1px rgba(255, 255, 255, .55); flex: none; }
 
-/* pola treści */
-.d24bgs-field { display: grid; gap: 5px; margin: 0 0 10px; }
-.d24bgs-field > span { display: flex; align-items: baseline; gap: 6px; font-size: .76rem; font-weight: 750; }
-.d24bgs-field em { font-style: normal; font-weight: 500; color: var(--muted); }
-.d24bgs-field small { margin-left: auto; font-weight: 600; color: var(--muted); font-size: .68rem; }
+.d24bgs-fields { display: grid; gap: 8px; }
+.d24bgs-field { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 8px; align-items: center; margin: 0; }
+.d24bgs-field__lbl { display: flex; flex-direction: column; font-size: .76rem; font-weight: 750; line-height: 1.2; }
+.d24bgs-field__lbl small { font-size: .66rem; font-weight: 600; color: var(--muted); }
+.d24bgs-field__lbl.d24bgs-check { flex-direction: row; align-items: center; gap: 8px; cursor: pointer; }
+.d24bgs-sliders { display: grid; gap: 0; }
+.d24bgs-sliders .d24bg-row { margin: 4px 0; grid-template-columns: 132px minmax(0, 1fr) 42px; }
+.d24bgs-sliders input:disabled { opacity: .4; }
+.d24bgs-align { margin: 0; }
 
-.d24bgs-link { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
-.d24bgs-note { margin: 0; }
-.d24bgs-msg { min-height: 1.2em; margin: 0; font-size: .78rem; font-weight: 650; color: var(--muted); }
+.d24bgs-msg { min-height: 1.1em; margin: 0 0 6px; font-size: .78rem; font-weight: 650; color: var(--muted); }
 .d24bgs-msg.is-bad { color: #c0392b; }
 html[data-theme=dark] .d24bgs-msg.is-bad { color: #ff8f84; }
-.d24bgs-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: auto -16px -14px; padding: 10px 16px 14px; position: sticky; bottom: -14px; background: var(--panel); border-top: 1px solid var(--border); }
-.d24bgs-actions .d24bg-btn--primary { flex: 1 1 100%; min-height: 44px; }
+.d24bgs-actions { margin: auto -18px 0; padding: 10px 18px 16px; position: sticky; bottom: 0; background: var(--panel); border-top: 1px solid var(--border); }
+.d24bgs-actions .d24bg-btn--primary { width: 100%; min-height: 48px; font-size: .95rem; }
 
 /* pola w oknie (poza .content przebijają globalne style pól) — te same zasady co w .d24bg */
 .d24bgs button:focus-visible, .d24bgs input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 
-/* ===== węższe ekrany ===== */
-@media (max-width: 760px) {
+/* ===== niższe ekrany: ciaśniej, żeby prawa kolumna nadal się mieściła ===== */
+@media (max-height: 780px) {
+  .d24bgs-side { gap: 12px; padding-top: 12px; }
+  .d24bgs-swatches button { height: 30px; }
+  .d24bgs-targets { margin-top: 8px; }
+  .d24bgs-fields { gap: 6px; }
+  .d24bgs-actions { padding-top: 8px; padding-bottom: 12px; }
+  .d24bgs-actions .d24bg-btn--primary { min-height: 44px; }
+}
+@media (max-width: 1100px) {
+  .d24bgs-main { grid-template-columns: minmax(0, 1fr) 390px; }
+}
+
+/* ===== telefon / wąskie okno: cały ekran, podgląd przyklejony u góry ===== */
+@media (max-width: 900px) {
   dialog.d24bgs-dialog { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; border: 0; }
+  .d24bgs-top { gap: 8px 12px; padding: 8px 10px; }
+  .d24bgs-top strong { order: 1; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d24bgs-top > [data-act=reset] { order: 2; min-height: 34px; padding: 5px 10px; font-size: .76rem; }
+  .d24bgs-close { order: 3; margin-left: 0; }
+  .d24bgs-size { order: 4; width: 100%; }
   .d24bgs-main { display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
-  .d24bgs-stage { flex: none; position: sticky; top: 0; z-index: 3; height: 30vh; min-height: 150px; padding: 10px; border-bottom: 1px solid var(--border); }
-  .d24bgs-side { border-left: 0; overflow: visible; flex: none; }
-  .d24bgs-top__title span { display: none; }
+  .d24bgs-left { flex: none; position: sticky; top: 0; z-index: 3; border-bottom: 1px solid var(--border); }
+  .d24bgs-stage { height: 36vh; min-height: 200px; padding: 10px; gap: 8px; }
+  .d24bgs-stage canvas { max-height: calc(100% - 52px); }
+  .d24bgs-chips { gap: 5px; }
+  .d24bgs-chips .d24bg-chip { font-size: .66rem; padding: 3px 8px; }
+  .d24bgs-side { border-left: 0; overflow: visible; flex: none; padding: 14px 14px 0; }
+  .d24bgs-swatches { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .d24bgs-swatches button { height: 40px; }
+  .d24bgs-actions { margin: 4px -14px 0; padding: 10px 14px 14px; }
+}
+@media (max-width: 520px) {
+  .d24bgs-field { grid-template-columns: 104px minmax(0, 1fr); }
+  .d24bgs-sliders .d24bg-row { grid-template-columns: 104px minmax(0, 1fr) 38px; }
 }
