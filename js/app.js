@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.21v";
+  const VERSION = "0.26.23v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -39,6 +39,7 @@
   const ORDER_FILE_MAX_TOTAL_BYTES = 50 * 1024 * 1024;
   const ORDER_FILE_ALLOWED_EXTENSIONS = new Set(["pdf", "jpg", "jpeg", "png", "webp", "tif", "tiff", "svg", "ai", "eps", "psd", "cdr", "zip"]);
   let orderFiles = [];
+  let lastOrderUploadStats = null; // 0.26.22: czas i przebieg ostatniej wysyłki plików (trafia do monitoringu w panelu)
   const ROULETTE_TRIGGER = "we wtorki chodze do kasyna";
   const BRAINROT_TRIGGER = "67 67 gyatt";
   const PRICE_ADMIN_TRIGGERS = new Set(["nie wszsytko zloto", "nie wszystko zloto"]);
@@ -4718,7 +4719,10 @@
             // 0.26.10v: gdy liczba stron nie została wpisana przez klienta, kafelek pokazuje cenę dla minimum tego zadruku (1 albo 2 strony).
             const qtyEl = document.getElementById("digQty");
             const pagesAuto = !!qtyEl && qtyEl.dataset.d24Auto !== undefined && qtyEl.dataset.d24Auto !== "" && qtyEl.value === qtyEl.dataset.d24Auto;
-            const previewPages = fieldId === "digSide" ? (pagesAuto ? C.getDigitalMinPages(v.digSide) : Math.max(n("digQty"), C.getDigitalMinPages(v.digSide))) : n("digQty");
+            // 0.26.23v: wybrany kafelek pokazuje cenę aktualnej konfiguracji (rzeczywista liczba stron), pozostałe — cenę po przełączeniu na ten zadruk.
+            const previewPages = fieldId === "digSide"
+              ? (candidate === values.digSide ? Math.max(n("digQty"), C.getDigitalMinPages(v.digSide)) : pagesAuto ? C.getDigitalMinPages(v.digSide) : Math.max(n("digQty"), C.getDigitalMinPages(v.digSide)))
+              : n("digQty");
             result = C.calculateDigitalPrint(state.prices, {
               colorMode: v.digColor, pages: previewPages, sets: n("digSets") || 1, formatName: v.digFormat || "A4", paperType: v.digPaper || "Standardowy 80 g", sideMode: v.digSide || "Jednostronny",
               foilType: foilOn ? v.digFoil : "Brak",
@@ -6003,6 +6007,7 @@
     const foilTypes = C.sortDigitalFoilTypes(C.getDigitalFoilTypes(state.prices));
     // 0.26.6v: w „Druku cyfrowym 24h” dwustronny zadruk jest domyślnie wybraną opcją.
     // 0.26.8v: kolejność opcji zamieniona — najpierw Jednostronny, potem Dwustronny (domyślnie nadal Dwustronny).
+    // 0.26.23v: domyślnie wybrany jest Jednostronny (najtańszy, 1 strona); Dwustronny zaczyna się od 2 stron.
     const sideModes = Object.keys(root.mnozniki_zadruku).sort((a, b) => (b === "Jednostronny") - (a === "Jednostronny"));
     const bindingTypes = C.getDigitalBindingTypes(state.prices);
     const impositionPapers = imposition.papiery || standardPapers.filter(name => ["130 g", "170 g", "250 g", "300 g"].some(weight => name.includes(weight)));
@@ -6022,7 +6027,7 @@
           <div class="field half"><label>Arkusz</label><select id="digSheet">${options(["Automatycznie", ...sheetFormats])}</select></div>`;
         note = `Kalkulator dodaje ${bleed} mm spadu z każdej strony, uwzględnia ${margin} mm marginesu arkusza i porównuje układ na SRA4 oraz SRA3. Cena korzysta z aktualnego cennika druku cyfrowego.`;
       } else if (service.value === "Druk cyfrowy 24h") {
-        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Dwustronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digSets">Ilość sztuk</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="2" step="1" value="2"><small id="digMinHint" aria-live="polite"></small><small id="digSheetsHint" aria-live="polite"></small></div>
+        html = `<div class="field half"><label>Rodzaj druku</label><select id="digColor">${options(Object.keys(root.druk_cyfrowy))}</select></div><div class="field half"><label>Format</label><select id="digFormat">${options(Object.keys(root.mnozniki_formatu))}</select></div><div class="field half"><label>Zadruk</label><select id="digSide">${options(sideModes, "Jednostronny")}</select></div><div class="field half"><label>Rodzaj papieru</label><select id="digPaper"></select></div><div class="field half"><label for="digSets">Ilość sztuk</label><input id="digSets" type="number" min="1" step="1" value="1"><small id="digSetsHint" aria-live="polite"></small></div><div class="field half"><label for="digQty">Liczba stron</label><input id="digQty" type="number" min="1" step="1" value="1"><small id="digMinHint" aria-live="polite"></small><small id="digSheetsHint" aria-live="polite"></small></div>
           <details class="d24-extra" id="digBindBox"><summary><span class="d24-extra__title">Bindowanie i oprawy</span><span class="d24-extra__state" id="digBindState"></span></summary>
             <div class="d24-extra__body">
               <div class="field half" id="digBindTypeField"><label for="digBindType">Rodzaj oprawy</label><select id="digBindType">${options(["Brak", ...bindingTypes])}</select><p class="d24-inactive-note">Bindowanie i oprawy są dostępne tylko dla papieru 80 g.</p></div>
@@ -6091,16 +6096,19 @@
       function enforceMinPages(event) {
         const min = minPagesNow();
         qty.min = String(min);
-        if (event && event.target === qty && !internalWrite) { autoPages = null; publishAuto(); }   // klient (albo preset z wyszukiwarki) ustawił liczbę stron
+        if (event && event.target === qty && !internalWrite) {
+          // 0.26.23v: klient wpisał liczbę stron. Wpisane ręcznie 1 albo 2 strony to wartość „startowa” — zmiana zadruku dalej dopasowuje ją
+          // (jednostronny 1, dwustronny 2), tak samo jak przy pierwszym otwarciu formularza. 3 i więcej stron oraz gotowy wynik z wyszukiwarki
+          // (zdarzenia programowe) to świadomy wybór — tych nie ruszamy.
+          const typedNow = qty.value.trim() !== "" ? Number(qty.value) : NaN;
+          autoPages = event.isTrusted && (typedNow === 1 || typedNow === 2) ? qty.value : null;
+          publishAuto();
+        }
         const untouched = qty.value.trim() === "" || (autoPages !== null && qty.value === autoPages);
         if (event && event.target === side && untouched && qty.value !== String(min)) setPagesAuto(min);
         const final = !event || event.type === "change" || event.target === side;
         const typed = qty.value.trim() !== "" ? Number(qty.value) : NaN;
-        if (final && Number.isFinite(typed) && typed < min) {
-          qty.value = String(min);
-          qty.dispatchEvent(new Event("input", { bubbles: true }));
-          qty.dispatchEvent(new Event("change", { bubbles: true }));
-        }
+        if (final && Number.isFinite(typed) && typed < min) setPagesAuto(min);   // 0.26.23v: podniesienie do minimum robi kalkulator — to nadal wartość startowa
         minHint.textContent = side.value === "Dwustronny" ? "Druk dwustronny: minimum 2 strony." : "Druk jednostronny: minimum 1 strona.";
       }
       function sheetsText() {
@@ -7456,9 +7464,29 @@
       throw new Error("Nie udało się otrzymać bezpiecznej sesji przesyłania plików.");
     }
 
-    const defaultChunkSize = Math.min(8 * 1024 * 1024, Math.max(256 * 1024, Number(session.chunkSize) || 4 * 1024 * 1024));
+    // 0.26.22: rozmiar fragmentu dopasowuje się do szybkości łącza i jest wspólny dla wszystkich plików.
+    // Zaczynamy od krótkiego fragmentu próbnego, potem celujemy w kilka sekund na fragment — dzięki temu wolne łącze
+    // nie trafia w limit czasu serwera (max_input_time), a szybkie szybko dochodzi do największego dozwolonego fragmentu.
     const minimumChunkSize = 256 * 1024;
+    const chunkStep = 64 * 1024;
+    const maxChunkSize = Math.min(8 * 1024 * 1024, Math.max(minimumChunkSize, Number(session.chunkSize) || 4 * 1024 * 1024));
+    const serverInputSeconds = Number(session.maxInputTime) > 0 ? Number(session.maxInputTime) : 0;
+    const targetChunkSeconds = serverInputSeconds ? Math.max(2, Math.min(8, serverInputSeconds / 4)) : 8;
+    const stallMs = Number(session.stallMs) > 0 ? Math.max(1000, Number(session.stallMs)) : 45000;
+    const responseWaitMs = Math.round(stallMs * 1.5);
+    let chunkCeiling = maxChunkSize;
+    const clampChunk = bytes => {
+      const stepped = Math.round(bytes / chunkStep) * chunkStep;
+      return Math.max(minimumChunkSize, Math.min(chunkCeiling, maxChunkSize, stepped));
+    };
+    let chunkSize = clampChunk(Math.min(maxChunkSize, 1024 * 1024));
+    const adaptChunkSize = (bytes, requested, seconds) => {
+      if (bytes < requested || bytes < minimumChunkSize || !(seconds > 0)) return;
+      const bytesPerSecond = bytes / Math.max(seconds, 0.05);
+      chunkSize = clampChunk(Math.min(bytesPerSecond * targetChunkSeconds, chunkSize * 2));
+    };
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    const stats = { chunks: 0, retries: 0, rejected: 0, maxChunk: 0 };
     const started = performance.now();
     const abort = new AbortController();
     let uploaded = 0;
@@ -7470,11 +7498,17 @@
       const current = Math.min(totalBytes, uploaded + inFlight);
       const percentage = Math.min(100, Math.floor((current / totalBytes) * 100));
       const seconds = Math.max(0.25, (performance.now() - started) / 1000);
-      const mbPerSecond = (current / 1048576 / seconds).toFixed(1);
+      const bytesPerSecond = current / seconds;
+      const speedText = bytesPerSecond < 100 * 1024 ? `${Math.round(bytesPerSecond / 1024)} KB/s` : `${(bytesPerSecond / 1048576).toFixed(1)} MB/s`;
+      let remainingText = "";
+      if (seconds >= 2 && current >= 262144 && current < totalBytes) {
+        const left = (totalBytes - current) / bytesPerSecond;
+        remainingText = left < 10 ? " · pozostało kilka sekund" : left < 90 ? ` · pozostało ok. ${Math.round(left / 5) * 5} s` : ` · pozostało ok. ${Math.ceil(left / 60)} min`;
+      }
       status.innerHTML = `<div class="d24-upload-progress" role="progressbar" aria-label="Wysyłanie załączników" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}">
         <strong>Wysyłanie załączników: ${percentage}%</strong>
         <div class="d24-upload-progress-track"><span style="width:${percentage}%"></span></div>
-        <small>${mbPerSecond} MB/s · Nie zamykaj strony. Po przesłaniu plików zostanie wysłane zgłoszenie do drukarni.</small>
+        <small>${speedText}${remainingText} · Nie zamykaj strony. Po przesłaniu plików zostanie wysłane zgłoszenie do drukarni.</small>
       </div>`;
     };
 
@@ -7485,17 +7519,27 @@
       request.withCredentials = true;
       request.setRequestHeader("X-Requested-With", "Drukulator");
       const abortRequest = () => request.abort();
+      // 0.26.22: zawieszone połączenie (brak postępu) kończymy sami i ponawiamy ten sam fragment, zamiast czekać w nieskończoność.
+      let stalled = false;
+      let stallTimer = null;
+      const armStall = ms => {
+        clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => { stalled = true; request.abort(); }, ms);
+      };
       const finish = (callback, value) => {
+        clearTimeout(stallTimer);
         signal.removeEventListener("abort", abortRequest);
         activePieces.delete(index);
         callback(value);
       };
       request.upload.onprogress = event => {
+        armStall(stallMs);
         if (event.lengthComputable) {
           activePieces.set(index, event.loaded);
           showUploadProgress();
         }
       };
+      request.upload.onload = () => armStall(responseWaitMs);
       request.onload = () => {
         let body;
         try { body = JSON.parse(request.responseText); }
@@ -7509,16 +7553,17 @@
         }
       };
       request.onerror = () => finish(reject, new TypeError("Failed to fetch"));
-      request.onabort = () => finish(reject, new Error("Przesyłanie przerwano."));
+      request.onabort = () => finish(reject, stalled ? new TypeError("Failed to fetch") : new Error("Przesyłanie przerwano."));
       signal.addEventListener("abort", abortRequest, { once: true });
+      armStall(stallMs);
       request.send(formData);
     });
 
     const uploadOneFile = async (file, index) => {
-      let chunkSize = defaultChunkSize;
       let offset = 0;
       while (offset < file.size && !abort.signal.aborted) {
-        const piece = file.slice(offset, Math.min(offset + chunkSize, file.size));
+        const requested = chunkSize;
+        const piece = file.slice(offset, Math.min(offset + requested, file.size));
         const formData = new FormData();
         formData.append("action", "chunk");
         formData.append("token", session.token);
@@ -7527,6 +7572,7 @@
         formData.append("chunk", piece, "fragment.bin");
         let result = null;
         let retryWithSmallerChunk = false;
+        const pieceStarted = performance.now();
 
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
@@ -7535,16 +7581,22 @@
           } catch (error) {
             if (abort.signal.aborted) throw error;
             // The proxy may reject a large body with HTTP 413 or PHP may silently discard it.
-            if ([400, 413].includes(error.httpStatus) && chunkSize > minimumChunkSize) {
+            if ([400, 413].includes(error.httpStatus) && piece.size > minimumChunkSize) {
               retryWithSmallerChunk = true;
               break;
             }
             const networkIssue = error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(String(error.message || ""));
             if (attempt === 2 || !networkIssue) throw error;
+            // Ponawiamy dokładnie ten sam fragment (serwer rozpoznaje duplikat), a kolejne będą mniejsze.
+            stats.retries++;
+            chunkSize = clampChunk(Math.floor(Math.min(chunkSize, requested) / 2));
           }
         }
         if (retryWithSmallerChunk) {
-          chunkSize = Math.max(minimumChunkSize, Math.floor(chunkSize / 2));
+          // Odrzucenie fragmentu = limit serwera lub serwera pośredniczącego: zapamiętujemy go dla wszystkich plików.
+          stats.rejected++;
+          chunkCeiling = Math.max(minimumChunkSize, Math.floor(piece.size / 2));
+          chunkSize = clampChunk(Math.min(chunkSize, chunkCeiling));
           continue;
         }
         if (!result || Number(result.received) !== offset + piece.size) {
@@ -7552,6 +7604,9 @@
         }
         offset += piece.size;
         uploaded += piece.size;
+        stats.chunks++;
+        stats.maxChunk = Math.max(stats.maxChunk, piece.size);
+        adaptChunkSize(piece.size, requested, (performance.now() - pieceStarted) / 1000);
         showUploadProgress();
       }
     };
@@ -7579,6 +7634,13 @@
       } catch {}
       throw failed.reason;
     }
+    lastOrderUploadStats = {
+      seconds: Math.round((performance.now() - started) / 100) / 10,
+      chunks: stats.chunks,
+      retries: stats.retries,
+      rejected: stats.rejected,
+      maxChunkKb: Math.round(stats.maxChunk / 1024)
+    };
     return session.token;
   }
 
@@ -7660,7 +7722,9 @@
       if (sendTotals.discount > 0 && state.promo) payload.promoCode = state.promo.code;
       if (orderFiles.length) {
         try {
+          lastOrderUploadStats = null;
           payload.uploadToken = await uploadOrderFilesInChunks(orderFiles, status);
+          if (lastOrderUploadStats) payload.uploadStats = lastOrderUploadStats;
         } catch (uploadError) {
           if (uploadError && typeof uploadError === "object") uploadError.orderErrorReason = "files";
           throw uploadError;

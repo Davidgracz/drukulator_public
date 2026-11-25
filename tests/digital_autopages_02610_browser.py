@@ -64,8 +64,9 @@ with sync_playwright() as p:
     browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
     for width in (1300,390):
         page,errors=boot(browser,width); go(page)
-        # --- start: dwustronny, 2 strony (wartość automatyczna); kafelki zmieniają liczbę stron tam i z powrotem
-        assert page.locator('#digSide').input_value()=='Dwustronny' and qty_info(page)==['2','2'],qty_info(page)
+        # --- start (0.26.23: domyślnie jednostronny, 1 strona — wartość automatyczna); kafelki zmieniają liczbę stron tam i z powrotem
+        assert page.locator('#digSide').input_value()=='Jednostronny' and qty_info(page)==['1','1'],qty_info(page)
+        tile_click(page,1); assert page.locator('#digSide').input_value()=='Dwustronny' and qty_info(page)==['2','2'],qty_info(page)
         tile_click(page,0); assert page.locator('#digSide').input_value()=='Jednostronny' and qty_info(page)==['1','1'],qty_info(page)
         assert hint(page)=='Druk jednostronny: minimum 1 strona.',hint(page)
         tile_click(page,1); assert page.locator('#digSide').input_value()=='Dwustronny' and qty_info(page)==['2','2'],qty_info(page)
@@ -90,10 +91,11 @@ with sync_playwright() as p:
         setv(page,'#digSide','Dwustronny'); settle(page); assert qty_info(page)[0]=='7',qty_info(page)
         setv(page,'#digQty','2'); setv(page,'#digSide','Jednostronny'); settle(page); assert qty_info(page)[0]=='2',qty_info(page)
         setv(page,'#digSide','Dwustronny'); settle(page); assert qty_info(page)[0]=='2'
-        # klient wpisał 1 przy jednostronnym → dwustronny podnosi do 2 (minimum), powrót nie przywraca „automatu”
+        # klient wpisał 1 przy jednostronnym → dwustronny podnosi do 2 (minimum); 0.26.23: to podniesienie robi kalkulator, więc powrót do
+        # jednostronnego znów ustawia 1 (wcześniej zostawało 2 i kliknięcia nie zmieniały ceny)
         setv(page,'#digSide','Jednostronny'); setv(page,'#digQty','1'); settle(page); assert qty_info(page)[0]=='1'
         setv(page,'#digSide','Dwustronny'); settle(page); assert qty_info(page)[0]=='2'
-        setv(page,'#digSide','Jednostronny'); settle(page); assert qty_info(page)[0]=='2',qty_info(page)
+        setv(page,'#digSide','Jednostronny'); settle(page); assert qty_info(page)[0]=='1',qty_info(page)
         assert not errors,errors
         print('PASS digital auto pages width',width,flush=True); page.close()
     # --- kafelki pokazują cenę dla liczby stron, jaka zostanie ustawiona po kliknięciu
@@ -130,17 +132,18 @@ with sync_playwright() as p:
     page.fill('#homeProductSearch','1 strona A4 kolor jednostronnie'); page.keyboard.press('Enter'); page.wait_for_timeout(1200)
     assert page.locator('#digSide').input_value()=='Jednostronny' and qty_info(page)[0]=='1',(page.locator('#digSide').input_value(),qty_info(page))
     assert not errors,errors; page.close()
-    # --- po zmianie usługi i powrocie formularz zaczyna od nowa (dwustronny, 2 strony, wartość automatyczna)
+    # --- po zmianie usługi i powrocie formularz zaczyna od nowa (jednostronny, 1 strona, wartość automatyczna)
     page,errors=boot(browser,1300); go(page)
     setv(page,'#digQty','9'); settle(page)
     setv(page,'#digService','Ksero i druk'); settle(page); setv(page,'#digService','Druk cyfrowy 24h'); settle(page)
-    assert page.locator('#digSide').input_value()=='Dwustronny' and qty_info(page)[0]=='2',qty_info(page)
-    tile_click(page,0); assert qty_info(page)[0]=='1'
+    assert page.locator('#digSide').input_value()=='Jednostronny' and qty_info(page)[0]=='1',qty_info(page)
+    tile_click(page,1); assert qty_info(page)[0]=='2'
     assert not errors,errors; page.close()
     # --- angielski
     page,errors=boot(browser,1300,lang='en'); go(page)
-    tile_click(page,0); assert qty_info(page)[0]=='1' and hint(page)=='Single-sided printing: minimum 1 page.',(qty_info(page),hint(page))
+    assert qty_info(page)[0]=='1' and hint(page)=='Single-sided printing: minimum 1 page.',(qty_info(page),hint(page))
     tile_click(page,1); assert qty_info(page)[0]=='2' and hint(page)=='Double-sided printing: minimum 2 pages.'
+    tile_click(page,0); assert qty_info(page)[0]=='1' and hint(page)=='Single-sided printing: minimum 1 page.'
     assert not errors,errors; page.close()
     browser.close()
 print('OK digital_autopages_02610_browser')

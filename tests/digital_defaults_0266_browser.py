@@ -57,20 +57,20 @@ with sync_playwright() as p:
     browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
     for width in (1300,390):
         page,errors=boot(browser,width); go(page)
-        # --- zadruk (0.26.8): kolejność Jednostronny, Dwustronny; domyślnie wybrany nadal Dwustronny
+        # --- zadruk (0.26.8): kolejność Jednostronny, Dwustronny; 0.26.23: domyślnie wybrany Jednostronny (najtańszy)
         assert opts(page,'#digSide')==['Jednostronny','Dwustronny'],opts(page,'#digSide')
-        assert page.locator('#digSide').input_value()=='Dwustronny'
+        assert page.locator('#digSide').input_value()=='Jednostronny'
         t=tiles(page,'digSide'); assert 'Jednostronny' in t[0][0] and 'Dwustronny' in t[1][0],t
-        assert [sel for _,sel in t]==[False,True],t
-        # wycena na domyślnych ustawieniach = dwustronny (1 strona = 1 arkusz); ręczna zmiana na jednostronny działa
+        assert [sel for _,sel in t]==[True,False],t
+        # wycena: ręczna zmiana na dwustronny działa (10 stron dwustronnie = 5 arkuszy papieru zamiast 10)
         setv(page,'#digColor','Kolorowy'); setv(page,'#digPaper','Papier kredowy 250 g'); setv(page,'#digQty','10'); settle(page)
-        two=price(page); assert 'Zadruk' in quote_text(page) and 'Dwustronny' in quote_text(page),quote_text(page)[:300]
-        setv(page,'#digSide','Jednostronny'); settle(page); one=price(page); assert 'Jednostronny' in quote_text(page)
+        one=price(page); assert 'Zadruk' in quote_text(page) and 'Jednostronny' in quote_text(page),quote_text(page)[:300]
+        setv(page,'#digSide','Dwustronny'); settle(page); two=price(page); assert 'Dwustronny' in quote_text(page)
         assert float(two.replace(' zł','').replace(',','.'))<float(one.replace(' zł','').replace(',','.')),(two,one)   # 10 stron dwustronnie = 5 arkuszy papieru zamiast 10, taniej
-        setv(page,'#digSide','Dwustronny'); settle(page); assert price(page)==two
-        # po przełączeniu usługi i powrocie znów dwustronny jest domyślny
+        setv(page,'#digSide','Jednostronny'); settle(page); assert price(page)==one
+        # po przełączeniu usługi i powrocie znów jednostronny jest domyślny
         setv(page,'#digService','Ksero i druk'); setv(page,'#digService','Druk cyfrowy 24h'); settle(page)
-        assert page.locator('#digSide').input_value()=='Dwustronny' and opts(page,'#digSide')==['Jednostronny','Dwustronny']
+        assert page.locator('#digSide').input_value()=='Jednostronny' and opts(page,'#digSide')==['Jednostronny','Dwustronny']
         # Arkuszowanie 24h bez zmian (domyślnie jednostronny, jak dotąd)
         setv(page,'#digService','Arkuszowanie 24h'); settle(page); assert page.locator('#digSide').input_value()=='Jednostronny',opts(page,'#digSide')
         assert not errors,errors

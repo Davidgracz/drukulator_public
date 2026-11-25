@@ -47,7 +47,7 @@ with sync_playwright() as p:
         # --- pola: strony zamiast kartek
         assert page.locator('label[for="digQty"]').inner_text().strip()=='Liczba stron'
         assert 'kartek' not in page.locator('#digQty').evaluate('e=>e.closest(".form-grid").innerText')
-        assert page.locator('#digQty').input_value()=='2'   # 0.26.8: domyślnie dwustronnie, więc początkowo minimum 2 strony
+        assert page.locator('#digQty').input_value()=='1'   # 0.26.23: domyślnie jednostronnie, więc początkowo 1 strona
         # --- papiery bez kolorowego i etykietowego (czarno-biały i kolor)
         for color in ('Czarno-biały','Kolorowy'):
             setv(page,'#digColor',color)

@@ -59,11 +59,14 @@ with sync_playwright() as p:
     browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
     for width in (1300,390):
         page,errors=boot(browser,width); go(page)
-        # --- stan początkowy: dwustronnie (domyślnie), minimum 2 strony
-        assert opts(page,'#digSide')==['Jednostronny','Dwustronny'] and page.locator('#digSide').input_value()=='Dwustronny'
-        assert qty_info(page)==['2','2'],qty_info(page)
-        assert hint(page)=='Druk dwustronny: minimum 2 strony.',hint(page)
+        # --- stan początkowy (0.26.23: jednostronnie, domyślnie): minimum 1 strona
+        assert opts(page,'#digSide')==['Jednostronny','Dwustronny'] and page.locator('#digSide').input_value()=='Jednostronny'
+        assert qty_info(page)==['1','1'],qty_info(page)
+        assert hint(page)=='Druk jednostronny: minimum 1 strona.',hint(page)
         assert float(price(page).replace(' zł','').replace(',','.'))>0
+        # --- dwustronnie: minimum 2
+        setv(page,'#digSide','Dwustronny'); settle(page)
+        assert qty_info(page)==['2','2'] and hint(page)=='Druk dwustronny: minimum 2 strony.',(qty_info(page),hint(page))
         # --- jednostronnie: minimum 1, wpisanie 1 działa
         setv(page,'#digSide','Jednostronny'); settle(page)
         assert qty_info(page)[1]=='1' and hint(page)=='Druk jednostronny: minimum 1 strona.',(qty_info(page),hint(page))
@@ -98,6 +101,7 @@ with sync_playwright() as p:
         print('PASS digital min pages width',width,flush=True); page.close()
     # --- prawdziwa interakcja: wpisanie „1” i kliknięcie „Oblicz cenę” (blur → change → podniesienie do 2) daje cenę, nie błąd
     page,errors=boot(browser,1300); go(page)
+    setv(page,'#digSide','Dwustronny'); settle(page)
     page.locator('#digQty').click(); page.keyboard.press('Control+A'); page.keyboard.type('1')
     assert qty_info(page)[0]=='1'
     page.locator('#calculate').click(); page.wait_for_timeout(400)
@@ -122,9 +126,8 @@ with sync_playwright() as p:
     assert not errors,errors; page.close()
     # --- angielski
     page,errors=boot(browser,1300,lang='en'); go(page)
-    assert hint(page)=='Double-sided printing: minimum 2 pages.',hint(page)
-    setv(page,'#digSide','Jednostronny'); settle(page); assert hint(page)=='Single-sided printing: minimum 1 page.',hint(page)
-    setv(page,'#digSide','Dwustronny'); settle(page)
+    assert hint(page)=='Single-sided printing: minimum 1 page.',hint(page)
+    setv(page,'#digSide','Dwustronny'); settle(page); assert hint(page)=='Double-sided printing: minimum 2 pages.',hint(page)
     page.locator('#digQty').evaluate('e=>{e.value="1";}'); page.locator('#calculate').evaluate('b=>b.click()'); page.wait_for_timeout(200)
     assert 'For double-sided printing the minimum is 2 pages.' in quote_text(page),quote_text(page)[:300]
     assert 'Przy druku' not in page.locator('#quoteArea').inner_text()

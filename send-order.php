@@ -210,6 +210,22 @@ function drukulator_remove_attachment_directory(string $directory): void
     @rmdir($directory);
 }
 
+/**
+ * Zamienia statystyki wysyłki plików z przeglądarki na krótki opis do monitoringu.
+ * Wszystkie wartości są liczbami i są ograniczane — dane od klienta nie są wiarygodne.
+ */
+function drukulator_upload_stats_report(array $stats, int $bytes): array
+{
+    $seconds = max(0.0, min(3600.0, (float) ($stats['seconds'] ?? 0)));
+    $chunks = max(0, min(5000, (int) ($stats['chunks'] ?? 0)));
+    $retries = max(0, min(5000, (int) ($stats['retries'] ?? 0)));
+    $rejected = max(0, min(5000, (int) ($stats['rejected'] ?? 0)));
+    $max_chunk_kb = max(0, min(65536, (int) ($stats['maxChunkKb'] ?? 0)));
+    $speed = $seconds > 0 ? ($bytes / 1048576) / $seconds : 0.0;
+    $note = sprintf('%.1f MB/s · %d fragm. · maks. %d KB · ponowień %d · odrzuceń %d', $speed, $chunks, $max_chunk_kb, $retries, $rejected);
+    return array('note' => $note, 'duration_ms' => (int) round($seconds * 1000));
+}
+
 function drukulator_collect_attachments(string $order_id, string $upload_token = ''): array
 {
     if ($upload_token !== '') {
@@ -697,6 +713,16 @@ d24_monitor_log('order_mail_accepted', 'info', 'Serwer przyjął e-mail z zapyta
     'bytes' => array_sum(array_map('filesize', array_filter($attachments, 'is_file'))),
     'total' => $total, 'channel' => 'office',
 ), (int) round((microtime(true) - $order_started_at) * 1000));
+// 0.26.22: czas i przebieg wysyłki plików (zmierzone w przeglądarce) — do monitoringu, żeby widać było realną prędkość wysyłki.
+if ($upload_token !== '' && isset($data['uploadStats']) && is_array($data['uploadStats'])) {
+    $upload_bytes = (int) array_sum(array_map('filesize', array_filter($attachments, 'is_file')));
+    $upload_report = drukulator_upload_stats_report($data['uploadStats'], $upload_bytes);
+    d24_monitor_log('upload_finished', 'info', 'Przesłano pliki w fragmentach', $order_id, array(
+        'files' => count($attachment_names),
+        'bytes' => $upload_bytes,
+        'note' => $upload_report['note'],
+    ), $upload_report['duration_ms']);
+}
 // Server-confirmed enquiry, independent of browser telemetry or page unloading.
 d24_analytics_verified_order($order_id, (float) $total, $cart, $data['analyticsSession'] ?? null);
 if ($promo_code !== '') {
