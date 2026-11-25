@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "0.26.23v";
+  const VERSION = "0.26.24v";
   const C = window.Calculators;
   const content = document.getElementById("content");
   const navigation = document.getElementById("navigation");
@@ -4825,7 +4825,7 @@
     }); refresh();
     document.getElementById("calculate").addEventListener("click", () => { try {
       const price = C.calculateBusinessCards(state.prices, print.value, finish.value, Number(qty.value), sides.value);
-      showQuote({ title: "Wizytówki 24h", description: `${value("bcFormat")}, druk ${print.value.toLowerCase()}, ${finish.value}, ${sides.value.toLowerCase()}, ${qty.value} szt.`, price, details: [["Format", value("bcFormat")], ["Nakład", `${qty.value} szt.`]] });
+      showQuote({ title: "Wizytówki 24h", description: `${value("bcFormat")}, druk ${print.value.toLowerCase()}, ${finish.value}, ${sides.value.toLowerCase()}, ${qty.value} szt.`, price, details: [["Format", value("bcFormat")], ["Nakład", `${qty.value} szt.`]], files: window.Druk24CardSimple?.getAttachFiles?.() || [] });   // 0.26.24v: projekt z generatora wizytówek (PDF ze spadem), jeśli klient go dołączył
     } catch (e) { setResultError(e); } });
   }
 

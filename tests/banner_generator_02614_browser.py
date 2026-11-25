@@ -97,7 +97,7 @@ with sync_playwright() as p:
 
     # --- 1. panel tylko na banerach ---
     goto_page(page, 'Wizytówki 24h')
-    check('brak panelu generatora na wizytówkach', page.locator('.d24bg-entry').count() == 0 and page.locator('.d24bgs-entry').count() == 0)
+    check('brak panelu generatora banerów na wizytówkach (od 0.26.24v jest tam osobny generator wizytówek)', page.locator('.d24bg-entry:not(.d24cg-entry)').count() == 0 and page.locator('.d24bgs-entry:not(.d24cg-entry)').count() == 0)
     goto_page(page, 'Folie i banery 24h')
     check('panel generatora na banerach (pełny + prosty)', page.locator('.d24bg-entry:not(.d24bgs-entry)').count() == 1 and page.locator('.d24bgs-entry').count() == 1)
     check('miniatura projektu narysowana', page.evaluate("document.querySelector('.d24bg-entry:not(.d24bgs-entry) canvas').width") > 100)

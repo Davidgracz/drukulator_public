@@ -666,7 +666,9 @@
     if (!grid) return;
     if (!panel || !panel.isConnected) { mountPanel(grid); lastSig = ''; }
     // „Podgląd 3D” ma być zaraz pod formularzem, przed schematem 2D.
-    if (grid.nextElementSibling !== panel) grid.after(panel);
+    // 0.26.24v: jeśli jest generator wizytówek (tuż pod formularzem), podgląd 3D układa się zaraz pod nim.
+    const lead = card.querySelector(':scope > .d24cg-entry') || grid;
+    if (lead.nextElementSibling !== panel) lead.after(panel);
     refresh();
   }
   function schedule() { if (scheduled) return; scheduled = true; requestAnimationFrame(decorate); }
