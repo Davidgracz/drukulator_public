@@ -1,8 +1,10 @@
-"""0.26.24v: generator wizytówek (Wizytówki 24h): panel pod formularzem + okno edytora (format / orientacja / zadruk zmieniają formularz, 6 układów, kolory, tło, krój pisma,
-dane, logo, rewers z kodem QR), PDF ze spadem 1,5 mm (MediaBox = format + spad, TrimBox = format netto, 1 albo 2 strony, 600 dpi), „Użyj w zamówieniu” → koszyk,
-„Zobacz w 3D”, ocena (najmniejszy tekst w pt, dpi logo, moduł QR), EN, telefon. Bez eksportu (nie ma pobierania).
+"""0.26.25v: generator wizytówek (Wizytówki 24h) w modelu „jak zaawansowany generator banerów”: panel pod formularzem + okno edytora (format / orientacja / zadruk zmieniają
+formularz), 12 układów awersu, 18 palet + własny kolor tekstu / akcentu / tła z przyciskiem ↺, 6 osobnych układów rewersu (marka, kolorowy pas, ramka, duży QR, dane,
+notatki) z wyborem tła rewersu, krój pisma, dane, logo (z białą płytką pod ciemnym logo na ciemnym tle), kod QR, PDF ze spadem 1,5 mm (MediaBox = format + spad, TrimBox =
+format netto, 1 albo 2 strony, 600 dpi), „Użyj w zamówieniu” → koszyk, „Zobacz w 3D”, ocena (najmniejszy tekst w pt, dpi logo, moduł QR), migracja zapisu z 0.26.25v, EN, telefon.
+Bez eksportu (nie ma pobierania).
 
-Uruchomienie: python tests/card_generator_02624_browser.py   (wymaga playwright, pypdf, Pillow, opencv-python; serwer HTTP startuje sam)
+Uruchomienie: python tests/card_generator_02625_browser.py   (wymaga playwright, pypdf, Pillow, opencv-python; serwer HTTP startuje sam)
 """
 import base64, functools, http.server, io, pathlib, re, socketserver, struct, threading, zlib
 
@@ -76,6 +78,12 @@ def attached_bytes(page):
     return base64.b64decode(b64)
 
 
+NAVY = {'pal': 'white-blue', 'custom': {'text': '', 'accent': '#0f2747', 'bg': ''}}
+NOCUSTOM = {'text': '', 'accent': '', 'bg': ''}
+LAYOUTS12 = ['bar', 'top', 'band', 'bottom', 'split', 'diagonal', 'center', 'minimal', 'corner', 'frame', 'badge', 'columns']
+BACKS6 = ['brand', 'stripe', 'frame', 'qr', 'contact', 'notes']
+
+
 def make_logo(path, w=600, h=300, color=(192, 24, 122, 255)):
     im = Image.new('RGBA', (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     d.rectangle([0, 0, w - 1, h - 1], fill=color)
@@ -106,7 +114,7 @@ with sync_playwright() as p:
     check('wizytówki: generator tuż pod formularzem, podgląd 3D zaraz pod nim', 'd24cg-entry' in kids[gi + 1] and 'd24c3-panel' in kids[gi + 2], str(kids[gi:gi + 3]))
     check('wizytówki: jeden panel, widoczny, z miniaturą i przyciskiem', page.locator(ENTRY).count() == 1 and page.locator(ENTRY).is_visible() and page.locator(f'{ENTRY} canvas').count() == 1)
     check('wizytówki: panel banerów się nie pojawia', page.locator('.d24bgs-entry:not(.d24cg-entry)').count() == 0)
-    check('wizytówki: wersja 0.26.24v', page.locator('#versionLabel').inner_text() == '0.26.24v')
+    check('wizytówki: wersja 0.26.25v', page.locator('#versionLabel').inner_text() == '0.26.25v')
     for name in ('Ulotki 24h', 'Plakaty 24h', 'Folie i banery 24h', 'Druk cyfrowy i ksero 24h'):
         goto_page(page, name)
         check(f'{name}: bez generatora wizytówek', page.locator(ENTRY).count() == 0)
@@ -117,22 +125,32 @@ with sync_playwright() as p:
     thumb = page.locator(f'{ENTRY} canvas').first
     box = thumb.bounding_box()
     check('miniatura ma kształt wizytówki (poziomo ok. 93 : 53)', box and 1.5 < box['width'] / box['height'] < 2.0, str(box))
-    shot_entry = shot / 'card_entry_0.26.24.png'
+    shot_entry = shot / 'card_entry_0.26.25.png'
     page.locator(ENTRY).scroll_into_view_if_needed(); page.locator(ENTRY).screenshot(path=str(shot_entry))
 
     # ============ B. okno: format, orientacja, zadruk ============
     check('domyślnie: bez przykładowych danych w PDF — projekt nie jest dołączony', not page.evaluate(f"{S}.isAttachEnabled()") and page.evaluate(f"{S}.getAttachFiles().length") == 0)
     open_editor(page)
     check('okno otwarte, okno banerów nie istnieje', page.evaluate(f"document.querySelector('{DLG}').open") and page.locator('dialog.d24bgs-dialog').count() == 0)
-    check('widoczne: 2 formaty, 6 układów, 12 kolorów, 3 tła, 4 kroje', page.locator(f'{DLG} [data-format]').count() == 2 and page.locator(f'{DLG} [data-layout]').count() == 6
-          and page.locator(f'{DLG} [data-color]').count() == 12 and page.locator(f'{DLG} [data-paper]').count() == 3 and page.locator(f'{DLG} [data-font]').count() == 4)
-    check('jednostronne: widoczny tylko awers, sekcja rewersu ukryta', page.locator(f'{DLG} [data-fig=front]').is_visible() and not page.locator(f'{DLG} [data-fig=back]').is_visible() and not page.locator(f'{DLG} [data-backsec]').is_visible())
+    check('widoczne: 2 formaty, 12 układów awersu, 6 układów rewersu, 18 palet, 4 kroje', page.locator(f'{DLG} [data-format]').count() == 2 and page.locator(f'{DLG} [data-layout]').count() == 12
+          and page.locator(f'{DLG} [data-blayout]').count() == 6 and page.locator(f'{DLG} [data-pal]').count() == 18 and page.locator(f'{DLG} [data-font]').count() == 4)
+    check('kolory własne: tekst, akcent, tło (3 pola + 3 przyciski ↺)', page.locator(f'{DLG} input[data-clr]').count() == 3 and page.locator(f'{DLG} [data-clear]').count() == 3)
+    check('nie ma już starych kontrolek (12 próbek koloru, wybór tła papieru)', page.locator(f'{DLG} [data-color]').count() == 0 and page.locator(f'{DLG} [data-paper]').count() == 0)
+    check('jednostronne: widoczny tylko awers, w sekcji rewersu informacja i przycisk „Dodaj rewers” (bez układów rewersu)', page.locator(f'{DLG} [data-fig=front]').is_visible() and not page.locator(f'{DLG} [data-fig=back]').is_visible()
+          and page.locator(f'{DLG} [data-backoff]').is_visible() and page.locator(f'{DLG} [data-act=two-sided]').is_visible() and not page.locator(f'{DLG} [data-backbody]').is_visible())
+    page.click(f'{DLG} [data-act=two-sided]'); page.wait_for_timeout(400)
+    check('„Dodaj rewers” ustawia zadruk dwustronny w formularzu i pokazuje układy rewersu', page.evaluate("document.getElementById('bcSides').value") == 'Dwustronne' and page.locator(f'{DLG} [data-backbody]').is_visible() and not page.locator(f'{DLG} [data-backoff]').is_visible() and page.locator(f'{DLG} [data-fig=back]').is_visible())
+    select(page, 'bcSides', 'Jednostronne')
+    thumbs = page.evaluate("[...document.querySelectorAll('dialog.d24cg-dialog [data-layout] canvas')].map(c => c.toDataURL())")
+    check('12 miniatur układów awersu, wszystkie różne', len(thumbs) == 12 and len(set(thumbs)) == 12, str(len(set(thumbs))))
+    bthumbs = page.evaluate("[...document.querySelectorAll('dialog.d24cg-dialog [data-blayout] canvas')].map(c => c.toDataURL())")
+    check('6 miniatur układów rewersu, wszystkie różne', len(bthumbs) == 6 and len(set(bthumbs)) == 6, str(len(set(bthumbs))))
     check('zaznaczone: 90×50, poziomo, jednostronny', page.get_attribute(f'{DLG} [data-format="90x50 mm"]', 'aria-pressed') == 'true' and page.get_attribute(f'{DLG} [data-orient=landscape]', 'aria-pressed') == 'true'
           and page.get_attribute(f'{DLG} [data-sides=Jednostronne]', 'aria-pressed') == 'true')
     c = page.locator(f'{DLG} [data-fig=front] canvas'); cw, ch = page.evaluate("[...document.querySelectorAll('dialog.d24cg-dialog [data-fig=front] canvas')].map(c => [c.width, c.height])[0]")
     check('płótno awersu = 90 × 50 mm + spad 1,5 mm (93 × 53, skala 12 px/mm)', (cw, ch) == (1116, 636), f'{cw}x{ch}')
     page.click(f'{DLG} [data-sides=Dwustronne]'); page.wait_for_timeout(400)
-    check('klik „Dwustronny” ustawia formularz (bcSides) i pokazuje rewers', page.evaluate("document.getElementById('bcSides').value") == 'Dwustronne' and page.locator(f'{DLG} [data-fig=back]').is_visible() and page.locator(f'{DLG} [data-backsec]').is_visible())
+    check('klik „Dwustronny” ustawia formularz (bcSides) i pokazuje rewers', page.evaluate("document.getElementById('bcSides').value") == 'Dwustronne' and page.locator(f'{DLG} [data-fig=back]').is_visible() and page.locator(f'{DLG} [data-backbody]').is_visible())
     page.click(f'{DLG} [data-format="85x55 mm"]'); page.wait_for_timeout(400)
     check('klik „85 × 55” ustawia formularz (bcFormat) i płótno', page.evaluate("document.getElementById('bcFormat').value") == '85x55 mm'
           and page.evaluate("document.querySelector('dialog.d24cg-dialog [data-fig=front] canvas').width") == round((85 + 3) * 12), page.evaluate("document.querySelector('dialog.d24cg-dialog [data-fig=front] canvas').width"))
@@ -152,32 +170,66 @@ with sync_playwright() as p:
     check('powrót na cyfrowy: „Jednostronny” znów dostępny', not page.is_disabled(f'{DLG} [data-sides=Jednostronne]'))
     page.click(f'{DLG} [data-sides=Dwustronne]'); page.wait_for_timeout(300)
 
-    # ============ C. układy, kolory, tła ============
-    set_state(page, {**REAL, 'layout': 'bar', 'paper': 'white', 'color': '#0f2747', 'orient': 'landscape'})
+    # ============ C. układy, palety, kolory własne ============
+    set_state(page, {**REAL, **NAVY, 'layout': 'bar', 'orient': 'landscape'})
     check('układ „pasek”: pasek w kolorze akcentu z lewej, reszta biała', pix(page, 'front', 2, 25) == '#0f2747' and pix(page, 'front', 70, 45) == '#ffffff', f'{pix(page, "front", 2, 25)} {pix(page, "front", 70, 45)}')
     check('pasek wchodzi w spad (kolor także poza polem netto)', page.evaluate("""() => { const c = document.createElement('canvas'); Druk24CardSimple.render(c, 'front'); const d = c.getContext('2d').getImageData(2, 300, 1, 1).data; return '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join(''); }""") == '#0f2747')
     set_state(page, {'layout': 'band'}); check('układ „kolorowy nagłówek”: góra w kolorze, dół biały', pix(page, 'front', 45, 2) == '#0f2747' and pix(page, 'front', 85, 46) == '#ffffff')
     set_state(page, {'layout': 'split', 'company': 'Fala'}); check('układ „podział”: lewy panel w kolorze, prawa biała', pix(page, 'front', 3, 3) == '#0f2747' and pix(page, 'front', 85, 3) == '#ffffff')
     set_state(page, {**REAL, 'layout': 'corner'}); check('układ „narożnik”: trójkąt w prawym dolnym rogu', pix(page, 'front', 88.5, 48.5) == '#0f2747' and pix(page, 'front', 88.5, 2) == '#ffffff')
-    set_state(page, {'layout': 'center'}); check('układ „wyśrodkowana” i „minimalistyczna”: białe tło', pix(page, 'front', 1, 1) == '#ffffff')
+    set_state(page, {'layout': 'center'}); check('układ „wyśrodkowana”: białe tło', pix(page, 'front', 1, 1) == '#ffffff')
     set_state(page, {'layout': 'minimal'}); check('minimalistyczna: białe tło', pix(page, 'front', 1, 1) == '#ffffff')
-    set_state(page, {'layout': 'bar', 'paper': 'accent', 'color': '#d71920'})
-    check('tło kolorowe: tło w kolorze akcentu, pasek w kolorze tekstu', pix(page, 'front', 70, 45) == '#d71920' and pix(page, 'front', 2, 25) == '#ffffff', f'{pix(page, "front", 70, 45)} {pix(page, "front", 2, 25)}')
-    set_state(page, {'paper': 'dark', 'color': '#ffd60a'})
-    check('tło ciemne: ciemne, pasek w kolorze akcentu', pix(page, 'front', 70, 45) == '#141414' and pix(page, 'front', 2, 25) == '#ffd60a')
-    set_state(page, {'paper': 'dark', 'color': '#111111'})
-    check('akcent zlewający się z tłem zamienia się na kolor tekstu (ciemne tło + czarny akcent)', pix(page, 'front', 2, 25) == '#ffffff', pix(page, 'front', 2, 25))
-    set_state(page, {'paper': 'white', 'color': '#ffffff'})
-    check('biały akcent na białym: pasek w kolorze tekstu', pix(page, 'front', 2, 25) == '#141414', pix(page, 'front', 2, 25))
-    # klik w kafelek układu / koloru / tła / kroju w oknie
-    set_state(page, {'paper': 'white', 'color': '#0f2747', 'layout': 'bar'})
-    page.click(f'{DLG} [data-layout=split]'); page.click(f'{DLG} [data-swatches] [data-color="#d71920"]'); page.click(f'{DLG} [data-paper=dark]'); page.click(f'{DLG} [data-font=serif]'); page.wait_for_timeout(300)
+    set_state(page, {'layout': 'top'}); check('układ „górny pasek”: pasek na górze, reszta biała', pix(page, 'front', 45, 2) == '#0f2747' and pix(page, 'front', 45, 12) == '#ffffff' and pix(page, 'front', 2, 45) == '#ffffff')
+    set_state(page, {'layout': 'bottom'}); check('układ „dolny pasek”: pas z danymi na dole, góra biała', pix(page, 'front', 45, 48.5) == '#0f2747' and pix(page, 'front', 85, 2) == '#ffffff' and pix(page, 'front', 2, 2) == '#ffffff')
+    set_state(page, {'layout': 'diagonal'}); check('układ „ukośny panel”: panel z prawej, lewa biała', pix(page, 'front', 88, 25) == '#0f2747' and pix(page, 'front', 2, 2) == '#ffffff' and pix(page, 'front', 50, 2) == '#ffffff')
+    set_state(page, {'layout': 'frame'}); check('układ „ramka”: linia ramki w kolorze akcentu, tło białe', pix(page, 'front', 3.58, 25) == '#0f2747' and pix(page, 'front', 1, 25) == '#ffffff')
+    set_state(page, {'layout': 'badge'}); check('układ „znak i dane”: monogram w kółku z lewej strony', pix(page, 'front', 6.5, 12.5) == '#0f2747' and pix(page, 'front', 1, 1) == '#ffffff')
+    set_state(page, {'layout': 'columns'}); check('układ „dwie kolumny”: cienka pionowa linia pośrodku', pix(page, 'front', 45, 25) == '#0f2747' and pix(page, 'front', 1, 1) == '#ffffff')
+    small = []
+    for lay in LAYOUTS12:
+        for orient in ('landscape', 'portrait'):
+            set_state(page, {'layout': lay, 'orient': orient, **NAVY})
+            rp = page.evaluate(f"{S}.getReport()")
+            if not (rp['minPt'] and rp['minPt'] >= 5): small.append(f"{lay}/{orient}={rp['minPt']}")
+    check('wszystkie 12 układów w obu orientacjach (dane przykładowe): najmniejszy tekst ≥ 5 pt', not small, ', '.join(small))
+    set_state(page, {'orient': 'landscape', 'layout': 'bar'})
+    # palety i kolory własne
+    set_state(page, {'pal': 'navy-gold', 'custom': NOCUSTOM})
+    check('paleta „Granat i żółć”: tło granatowe, pasek żółty', pix(page, 'front', 70, 45) == '#0f2747' and pix(page, 'front', 2, 25) == '#ffc928', f'{pix(page, "front", 70, 45)} {pix(page, "front", 2, 25)}')
+    set_state(page, {'pal': 'red-white', 'custom': NOCUSTOM})
+    check('paleta „Czerwień i biel”: czerwone tło, biały pasek', pix(page, 'front', 70, 45) == '#d71920' and pix(page, 'front', 2, 25) == '#ffffff')
+    set_state(page, {'pal': 'navy-gold', 'custom': {'text': '', 'accent': '#e0408a', 'bg': ''}})
+    check('własny kolor akcentu nadpisuje paletę (tło z palety zostaje)', pix(page, 'front', 2, 25) == '#e0408a' and pix(page, 'front', 70, 45) == '#0f2747')
+    set_state(page, {'pal': 'navy-gold', 'custom': {'text': '', 'accent': '', 'bg': '#ffffff'}})
+    dark_ink = (np.array(side_png(page, 'front')) == np.array([17, 17, 17])).all(axis=2).sum()
+    check('sam własny kolor tła: tło się zmienia, a tekst dobiera się sam (ciemny na białym)', pix(page, 'front', 70, 45) == '#ffffff' and dark_ink > 300, f'{dark_ink}')
+    set_state(page, {'pal': 'black-orange', 'custom': {'text': '', 'accent': '#111111', 'bg': ''}})
+    check('akcent zlewający się z tłem zamienia się na kolor tekstu (czarny akcent na czerni)', pix(page, 'front', 2, 25) == '#ffffff', pix(page, 'front', 2, 25))
+    set_state(page, {'pal': 'white-blue', 'custom': {'text': '', 'accent': '#ffffff', 'bg': ''}})
+    check('biały akcent na białym: pasek w kolorze tekstu', pix(page, 'front', 2, 25) == '#12263f', pix(page, 'front', 2, 25))
+    # klik w paletę / własny kolor / ↺ / układ / krój w oknie
+    set_state(page, {**NAVY, 'layout': 'bar', 'font': 'modern'})
+    page.click(f'{DLG} [data-layout=split]'); page.click(f'{DLG} [data-pal=red-white]'); page.click(f'{DLG} [data-font=serif]'); page.wait_for_timeout(300)
     st = page.evaluate(f"{S}.getState()")
-    check('kliknięcia w oknie zmieniają stan (układ, kolor, tło, krój)', st['layout'] == 'split' and st['color'] == '#d71920' and st['paper'] == 'dark' and st['font'] == 'serif', str(st))
-    check('zaznaczenia widoczne (aria-pressed)', page.get_attribute(f'{DLG} [data-layout=split]', 'aria-pressed') == 'true' and page.get_attribute(f'{DLG} [data-paper=dark]', 'aria-pressed') == 'true'
-          and page.get_attribute(f'{DLG} [data-font=serif]', 'aria-pressed') == 'true' and page.get_attribute(f'{DLG} [data-color="#d71920"]', 'aria-pressed') == 'true')
-    set_state(page, {'layout': 'bar', 'paper': 'white', 'color': '#0f2747', 'font': 'modern'})
-    page.screenshot(path=str(shot / 'card_dialog_0.26.24.png'))
+    check('kliknięcia w oknie zmieniają stan (układ, paleta, krój)', st['layout'] == 'split' and st['pal'] == 'red-white' and st['font'] == 'serif', str(st))
+    check('wybór palety zeruje własne kolory', st['custom'] == NOCUSTOM, str(st['custom']))
+    check('zaznaczenia widoczne (aria-pressed)', page.get_attribute(f'{DLG} [data-layout=split]', 'aria-pressed') == 'true' and page.get_attribute(f'{DLG} [data-pal=red-white]', 'aria-pressed') == 'true'
+          and page.get_attribute(f'{DLG} [data-font=serif]', 'aria-pressed') == 'true')
+    check('pola kolorów pokazują kolory z palety (tekst biały, akcent biały, tło czerwone)', page.input_value(f'{DLG} [data-clr=text]') == '#ffffff' and page.input_value(f'{DLG} [data-clr=bg]') == '#d71920' and page.is_disabled(f'{DLG} [data-clear=bg]'))
+    page.evaluate("""() => { const i = document.querySelector('dialog.d24cg-dialog [data-clr=accent]'); i.value = '#ffd60a'; i.dispatchEvent(new Event('input', {bubbles: true})); }"""); page.wait_for_timeout(250)
+    check('własny kolor akcentu z pola koloru: zapisany w stanie, ↺ staje się aktywny', page.evaluate(f"{S}.getState().custom.accent") == '#ffd60a' and not page.is_disabled(f'{DLG} [data-clear=accent]'))
+    set_state(page, {'layout': 'bar'}); check('własny akcent widać na wizytówce (pasek)', pix(page, 'front', 2, 25) == '#ffd60a', pix(page, 'front', 2, 25))
+    page.click(f'{DLG} [data-clear=accent]'); page.wait_for_timeout(250)
+    check('↺ przywraca kolor z palety (akcent biały)', page.evaluate(f"{S}.getState().custom.accent") == '' and pix(page, 'front', 2, 25) == '#ffffff' and page.is_disabled(f'{DLG} [data-clear=accent]'))
+    # stary zapis (0.26.24v: color + paper + back) zamienia się na paletę i kolory własne
+    set_state(page, {'paper': 'dark', 'color': '#ffd60a', 'layout': 'bar', 'back': 'white'})
+    st = page.evaluate(f"{S}.getState()")
+    check('migracja: stare „paper: dark” + color → paleta „Czerń i pomarańcz” z własnym akcentem, back: white → białe tło rewersu', st['pal'] == 'black-orange' and st['custom']['accent'] == '#ffd60a' and st['backBg'] == 'white', str(st))
+    check('migracja: ciemne tło, pasek w kolorze akcentu', pix(page, 'front', 70, 45) == '#111111' and pix(page, 'front', 2, 25) == '#ffd60a')
+    set_state(page, {'paper': 'accent', 'color': '#d71920'})
+    check('migracja: stare „paper: accent” → tło w kolorze akcentu, pasek w kolorze tekstu', pix(page, 'front', 70, 45) == '#d71920' and pix(page, 'front', 2, 25) == '#ffffff', f'{pix(page, "front", 70, 45)} {pix(page, "front", 2, 25)}')
+    set_state(page, {**NAVY, 'layout': 'bar', 'font': 'modern', 'backBg': 'accent'})
+    page.screenshot(path=str(shot / 'card_dialog_0.26.25.png'))
 
     # ============ D. przykładowe teksty blokują „Użyj w zamówieniu” ============
     page.click(f'{DLG} [data-act=reset]'); page.click(f'{DLG} [data-act=reset]'); page.wait_for_timeout(300)
@@ -221,13 +273,45 @@ with sync_playwright() as p:
     r2 = pypdf.PdfReader(io.BytesIO(attached_bytes(page)))
     check('zmiana zadruku w formularzu przebudowuje załącznik: 2 strony', len(r2.pages) == 2 and abs(float(r2.pages[1].mediabox.width) - 93 * mm) < 0.1, str(len(r2.pages)))
     open_editor(page)
-    check('dwustronnie: rewers i sekcja rewersu widoczne', page.locator(f'{DLG} [data-fig=back]').is_visible() and page.locator(f'{DLG} [data-backsec]').is_visible())
-    set_state(page, {'qrOn': False, 'back': 'color'})
+    check('dwustronnie: rewers i układy rewersu widoczne', page.locator(f'{DLG} [data-fig=back]').is_visible() and page.locator(f'{DLG} [data-backbody]').is_visible())
+    set_state(page, {**NAVY, 'qrOn': False, 'backBg': 'accent', 'backLayout': 'brand', 'layout': 'bar', 'orient': 'landscape'})
     back_plain = side_png(page, 'back')
-    check('rewers kolorowy: tło w kolorze akcentu', pix(page, 'back', 2, 2) == '#0f2747', pix(page, 'back', 2, 2))
-    page.click(f'{DLG} [data-back=white]'); page.wait_for_timeout(250)
-    check('rewers „białe”: białe tło', pix(page, 'back', 2, 2) == '#ffffff')
-    page.click(f'{DLG} [data-back=color]'); page.wait_for_timeout(250)
+    check('tło rewersu „kolor akcentu”: tło w kolorze akcentu', pix(page, 'back', 2, 2) == '#0f2747', pix(page, 'back', 2, 2))
+    page.click(f'{DLG} [data-bbg=white]'); page.wait_for_timeout(250)
+    check('tło rewersu „białe”: białe tło', pix(page, 'back', 2, 2) == '#ffffff')
+    set_state(page, {'pal': 'navy-gold', 'custom': NOCUSTOM})
+    page.click(f'{DLG} [data-bbg=same]'); page.wait_for_timeout(250)
+    check('tło rewersu „jak awers”: tło z palety (granat)', pix(page, 'back', 2, 2) == '#0f2747' and page.get_attribute(f'{DLG} [data-bbg=same]', 'aria-pressed') == 'true')
+    page.click(f'{DLG} [data-bbg=accent]'); page.wait_for_timeout(250)
+    check('tło rewersu „kolor akcentu”: żółty rewers z palety', pix(page, 'back', 2, 2) == '#ffc928')
+    set_state(page, NAVY)
+    # układy rewersu
+    set_state(page, {**REAL, 'qrOn': False, 'backBg': 'same', 'backLayout': 'brand'})
+    seen = {}
+    for bl in BACKS6:
+        page.click(f'{DLG} [data-blayout={bl}]'); set_state(page, {'qrOn': False}); page.wait_for_timeout(100)
+        seen[bl] = side_png(page, 'back').tobytes()
+        check(f'rewers „{bl}”: kafelek zaznaczony i stan zapisany', page.get_attribute(f'{DLG} [data-blayout={bl}]', 'aria-pressed') == 'true' and page.evaluate(f"{S}.getState().backLayout") == bl)
+    page.click(f'{DLG} [data-blayout=brand]')
+    check('bez kodu QR: brand, stripe, frame, contact i notes wyglądają różnie, a „duży QR” bez kodu wraca do układu marki', len({seen[k] for k in ('brand', 'stripe', 'frame', 'contact', 'notes')}) == 5 and seen['qr'] == seen['brand'])
+    set_state(page, {'backLayout': 'stripe', 'backBg': 'same'})
+    check('rewers „kolorowy pas”: pas na całą szerokość (także w spadzie), nad i pod nim białe tło', pix(page, 'back', 2, 20) == '#0f2747' and pix(page, 'back', 88, 20) == '#0f2747' and pix(page, 'back', 45, 3) == '#ffffff' and pix(page, 'back', 45, 47) == '#ffffff', f"{pix(page, 'back', 2, 20)} {pix(page, 'back', 45, 3)}")
+    set_state(page, {'backLayout': 'frame'})
+    check('rewers „ramka”: ramka w kolorze akcentu przy krawędzi, środek biały', pix(page, 'back', 3.58, 25) == '#0f2747' and pix(page, 'back', 1, 25) == '#ffffff')
+    set_state(page, {'backLayout': 'notes'})
+    ln = np.array(side_png(page, 'back')); rows = [y for y in range(ln.shape[0]) if (np.abs(ln[y, 200:900].astype(int) - 255).sum(axis=1) > 20).all()]
+    check('rewers „pole na notatki”: kilka poziomych linii na całej szerokości pola', len(rows) >= 3, str(len(rows)))
+    set_state(page, {'tagline': 'Twoje hasło firmowe', 'backLayout': 'brand'})
+    check('przykładowe hasło blokuje w układzie, który je pokazuje (marka na środku)', 'przykładowy' in page.evaluate(f"{S}.getProblem()"), page.evaluate(f"{S}.getProblem()"))
+    set_state(page, {'backLayout': 'notes'})
+    check('przykładowe hasło nie blokuje w układzie „pole na notatki” (hasła tam nie ma)', page.evaluate(f"{S}.getProblem()") == '', page.evaluate(f"{S}.getProblem()"))
+    set_state(page, {'tagline': REAL['tagline'], 'backLayout': 'brand', 'backBg': 'accent'})
+    set_state(page, {'qrOn': False, 'backLayout': 'qr'}); page.click(f'{DLG} [data-blayout=qr]'); page.wait_for_timeout(250)
+    check('kafelek „Duży kod QR” włącza kod QR (pole wyboru zaznaczone)', page.evaluate(f"{S}.getState().qrOn") is True and page.is_checked(f'{DLG} [data-qr-on]'))
+    qimg = np.array(side_png(page, 'back')); det0 = cv2.QRCodeDetector(); v0, _, _ = det0.detectAndDecode(cv2.cvtColor(qimg, cv2.COLOR_RGB2BGR))
+    check('układ „duży kod QR”: kod dekoduje się do adresu strony', v0 == 'https://www.fala.example', repr(v0))
+    rep0 = page.evaluate(f"{S}.getReport()"); check('układ „duży kod QR”: moduł kodu ≥ 0,6 mm (duży)', rep0['qrModule'] >= 0.6, str(rep0['qrModule']))
+    set_state(page, {'backLayout': 'brand', 'qrOn': False})
     page.check(f'{DLG} [data-qr-on]'); page.wait_for_timeout(300)
     rep = page.evaluate(f"{S}.getReport()")
     check('kod QR włączony: moduł ≥ 0,4 mm i chip „Kod QR”', rep['qrModule'] >= 0.4 and 'Kod QR' in page.inner_text(f'{DLG} [data-chips]'), f"{rep['qrModule']} | {page.inner_text(f'{DLG} [data-chips]')}")
@@ -246,7 +330,10 @@ with sync_playwright() as p:
     page.fill(f'{DLG} [data-f=tagline]', ''); page.wait_for_timeout(200)
     check('rewers bez hasła i bez logo: nazwa firmy na środku (nie jest pusty)', np.array(side_png(page, 'back')).std() > 5)
     set_state(page, {'tagline': 'Reklama, która płynie'})
-    page.screenshot(path=str(shot / 'card_dialog_back_0.26.24.png'))
+    for bl in BACKS6:
+        page.click(f'{DLG} [data-blayout={bl}]'); page.wait_for_timeout(150)
+        if bl == 'stripe': page.screenshot(path=str(shot / 'card_dialog_back_0.26.25.png'))
+    set_state(page, {'backLayout': 'brand'})
 
     # ============ G. logo ============
     logo_path = pathlib.Path('/tmp/d24_test_logo.png'); make_logo(logo_path)
@@ -286,6 +373,22 @@ with sync_playwright() as p:
     page.click(f'{DLG} [data-act=logo-off]'); page.wait_for_timeout(300)
     check('„Usuń logo”: logo znika', pix(page, 'front', 80, 11) == '#ffffff' and not page.locator(f'{DLG} [data-act=logo-off]').is_visible())
 
+    # ============ G2. logo na ciemnym tle: biała płytka tylko wtedy, gdy jest potrzebna ============
+    dark_logo, light_logo = pathlib.Path('/tmp/d24_test_logo_dark.png'), pathlib.Path('/tmp/d24_test_logo_light.png')
+    Image.new('RGBA', (600, 300), (15, 39, 71, 255)).save(dark_logo); Image.new('RGBA', (600, 300), (250, 250, 250, 255)).save(light_logo)
+    set_state(page, {'pal': 'navy-gold', 'custom': NOCUSTOM, 'layout': 'bar', 'orient': 'landscape'})
+    page.set_input_files(f'{DLG} [data-logofile]', str(dark_logo)); page.wait_for_timeout(700)
+    check('ciemne logo na granatowym tle dostaje białą płytkę (biały pas wokół logo)', pix(page, 'front', 63.5, 17.6) == '#ffffff' and pix(page, 'front', 73, 11.5) == '#0f2747', f"{pix(page, 'front', 63.5, 17.6)} {pix(page, 'front', 73, 11.5)}")
+    page.set_input_files(f'{DLG} [data-logofile]', str(light_logo)); page.wait_for_timeout(700)
+    check('jasne logo na granatowym tle jest bez płytki (rysowane na całym polu)', pix(page, 'front', 63.5, 17.6) == '#0f2747' and pix(page, 'front', 73, 11.5) == '#fafafa', f"{pix(page, 'front', 63.5, 17.6)} {pix(page, 'front', 73, 11.5)}")
+    set_state(page, {'pal': 'white-blue', 'custom': NOCUSTOM})
+    page.set_input_files(f'{DLG} [data-logofile]', str(dark_logo)); page.wait_for_timeout(700)
+    check('ciemne logo na białym tle: bez płytki, logo na pełnym polu', pix(page, 'front', 73, 11.5) == '#0f2747' and pix(page, 'front', 63.5, 5.6) == '#0f2747', f"{pix(page, 'front', 73, 11.5)} {pix(page, 'front', 63.5, 5.6)}")
+    set_state(page, {'pal': 'navy-gold', 'layout': 'split', 'company': 'Fala', 'qrOn': False, 'backBg': 'accent', 'backLayout': 'stripe'})
+    check('układ „podział”: ciemne logo na kolorowym (żółtym) panelu — bez płytki', pix(page, 'front', 18, 25) == '#0f2747', pix(page, 'front', 18, 25))
+    page.click(f'{DLG} [data-act=logo-off]'); page.wait_for_timeout(300)
+    set_state(page, {**REAL, **NAVY, 'layout': 'bar', 'backLayout': 'brand'})
+
     # ============ H. zbyt mały tekst blokuje ============
     set_state(page, {**REAL, 'orient': 'portrait', 'layout': 'bar', 'email': 'bardzo.dlugi.adres.email.kowalska@studio-reklamy-fala.example'})
     rep = page.evaluate(f"{S}.getReport()")
@@ -315,17 +418,27 @@ with sync_playwright() as p:
     t3 = page.locator('.d24c3-panel').inner_text()
     check('3D rozpoznaje spad 1,5 mm w pliku z generatora', 'spad' in t3.lower() and '1,5' in t3, t3[:400])
     page.locator('.d24c3-panel').scroll_into_view_if_needed(); page.wait_for_timeout(500)
-    page.screenshot(path=str(shot / 'card_3d_0.26.24.png'))
+    page.screenshot(path=str(shot / 'card_3d_0.26.25.png'))
 
     # ============ K. EN ============
     page.evaluate("document.documentElement.lang = 'en'"); page.wait_for_timeout(600)
     check('EN: panel po angielsku', 'BUSINESS CARD GENERATOR' in page.inner_text(ENTRY) and 'Design my card' in page.inner_text(ENTRY), page.inner_text(ENTRY)[:120])
     open_editor(page)
-    check('EN: okno po angielsku, 6 układów', 'Business card generator' in page.inner_text(f'{DLG} .d24cg-top') and 'Centred' in page.inner_text(f'{DLG} .d24cg-layouts') and 'Use in order' in page.inner_text(DLG), page.inner_text(f'{DLG} .d24cg-top')[:150])
+    check('EN: nazwy układów rewersu po angielsku', 'Notes lines' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text() and 'Large QR code' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text())
+    check('EN: palety po angielsku (podpis)', page.get_attribute(f'{DLG} [data-pal=navy-gold]', 'title') == 'Navy & yellow', str(page.get_attribute(f'{DLG} [data-pal=navy-gold]', 'title')))
+    check('EN: okno po angielsku, 12 układów awersu', 'Business card generator' in page.inner_text(f'{DLG} .d24cg-top') and 'Centred' in page.locator(f'{DLG} .d24cg-layouts').first.inner_text() and 'Use in order' in page.inner_text(DLG), page.inner_text(f'{DLG} .d24cg-top')[:150])
     page.click(f'{DLG} [data-act=reset]'); page.click(f'{DLG} [data-act=reset]'); page.wait_for_timeout(300)
     check('EN: przykłady po angielsku (John Smith)', page.evaluate(f"{S}.getState().name") == 'John Smith' and 'sample' in page.evaluate(f"{S}.getProblem()").lower(), page.evaluate(f"{S}.getProblem()"))
     page.keyboard.press('Escape'); page.evaluate("document.documentElement.lang = 'pl'"); page.wait_for_timeout(500)
     check('powrót do PL: panel po polsku', 'GENERATOR WIZYTÓWEK' in page.inner_text(ENTRY))
+
+    # ============ K2. zapis z 0.26.24v w pamięci przeglądarki zamienia się na paletę i kolory własne ============
+    page.evaluate("() => localStorage.setItem('druk24-card-simple-v1', JSON.stringify({color: '#d71920', paper: 'dark', layout: 'split', back: 'white', name: 'Stary Zapis', font: 'serif'}))")
+    page.reload(); page.wait_for_timeout(900); goto_page(page, PAGE); page.wait_for_timeout(500)
+    st = page.evaluate(f"{S}.getState()")
+    check('stary zapis po przeładowaniu: paleta + własny akcent + białe tło rewersu, reszta zachowana', st['pal'] == 'black-orange' and st['custom']['accent'] == '#d71920' and st['backBg'] == 'white'
+          and st['layout'] == 'split' and st['font'] == 'serif' and st['name'] == 'Stary Zapis' and st['backLayout'] == 'brand', str(st))
+    check('stary zapis: ciemne tło z czerwonym panelem', pix(page, 'front', 85, 45) == '#111111' and pix(page, 'front', 3, 3) == '#d71920', f"{pix(page, 'front', 85, 45)} {pix(page, 'front', 3, 3)}")
 
     check('brak błędów JS w konsoli', not errors, '; '.join(errors[:4]))
 
@@ -337,9 +450,9 @@ with sync_playwright() as p:
     mp.goto(base); mp.wait_for_timeout(800); goto_page(mp, PAGE); mp.wait_for_timeout(500)
     mp.locator(ENTRY).scroll_into_view_if_needed()
     check('telefon: panel mieści się w szerokości ekranu', mp.evaluate(f"document.querySelector('{ENTRY}').getBoundingClientRect().right") <= 391)
-    mp.screenshot(path=str(shot / 'card_mobile_entry_0.26.24.png'))
+    mp.screenshot(path=str(shot / 'card_mobile_entry_0.26.25.png'))
     mp.locator(f'{ENTRY} [data-act=open]').first.click(); mp.wait_for_timeout(800)
-    mp.screenshot(path=str(shot / 'card_mobile_dialog_0.26.24.png'))
+    mp.screenshot(path=str(shot / 'card_mobile_dialog_0.26.25.png'))
     r0 = mp.evaluate(f"document.querySelector('{DLG}').getBoundingClientRect().toJSON()")
     check('telefon: okno na cały ekran, bez poziomego przewijania', r0['width'] >= 389 and r0['height'] >= 843 and mp.evaluate("document.documentElement.scrollWidth") <= 391, str(r0))
     cb = mp.evaluate("document.querySelector('dialog.d24cg-dialog [data-fig=front] canvas').getBoundingClientRect().toJSON()")

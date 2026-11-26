@@ -1,5 +1,5 @@
-/* Drukulator 0.26.24v — generator wizytówek (okno edytora: format / orientacja / zadruk, podgląd awersu i rewersu, układy, kolory, dane, logo, rewers z kodem QR).
- * Korzysta z klas generatora banerów: banner-generator.css (.d24bg-btn, .d24bg-chip, .d24bg-row, .d24bg-seg, .d24bg-entry, .d24bg input…)
+/* Drukulator 0.26.25v — generator wizytówek (okno edytora: format / orientacja / zadruk, podgląd awersu i rewersu, 12 układów awersu, palety i kolory własne, dane, logo, 6 układów rewersu z kodem QR).
+ * Korzysta z klas generatora banerów: banner-generator.css (.d24bg-btn, .d24bg-chip, .d24bg-row, .d24bg-seg, .d24bg-entry, .d24bg-pals, .d24bg-color, .d24bg-mini, .d24bg input…)
  * i banner-generator-simple.css (.d24bgs-top, .d24bgs-main, .d24bgs-left, .d24bgs-side, .d24bgs-swatches, .d24bgs-field, .d24bgs-sliders, .d24bgs-actions…)
  * oraz zmiennych motywu: --panel --panel-2 --border --text --muted --accent --nav-hover. Tryb ciemny przez zmienne. */
 
@@ -45,6 +45,14 @@ dialog.d24cg-dialog::backdrop { background: rgba(8, 12, 22, .66); }
 .d24cg-layouts button[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .d24cg-layouts button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .d24cg-layouts canvas { display: block; width: 100%; height: auto; border-radius: 4px; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); background: #fff; }
+
+/* palety i kolory własne (klasy .d24bg-pals / .d24bg-colors z generatora banerów) */
+.d24cg-pals { margin: 0; }
+.d24cg .d24bg-colors { margin: 0; gap: 8px 16px; }
+.d24cg .d24bg-mini:disabled { opacity: .35; cursor: default; }
+.d24cg .d24bg-pals button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.d24cg-backbody { display: grid; gap: 9px; }
+.d24cg-backoff { display: grid; gap: 8px; justify-items: start; }
 
 .d24cg-logo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .d24cg-logo span { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .74rem; color: var(--muted); }
