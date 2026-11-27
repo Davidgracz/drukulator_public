@@ -1,9 +1,9 @@
-/*! Drukulator 0.26.25v — generator wizytówek (strona „Wizytówki 24h”).
+/*! Drukulator 0.26.26v — generator wizytówek (strona „Wizytówki 24h”).
  *
  * Panel z miniaturą tuż pod formularzem wizytówek + okno edytora (ten sam wzór co zaawansowany generator banerów): u góry format, orientacja
  * i zadruk (zmieniają formularz na stronie, a z nim cenę), po lewej podgląd awersu i rewersu z oceną (najmniejszy tekst w pt, rozdzielczość
  * logo, gęstość kodu QR), po prawej: układ awersu (12 gotowych), kolory (18 palet jak w generatorze banerów + własny kolor tekstu, akcentu
- * i tła z przyciskiem „↺ wróć do palety”) i krój pisma, dane osoby i firmy, logo, rewers (6 osobnych układów, tło rewersu, hasło, kod QR)
+ * i tła z przyciskiem „↺ wróć do palety”) i krój pisma, dane osoby i firmy, logo, rewers (7 osobnych układów — w tym lista usług z punktorami —, tło rewersu, hasło, kod QR)
  * oraz „Użyj w zamówieniu”.
  * Wizytówka powstaje w mm: format netto z formularza (90 × 50 albo 85 × 55 mm, poziomo lub pionowo) + spad 1,5 mm z każdej strony,
  * tekst trzymany jest w polu bezpiecznym (min. 4 mm od krawędzi cięcia). PDF ma tyle stron, ile stron zadruku (1 albo 2), MediaBox = format
@@ -32,8 +32,8 @@
   const M = 5;                   // mm: standardowy margines tekstu (≥ SAFE)
   const PT_MM = 25.4 / 72;       // 1 pt w mm
   const PDF_K = 600 / 25.4;      // px na mm w pliku do druku (600 dpi)
-  const LIM = { name: 34, title: 44, company: 40, phone: 26, email: 48, web: 48, address: 70, tagline: 50, qrText: 180 };
-  const TEXT_KEYS = ['name', 'title', 'company', 'phone', 'email', 'web', 'address', 'tagline'];
+  const LIM = { name: 34, title: 44, company: 40, phone: 26, email: 48, web: 48, address: 70, tagline: 50, qrText: 180, services: 400, servicesTitle: 30 };
+  const TEXT_KEYS = ['name', 'title', 'company', 'phone', 'email', 'web', 'address', 'tagline', 'services', 'servicesTitle'];
   const SAMPLE_KEYS = ['name', 'title', 'company', 'phone', 'email', 'web', 'address'];
   const FONT_IDS = ['modern', 'serif', 'condensed', 'round'];
   const OLD_PAPERS = ['white', 'accent', 'dark'];     // stary model (do 0.26.24v): kolor akcentu + rodzaj tła — przy wczytaniu zamieniany na paletę i kolory własne
@@ -44,15 +44,15 @@
   };
   const BACK_NAMES = {
     brand: ['Marka na środku', 'Centred brand'], stripe: ['Kolorowy pas', 'Colour stripe'], frame: ['Ramka', 'Frame'],
-    qr: ['Duży kod QR', 'Large QR code'], contact: ['Dane kontaktowe', 'Contact details'], notes: ['Pole na notatki', 'Notes lines']
+    qr: ['Duży kod QR', 'Large QR code'], contact: ['Dane kontaktowe', 'Contact details'], services: ['Lista usług', 'Services list'], notes: ['Pole na notatki', 'Notes lines']
   };
   const BACK_BGS = [['same', 'Jak awers', 'Like front'], ['accent', 'Kolor akcentu', 'Accent colour'], ['white', 'Białe', 'White']];
   const BACK_TAGLINE = ['brand', 'stripe', 'frame', 'qr', 'contact'];   // układy rewersu, które pokazują hasło
   const SAMPLES = {
-    pl: { name: 'Jan Kowalski', title: 'Dyrektor handlowy', company: 'Twoja Firma Sp. z o.o.', phone: '+48 500 600 700', email: 'jan@twojafirma.pl', web: 'www.twojafirma.pl', address: 'ul. Przykładowa 1, 70-001 Szczecin', tagline: 'Twoje hasło firmowe' },
-    en: { name: 'John Smith', title: 'Sales director', company: 'Your Company Ltd', phone: '+48 500 600 700', email: 'john@yourcompany.com', web: 'www.yourcompany.com', address: '1 Sample Street, 70-001 Szczecin', tagline: 'Your company slogan' }
+    pl: { name: 'Jan Kowalski', title: 'Dyrektor handlowy', company: 'Twoja Firma Sp. z o.o.', phone: '+48 500 600 700', email: 'jan@twojafirma.pl', web: 'www.twojafirma.pl', address: 'ul. Przykładowa 1, 70-001 Szczecin', tagline: 'Twoje hasło firmowe', servicesTitle: 'Nasze usługi', services: 'Projektowanie graficzne\nDruk cyfrowy i offsetowy\nReklama zewnętrzna\nWydruki wielkoformatowe' },
+    en: { name: 'John Smith', title: 'Sales director', company: 'Your Company Ltd', phone: '+48 500 600 700', email: 'john@yourcompany.com', web: 'www.yourcompany.com', address: '1 Sample Street, 70-001 Szczecin', tagline: 'Your company slogan', servicesTitle: 'Our services', services: 'Graphic design\nDigital and offset printing\nOutdoor advertising\nLarge-format prints' }
   };
-  const isSample = (k, v) => { const t = String(v || '').trim(); return !!t && ['pl', 'en'].some(l => SAMPLES[l][k] === t); };
+  const isSample = (k, v) => { const t = String(v || '').replace(/\r/g, '').trim(); return !!t && ['pl', 'en'].some(l => SAMPLES[l][k] === t); };
 
   // ---------- kolory ----------
   const lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
@@ -64,8 +64,8 @@
   // ---------- stan ----------
   const fresh = () => {
     const d = SAMPLES[isEn() ? 'en' : 'pl'];
-    return { pal: 'white-blue', custom: { text: '', accent: '', bg: '' }, layout: 'bar', font: 'modern', orient: 'landscape', backLayout: 'brand', backBg: 'accent', qrOn: false, qrText: '', nameScale: 100, textScale: 100,
-      name: d.name, title: d.title, company: d.company, phone: d.phone, email: d.email, web: d.web, address: d.address, tagline: d.tagline };
+    return { pal: 'white-blue', custom: { text: '', accent: '', bg: '' }, layout: 'bar', font: 'modern', orient: 'landscape', backLayout: 'brand', backBg: 'accent', qrOn: false, qrText: '', nameScale: 100, textScale: 100, servicesBullets: true,
+      servicesTitle: d.servicesTitle, services: d.services, name: d.name, title: d.title, company: d.company, phone: d.phone, email: d.email, web: d.web, address: d.address, tagline: d.tagline };
   };
   const data = fresh();
   const touched = {}; TEXT_KEYS.forEach(k => { touched[k] = false; });
@@ -89,6 +89,7 @@
     if (BACK_BGS.some(b => b[0] === raw.backBg)) data.backBg = raw.backBg;
     else if (raw.backBg == null && (raw.back === 'color' || raw.back === 'white')) data.backBg = raw.back === 'white' ? 'white' : 'accent';     // stary zapis
     if (typeof raw.qrOn === 'boolean') data.qrOn = raw.qrOn;
+    if (typeof raw.servicesBullets === 'boolean') data.servicesBullets = raw.servicesBullets;
     if (typeof raw.qrText === 'string') data.qrText = raw.qrText.slice(0, LIM.qrText);
     ['nameScale', 'textScale'].forEach(k => { const n = Number(raw[k]); if (raw[k] != null && Number.isFinite(n)) data[k] = clamp(Math.round(n), 60, 100); });
     TEXT_KEYS.forEach(k => { if (typeof raw[k] === 'string') { data[k] = raw[k].slice(0, LIM[k]); touched[k] = true; } });
@@ -214,7 +215,7 @@
     specs = specs.filter(s => s && s.text && s.text.trim());
     if (!specs.length) return { top: y, h: 0 };
     const run = f => {
-      const ms = specs.map(s => measure(R, { ...s, scale: (s.scale == null ? 1 : s.scale) * f }, w));
+      const ms = specs.map(s => measure(R, { ...s, scale: (s.scale == null ? 1 : s.scale) * f }, w - (s.indent || 0)));
       return { ms, total: ms.reduce((a, m, i) => a + m.h + (i ? (specs[i].gapBefore == null ? gap : specs[i].gapBefore) : 0), 0) };
     };
     let r = run(1);
@@ -225,7 +226,13 @@
     const ms = r.ms, total = r.total;
     let yy = valign === 'bottom' ? y + availH - total : valign === 'middle' ? y + (availH - total) / 2 : y;
     const top = yy;
-    ms.forEach((m, i) => { if (i) yy += specs[i].gapBefore == null ? gap : specs[i].gapBefore; paint(R, m, x, yy, w, align, specs[i].color, specs[i].role); yy += m.h; });
+    ms.forEach((m, i) => {
+      if (i) yy += specs[i].gapBefore == null ? gap : specs[i].gapBefore;
+      const ind = specs[i].indent || 0;
+      paint(R, m, x + ind, yy, w - ind, align, specs[i].color, specs[i].role);
+      if (specs[i].bullet) circle(R, x + ind * 0.32, yy + m.size * m.lh / 2, Math.max(0.28, m.size * 0.16), specs[i].bullet);     // punktor przy pierwszej linii pozycji
+      yy += m.h;
+    });
     return { top, h: total };
   }
   const fitLogo = (img, box, halign, valign) => {
@@ -468,6 +475,7 @@
       flow(R, [{ ...brandSpec(c, p), color: o.markColor || p.ink }, tagSpec].filter(Boolean), box.x, box.y, box.w, al, box.h, 2.5, 'middle');
     }
   }
+  const servicesList = () => String(data.services || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean).slice(0, 10);
   const BACKS = {
     // marka na środku (logo albo nazwa firmy) + hasło
     brand(R, c, p, qr) { const f = backFrame(R, qr); backBrand(R, c, p, f.box); if (f.qbox) drawQr(R, qr, f.qbox, p); },
@@ -506,6 +514,21 @@
       const limit = box.y + box.h - hC - 3;
       if (c.logo) { const r = drawLogoOn(R, c.logo, { x: box.x, y, w: Math.min(30, box.w), h: land ? 10 : 12 }, 'left', 'top', p.paper); y += (r ? r.h : 10) + 3; if (ts) flow(R, [ts], box.x, y, box.w, 'left', Math.max(3, limit - y), 0, 'top'); }
       else flow(R, [{ ...brandSpec(c, p), size: 4.4, maxLines: 2 }, ts && { ...ts, gapBefore: 1.6 }].filter(Boolean), box.x, y, box.w, 'left', Math.max(6, limit - y), 1.6, 'top');
+      if (qbox) drawQr(R, qr, qbox, p);
+    },
+    // znak firmy u góry, pod nim nagłówek i lista usług (każda linia = jedna pozycja, z punktorami albo bez)
+    services(R, c, p, qr) {
+      const land = R.W >= R.H, { box, qbox } = backFrame(R, qr), F = fontSet(), items = servicesList(), title = t(data.servicesTitle);
+      if (!items.length && !title) { BACKS.brand(R, c, p, qr); return; }
+      const ind = data.servicesBullets ? 3.4 : 0, base = 3.0 * data.textScale / 100;
+      let specs = items.map(x => ({ role: 'service', text: x, font: F.body, size: base, lh: 1.3, maxLines: 2, color: p.ink, indent: ind, bullet: data.servicesBullets ? p.accentText : null, gapBefore: 1.3 }));
+      if (specs.length) { const sz = Math.min(...specs.map(sp => measure(R, sp, box.w - ind).size)); specs = specs.map(sp => ({ ...sp, size: sz, scale: 1 })); specs[0].gapBefore = title ? 2 : 0; }
+      const head = title ? [{ role: 'heading', text: title, font: [F.head[0], 700], size: 2.8, lh: 1.2, maxLines: 1, em: 0.09, upper: true, color: p.accentText, gapBefore: 2.4 }] : [];
+      let y = box.y, top = [];
+      if (c.logo) { const r = drawLogoOn(R, c.logo, { x: box.x, y, w: Math.min(30, box.w), h: land ? 9 : 11 }, 'left', 'top', p.paper); y += (r ? r.h : 9) + 4; }
+      else top = [{ ...brandSpec(c, p), size: 4.0, maxLines: 2, lh: 1.1 }];
+      const all = top.concat(head, specs); if (top.length && head.length) head[0].gapBefore = 3; if (!top.length && head.length) head[0].gapBefore = 0;
+      flow(R, all, box.x, y, box.w, 'left', box.y + box.h - y, 1.3, 'top');
       if (qbox) drawQr(R, qr, qbox, p);
     },
     // znak firmy u góry i linie do odręcznych notatek (np. termin wizyty)
@@ -547,6 +570,10 @@
     if (!c.name && !c.company) return tr('Wpisz imię i nazwisko albo nazwę firmy.', 'Enter a name or a company name.');
     const keys = SAMPLE_KEYS.concat(twoSided() && BACK_TAGLINE.includes(data.backLayout) ? ['tagline'] : []), k = keys.find(x => isSample(x, data[x]));
     if (k) return tr(`Zamień przykładowy tekst („${t(data[k])}”) na własny albo go usuń.`, `Replace the sample text (“${t(data[k])}”) with your own or delete it.`);
+    if (twoSided() && data.backLayout === 'services') {
+      if (isSample('services', data.services)) return tr('Zamień przykładową listę usług na własną albo wybierz inny układ rewersu.', 'Replace the sample list of services with your own or choose another back layout.');
+      if (!servicesList().length) return tr('Wpisz usługi (każda w nowej linii) albo wybierz inny układ rewersu.', 'Enter your services (one per line) or choose another back layout.');
+    }
     if (logo.error) return logo.error;
     if (data.qrOn && twoSided()) {
       if (!QR) return tr('Kod QR jest niedostępny.', 'The QR code is not available.');
@@ -804,6 +831,11 @@
             <div class="d24cg-backbody" data-backbody>
             <div class="d24cg-layouts" role="group" aria-label="${tr('Układ rewersu', 'Back layout')}">${blayouts}</div>
             <div class="d24cg-row"><span>${tr('Tło', 'Colour')}</span>${seg('data-bbg', BACK_BGS, tr('Tło rewersu', 'Back background'))}</div>
+            <div class="d24cg-svc" data-svc>
+              <div class="d24bgs-fields">${field('servicesTitle', 'Nagłówek listy', 'List heading')}
+                <label class="d24bgs-field"><span class="d24bgs-field__lbl">${tr('Usługi', 'Services')}<small data-count="services"></small><small>${tr('każda w nowej linii', 'one per line')}</small></span><textarea data-f="services" rows="6" maxlength="${LIM.services}" spellcheck="false"></textarea></label></div>
+              <label class="d24bg-check"><input type="checkbox" data-bullets><span>${tr('Punktory przed pozycjami', 'Bullets before each item')}</span></label>
+            </div>
             <div class="d24bgs-fields">${field('tagline', 'Hasło', 'Slogan')}
               <div class="d24bgs-field"><label class="d24bgs-field__lbl d24bgs-check"><input type="checkbox" data-qr-on aria-label="${tr('Pokaż kod QR', 'Show a QR code')}"><span>${tr('Kod QR', 'QR code')}</span></label><input type="text" data-qr maxlength="${LIM.qrText}" autocomplete="off" spellcheck="false" aria-label="${tr('Adres w kodzie QR', 'Address in the QR code')}"></div></div>
             <p class="d24cg-hint">${tr('Kod QR prowadzi pod adres ze strony www (pole „Adres w kodzie QR” zostaw puste) albo pod własny adres.', 'The QR code points to your website (leave the QR address empty) or to a custom address.')}</p>
@@ -849,6 +881,7 @@
     dlg.addEventListener('change', e => {
       const el = e.target;
       if (el.matches('[data-qr-on]')) { data.qrOn = el.checked; changed(); }
+      else if (el.matches('[data-bullets]')) { data.servicesBullets = el.checked; changed(); }
       else if (el.matches('[data-guides]')) { showGuides = el.checked; schedulePreview(); }
       else if (el.matches('[data-logofile]')) { setLogoFile(el.files && el.files[0]); el.value = ''; }
     });
@@ -883,6 +916,8 @@
     qrInput.placeholder = t(data.web) ? tr('domyślnie: adres strony www', 'default: your website') : tr('adres strony lub własny tekst', 'website or custom text');
     dlg.querySelector('[data-qr-on]').checked = data.qrOn; dlg.querySelector('[data-qr-on]').disabled = !QR;
     dlg.querySelectorAll('[data-s]').forEach(i => { const k = i.dataset.s; if (Number(i.value) !== data[k]) i.value = String(data[k]); dlg.querySelector(`[data-out="${k}"]`).textContent = data[k] + '%'; });
+    dlg.querySelector('[data-f="tagline"]').closest('label').hidden = !BACK_TAGLINE.includes(data.backLayout);
+    dlg.querySelector('[data-svc]').hidden = data.backLayout !== 'services'; dlg.querySelector('[data-bullets]').checked = data.servicesBullets;
     ui.backBody.hidden = !twoSided(); ui.backOff.hidden = twoSided() || !opts.includes('Dwustronne'); ui.root.setAttribute('data-cg-orient', data.orient); ui.root.setAttribute('data-cg-two', twoSided() ? '1' : '0');   // (nie data-orient — to nazwa przycisków, a closest() trafiałby w korzeń okna)
     ui.logoName.textContent = logo.img ? (logo.name || tr('logo wgrane', 'logo uploaded')) : '';
     dlg.querySelector('[data-act="logo-off"]').hidden = !logo.img;

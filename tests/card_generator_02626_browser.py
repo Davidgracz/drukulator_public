@@ -1,10 +1,10 @@
-"""0.26.25v: generator wizytówek (Wizytówki 24h) w modelu „jak zaawansowany generator banerów”: panel pod formularzem + okno edytora (format / orientacja / zadruk zmieniają
-formularz), 12 układów awersu, 18 palet + własny kolor tekstu / akcentu / tła z przyciskiem ↺, 6 osobnych układów rewersu (marka, kolorowy pas, ramka, duży QR, dane,
-notatki) z wyborem tła rewersu, krój pisma, dane, logo (z białą płytką pod ciemnym logo na ciemnym tle), kod QR, PDF ze spadem 1,5 mm (MediaBox = format + spad, TrimBox =
-format netto, 1 albo 2 strony, 600 dpi), „Użyj w zamówieniu” → koszyk, „Zobacz w 3D”, ocena (najmniejszy tekst w pt, dpi logo, moduł QR), migracja zapisu z 0.26.25v, EN, telefon.
+"""0.26.26v: generator wizytówek (Wizytówki 24h) w modelu „jak zaawansowany generator banerów”: panel pod formularzem + okno edytora (format / orientacja / zadruk zmieniają
+formularz), 12 układów awersu, 18 palet + własny kolor tekstu / akcentu / tła z przyciskiem ↺, 7 osobnych układów rewersu (marka, kolorowy pas, ramka, duży QR, dane,
+lista usług z punktorami, notatki) z wyborem tła rewersu, krój pisma, dane, logo (z białą płytką pod ciemnym logo na ciemnym tle), kod QR, PDF ze spadem 1,5 mm (MediaBox = format + spad, TrimBox =
+format netto, 1 albo 2 strony, 600 dpi), „Użyj w zamówieniu” → koszyk, „Zobacz w 3D”, ocena (najmniejszy tekst w pt, dpi logo, moduł QR), migracja zapisu z 0.26.26v, EN, telefon.
 Bez eksportu (nie ma pobierania).
 
-Uruchomienie: python tests/card_generator_02625_browser.py   (wymaga playwright, pypdf, Pillow, opencv-python; serwer HTTP startuje sam)
+Uruchomienie: python tests/card_generator_02626_browser.py   (wymaga playwright, pypdf, Pillow, opencv-python; serwer HTTP startuje sam)
 """
 import base64, functools, http.server, io, pathlib, re, socketserver, struct, threading, zlib
 
@@ -33,6 +33,7 @@ ENTRY = '.d24cg-entry'
 DLG = 'dialog.d24cg-dialog'
 S = 'Druk24CardSimple'
 PAGE = 'Wizytówki 24h'
+SAMPLE_SERVICES = 'Projektowanie graficzne\nDruk cyfrowy i offsetowy\nReklama zewnętrzna\nWydruki wielkoformatowe'
 fails = []
 
 REAL = dict(name='Anna Kowalska', title='Kierownik sprzedaży', company='Studio Reklamy Fala', phone='+48 91 123 45 67', email='anna@fala.example',
@@ -72,6 +73,12 @@ def side_png(page, side):
     return Image.open(io.BytesIO(base64.b64decode(u.split(',', 1)[1]))).convert('RGB')
 
 
+def runs(img, col, color):
+    """liczba pionowych odcinków o danym kolorze w kolumnie pikseli (np. punktorów listy)"""
+    m = (np.array(img)[:, col] == np.array(color)).all(axis=1)
+    return int((m[1:] & ~m[:-1]).sum()) + (1 if m[0] else 0)
+
+
 def attached_bytes(page):
     b64 = page.evaluate("""async () => { const f = Druk24CardSimple.getAttachFiles()[0]; const u = new Uint8Array(await f.arrayBuffer());
       let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); }""")
@@ -81,7 +88,7 @@ def attached_bytes(page):
 NAVY = {'pal': 'white-blue', 'custom': {'text': '', 'accent': '#0f2747', 'bg': ''}}
 NOCUSTOM = {'text': '', 'accent': '', 'bg': ''}
 LAYOUTS12 = ['bar', 'top', 'band', 'bottom', 'split', 'diagonal', 'center', 'minimal', 'corner', 'frame', 'badge', 'columns']
-BACKS6 = ['brand', 'stripe', 'frame', 'qr', 'contact', 'notes']
+BACKS6 = ['brand', 'stripe', 'frame', 'qr', 'contact', 'services', 'notes']
 
 
 def make_logo(path, w=600, h=300, color=(192, 24, 122, 255)):
@@ -114,7 +121,7 @@ with sync_playwright() as p:
     check('wizytówki: generator tuż pod formularzem, podgląd 3D zaraz pod nim', 'd24cg-entry' in kids[gi + 1] and 'd24c3-panel' in kids[gi + 2], str(kids[gi:gi + 3]))
     check('wizytówki: jeden panel, widoczny, z miniaturą i przyciskiem', page.locator(ENTRY).count() == 1 and page.locator(ENTRY).is_visible() and page.locator(f'{ENTRY} canvas').count() == 1)
     check('wizytówki: panel banerów się nie pojawia', page.locator('.d24bgs-entry:not(.d24cg-entry)').count() == 0)
-    check('wizytówki: wersja 0.26.25v', page.locator('#versionLabel').inner_text() == '0.26.25v')
+    check('wizytówki: wersja 0.26.26v', page.locator('#versionLabel').inner_text() == '0.26.26v')
     for name in ('Ulotki 24h', 'Plakaty 24h', 'Folie i banery 24h', 'Druk cyfrowy i ksero 24h'):
         goto_page(page, name)
         check(f'{name}: bez generatora wizytówek', page.locator(ENTRY).count() == 0)
@@ -125,15 +132,15 @@ with sync_playwright() as p:
     thumb = page.locator(f'{ENTRY} canvas').first
     box = thumb.bounding_box()
     check('miniatura ma kształt wizytówki (poziomo ok. 93 : 53)', box and 1.5 < box['width'] / box['height'] < 2.0, str(box))
-    shot_entry = shot / 'card_entry_0.26.25.png'
+    shot_entry = shot / 'card_entry_0.26.26.png'
     page.locator(ENTRY).scroll_into_view_if_needed(); page.locator(ENTRY).screenshot(path=str(shot_entry))
 
     # ============ B. okno: format, orientacja, zadruk ============
     check('domyślnie: bez przykładowych danych w PDF — projekt nie jest dołączony', not page.evaluate(f"{S}.isAttachEnabled()") and page.evaluate(f"{S}.getAttachFiles().length") == 0)
     open_editor(page)
     check('okno otwarte, okno banerów nie istnieje', page.evaluate(f"document.querySelector('{DLG}').open") and page.locator('dialog.d24bgs-dialog').count() == 0)
-    check('widoczne: 2 formaty, 12 układów awersu, 6 układów rewersu, 18 palet, 4 kroje', page.locator(f'{DLG} [data-format]').count() == 2 and page.locator(f'{DLG} [data-layout]').count() == 12
-          and page.locator(f'{DLG} [data-blayout]').count() == 6 and page.locator(f'{DLG} [data-pal]').count() == 18 and page.locator(f'{DLG} [data-font]').count() == 4)
+    check('widoczne: 2 formaty, 12 układów awersu, 7 układów rewersu, 18 palet, 4 kroje', page.locator(f'{DLG} [data-format]').count() == 2 and page.locator(f'{DLG} [data-layout]').count() == 12
+          and page.locator(f'{DLG} [data-blayout]').count() == 7 and page.locator(f'{DLG} [data-pal]').count() == 18 and page.locator(f'{DLG} [data-font]').count() == 4)
     check('kolory własne: tekst, akcent, tło (3 pola + 3 przyciski ↺)', page.locator(f'{DLG} input[data-clr]').count() == 3 and page.locator(f'{DLG} [data-clear]').count() == 3)
     check('nie ma już starych kontrolek (12 próbek koloru, wybór tła papieru)', page.locator(f'{DLG} [data-color]').count() == 0 and page.locator(f'{DLG} [data-paper]').count() == 0)
     check('jednostronne: widoczny tylko awers, w sekcji rewersu informacja i przycisk „Dodaj rewers” (bez układów rewersu)', page.locator(f'{DLG} [data-fig=front]').is_visible() and not page.locator(f'{DLG} [data-fig=back]').is_visible()
@@ -144,7 +151,7 @@ with sync_playwright() as p:
     thumbs = page.evaluate("[...document.querySelectorAll('dialog.d24cg-dialog [data-layout] canvas')].map(c => c.toDataURL())")
     check('12 miniatur układów awersu, wszystkie różne', len(thumbs) == 12 and len(set(thumbs)) == 12, str(len(set(thumbs))))
     bthumbs = page.evaluate("[...document.querySelectorAll('dialog.d24cg-dialog [data-blayout] canvas')].map(c => c.toDataURL())")
-    check('6 miniatur układów rewersu, wszystkie różne', len(bthumbs) == 6 and len(set(bthumbs)) == 6, str(len(set(bthumbs))))
+    check('7 miniatur układów rewersu, wszystkie różne', len(bthumbs) == 7 and len(set(bthumbs)) == 7, str(len(set(bthumbs))))
     check('zaznaczone: 90×50, poziomo, jednostronny', page.get_attribute(f'{DLG} [data-format="90x50 mm"]', 'aria-pressed') == 'true' and page.get_attribute(f'{DLG} [data-orient=landscape]', 'aria-pressed') == 'true'
           and page.get_attribute(f'{DLG} [data-sides=Jednostronne]', 'aria-pressed') == 'true')
     c = page.locator(f'{DLG} [data-fig=front] canvas'); cw, ch = page.evaluate("[...document.querySelectorAll('dialog.d24cg-dialog [data-fig=front] canvas')].map(c => [c.width, c.height])[0]")
@@ -229,7 +236,7 @@ with sync_playwright() as p:
     set_state(page, {'paper': 'accent', 'color': '#d71920'})
     check('migracja: stare „paper: accent” → tło w kolorze akcentu, pasek w kolorze tekstu', pix(page, 'front', 70, 45) == '#d71920' and pix(page, 'front', 2, 25) == '#ffffff', f'{pix(page, "front", 70, 45)} {pix(page, "front", 2, 25)}')
     set_state(page, {**NAVY, 'layout': 'bar', 'font': 'modern', 'backBg': 'accent'})
-    page.screenshot(path=str(shot / 'card_dialog_0.26.25.png'))
+    page.screenshot(path=str(shot / 'card_dialog_0.26.26.png'))
 
     # ============ D. przykładowe teksty blokują „Użyj w zamówieniu” ============
     page.click(f'{DLG} [data-act=reset]'); page.click(f'{DLG} [data-act=reset]'); page.wait_for_timeout(300)
@@ -293,7 +300,7 @@ with sync_playwright() as p:
         seen[bl] = side_png(page, 'back').tobytes()
         check(f'rewers „{bl}”: kafelek zaznaczony i stan zapisany', page.get_attribute(f'{DLG} [data-blayout={bl}]', 'aria-pressed') == 'true' and page.evaluate(f"{S}.getState().backLayout") == bl)
     page.click(f'{DLG} [data-blayout=brand]')
-    check('bez kodu QR: brand, stripe, frame, contact i notes wyglądają różnie, a „duży QR” bez kodu wraca do układu marki', len({seen[k] for k in ('brand', 'stripe', 'frame', 'contact', 'notes')}) == 5 and seen['qr'] == seen['brand'])
+    check('bez kodu QR: brand, stripe, frame, contact, services i notes wyglądają różnie, a „duży QR” bez kodu wraca do układu marki', len({seen[k] for k in ('brand', 'stripe', 'frame', 'contact', 'services', 'notes')}) == 6 and seen['qr'] == seen['brand'])
     set_state(page, {'backLayout': 'stripe', 'backBg': 'same'})
     check('rewers „kolorowy pas”: pas na całą szerokość (także w spadzie), nad i pod nim białe tło', pix(page, 'back', 2, 20) == '#0f2747' and pix(page, 'back', 88, 20) == '#0f2747' and pix(page, 'back', 45, 3) == '#ffffff' and pix(page, 'back', 45, 47) == '#ffffff', f"{pix(page, 'back', 2, 20)} {pix(page, 'back', 45, 3)}")
     set_state(page, {'backLayout': 'frame'})
@@ -301,6 +308,29 @@ with sync_playwright() as p:
     set_state(page, {'backLayout': 'notes'})
     ln = np.array(side_png(page, 'back')); rows = [y for y in range(ln.shape[0]) if (np.abs(ln[y, 200:900].astype(int) - 255).sum(axis=1) > 20).all()]
     check('rewers „pole na notatki”: kilka poziomych linii na całej szerokości pola', len(rows) >= 3, str(len(rows)))
+    # lista usług (blok tekstu z punktorami)
+    set_state(page, {**REAL, **NAVY, 'qrOn': False, 'backBg': 'same', 'backLayout': 'brand', 'layout': 'bar'})
+    check('pole „Usługi” i nagłówek listy są ukryte poza układem „Lista usług”', not page.locator(f'{DLG} [data-f=services]').is_visible() and not page.locator(f'{DLG} [data-f=servicesTitle]').is_visible() and page.locator(f'{DLG} [data-f=tagline]').is_visible())
+    page.click(f'{DLG} [data-blayout=services]'); page.wait_for_timeout(250)
+    check('układ „Lista usług”: widać nagłówek, pole usług (wiele linii) i punktory; pole hasła ukryte', page.locator(f'{DLG} [data-f=servicesTitle]').is_visible() and page.locator(f'{DLG} textarea[data-f=services]').is_visible()
+          and page.locator(f'{DLG} [data-bullets]').is_visible() and page.is_checked(f'{DLG} [data-bullets]') and not page.locator(f'{DLG} [data-f=tagline]').is_visible())
+    set_state(page, {'services': SAMPLE_SERVICES, 'servicesTitle': 'Nasze usługi'})
+    check('przykładowa lista usług blokuje „Użyj w zamówieniu” (i podpowiada, co zrobić)', 'listę usług' in page.evaluate(f"{S}.getProblem()"), page.evaluate(f"{S}.getProblem()"))
+    page.fill(f'{DLG} textarea[data-f=services]', 'Projekty graficzne\nDruk cyfrowy\n\n  Reklama zewnętrzna  '); page.wait_for_timeout(300)
+    check('własna lista usług: brak blokady, w stanie 4 linie (puste i spacje są pomijane przy rysowaniu)', page.evaluate(f"{S}.getProblem()") == '' and page.evaluate(f"{S}.getState().services.split('\\n').length") == 4, page.evaluate(f"{S}.getProblem()"))
+    on = side_png(page, 'back'); n_on = runs(on, 91, (15, 39, 71))
+    page.uncheck(f'{DLG} [data-bullets]'); page.wait_for_timeout(250)
+    off = side_png(page, 'back'); n_off = runs(off, 91, (15, 39, 71))
+    check('punktory: 3 pozycje = 3 punktory w kolorze akcentu więcej niż bez punktorów', n_on - n_off == 3 and page.evaluate(f"{S}.getState().servicesBullets") is False, f'{n_on} vs {n_off}')
+    page.check(f'{DLG} [data-bullets]'); page.wait_for_timeout(200)
+    rep_s = page.evaluate(f"{S}.getReport()"); check('lista 3 pozycji: najmniejszy tekst ≥ 6 pt', rep_s['minPt'] >= 6, str(rep_s['minPt']))
+    page.fill(f'{DLG} textarea[data-f=services]', ''); page.fill(f'{DLG} [data-f=servicesTitle]', ''); page.wait_for_timeout(250)
+    check('pusta lista usług i nagłówek: komunikat „Wpisz usługi”, a rewers wraca do układu marki', 'Wpisz usługi' in page.evaluate(f"{S}.getProblem()") and np.array(side_png(page, 'back')).std() > 5, page.evaluate(f"{S}.getProblem()"))
+    page.fill(f'{DLG} [data-f=servicesTitle]', 'Oferta'); page.fill(f'{DLG} textarea[data-f=services]', 'Ulotki\nWizytówki\nBanery\nPlakaty\nNaklejki\nRoll-upy\nKoszulki\nKubki\nDlugopisy\nTorby\nCzapki\nPuzzle'); page.wait_for_timeout(300)
+    check('pole usług: tekst ograniczony do 400 znaków, rysowane jest najwyżej 10 pozycji', page.evaluate(f"{S}.getState().services.length") <= 400 and page.evaluate("document.querySelector('dialog.d24cg-dialog textarea[data-f=services]').maxLength") == 400)
+    page.fill(f'{DLG} textarea[data-f=services]', 'Projekty graficzne\nDruk cyfrowy\nReklama zewnętrzna'); page.fill(f'{DLG} [data-f=servicesTitle]', 'Nasze usługi'); page.wait_for_timeout(250)
+    page.screenshot(path=str(shot / 'card_dialog_services_0.26.26.png'))
+    set_state(page, {'backLayout': 'brand'})
     set_state(page, {'tagline': 'Twoje hasło firmowe', 'backLayout': 'brand'})
     check('przykładowe hasło blokuje w układzie, który je pokazuje (marka na środku)', 'przykładowy' in page.evaluate(f"{S}.getProblem()"), page.evaluate(f"{S}.getProblem()"))
     set_state(page, {'backLayout': 'notes'})
@@ -332,7 +362,7 @@ with sync_playwright() as p:
     set_state(page, {'tagline': 'Reklama, która płynie'})
     for bl in BACKS6:
         page.click(f'{DLG} [data-blayout={bl}]'); page.wait_for_timeout(150)
-        if bl == 'stripe': page.screenshot(path=str(shot / 'card_dialog_back_0.26.25.png'))
+        if bl == 'stripe': page.screenshot(path=str(shot / 'card_dialog_back_0.26.26.png'))
     set_state(page, {'backLayout': 'brand'})
 
     # ============ G. logo ============
@@ -418,17 +448,17 @@ with sync_playwright() as p:
     t3 = page.locator('.d24c3-panel').inner_text()
     check('3D rozpoznaje spad 1,5 mm w pliku z generatora', 'spad' in t3.lower() and '1,5' in t3, t3[:400])
     page.locator('.d24c3-panel').scroll_into_view_if_needed(); page.wait_for_timeout(500)
-    page.screenshot(path=str(shot / 'card_3d_0.26.25.png'))
+    page.screenshot(path=str(shot / 'card_3d_0.26.26.png'))
 
     # ============ K. EN ============
     page.evaluate("document.documentElement.lang = 'en'"); page.wait_for_timeout(600)
     check('EN: panel po angielsku', 'BUSINESS CARD GENERATOR' in page.inner_text(ENTRY) and 'Design my card' in page.inner_text(ENTRY), page.inner_text(ENTRY)[:120])
     open_editor(page)
-    check('EN: nazwy układów rewersu po angielsku', 'Notes lines' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text() and 'Large QR code' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text())
+    check('EN: nazwy układów rewersu po angielsku', 'Services list' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text() and 'Notes lines' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text() and 'Large QR code' in page.locator(f'{DLG} .d24cg-layouts').nth(1).inner_text())
     check('EN: palety po angielsku (podpis)', page.get_attribute(f'{DLG} [data-pal=navy-gold]', 'title') == 'Navy & yellow', str(page.get_attribute(f'{DLG} [data-pal=navy-gold]', 'title')))
     check('EN: okno po angielsku, 12 układów awersu', 'Business card generator' in page.inner_text(f'{DLG} .d24cg-top') and 'Centred' in page.locator(f'{DLG} .d24cg-layouts').first.inner_text() and 'Use in order' in page.inner_text(DLG), page.inner_text(f'{DLG} .d24cg-top')[:150])
     page.click(f'{DLG} [data-act=reset]'); page.click(f'{DLG} [data-act=reset]'); page.wait_for_timeout(300)
-    check('EN: przykłady po angielsku (John Smith)', page.evaluate(f"{S}.getState().name") == 'John Smith' and 'sample' in page.evaluate(f"{S}.getProblem()").lower(), page.evaluate(f"{S}.getProblem()"))
+    check('EN: przykłady po angielsku (John Smith, lista usług)', page.evaluate(f"{S}.getState().name") == 'John Smith' and 'Graphic design' in page.evaluate(f"{S}.getState().services") and 'sample' in page.evaluate(f"{S}.getProblem()").lower(), page.evaluate(f"{S}.getProblem()"))
     page.keyboard.press('Escape'); page.evaluate("document.documentElement.lang = 'pl'"); page.wait_for_timeout(500)
     check('powrót do PL: panel po polsku', 'GENERATOR WIZYTÓWEK' in page.inner_text(ENTRY))
 
@@ -450,9 +480,9 @@ with sync_playwright() as p:
     mp.goto(base); mp.wait_for_timeout(800); goto_page(mp, PAGE); mp.wait_for_timeout(500)
     mp.locator(ENTRY).scroll_into_view_if_needed()
     check('telefon: panel mieści się w szerokości ekranu', mp.evaluate(f"document.querySelector('{ENTRY}').getBoundingClientRect().right") <= 391)
-    mp.screenshot(path=str(shot / 'card_mobile_entry_0.26.25.png'))
+    mp.screenshot(path=str(shot / 'card_mobile_entry_0.26.26.png'))
     mp.locator(f'{ENTRY} [data-act=open]').first.click(); mp.wait_for_timeout(800)
-    mp.screenshot(path=str(shot / 'card_mobile_dialog_0.26.25.png'))
+    mp.screenshot(path=str(shot / 'card_mobile_dialog_0.26.26.png'))
     r0 = mp.evaluate(f"document.querySelector('{DLG}').getBoundingClientRect().toJSON()")
     check('telefon: okno na cały ekran, bez poziomego przewijania', r0['width'] >= 389 and r0['height'] >= 843 and mp.evaluate("document.documentElement.scrollWidth") <= 391, str(r0))
     cb = mp.evaluate("document.querySelector('dialog.d24cg-dialog [data-fig=front] canvas').getBoundingClientRect().toJSON()")
